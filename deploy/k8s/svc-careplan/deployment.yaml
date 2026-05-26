@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-careplan
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: svc-careplan
+  template:
+    metadata:
+      labels:
+        app: svc-careplan
+    spec:
+      containers:
+        - name: svc-careplan
+          image: ghcr.io/uttambhatia/healthcarepatientengagement/svc-careplan:latest
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: aks
+            - name: SERVICEBUS_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: servicebus-namespace
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083

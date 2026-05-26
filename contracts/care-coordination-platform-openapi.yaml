@@ -1,0 +1,111 @@
+openapi: 3.0.3
+info:
+  title: Healthcare Patient Engagement Platform API
+  version: 1.0.0
+  description: API-first contract examples for the care coordination platform.
+servers:
+  - url: https://api.healthcare.example.com
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    PatientRequest:
+      type: object
+      required: [externalReference, givenName, familyName, birthDate]
+      properties:
+        externalReference: { type: string }
+        givenName: { type: string }
+        familyName: { type: string }
+        birthDate: { type: string, format: date }
+    AppointmentRequest:
+      type: object
+      required: [patientId, providerId, scheduledAt, channel]
+      properties:
+        patientId: { type: string }
+        providerId: { type: string }
+        scheduledAt: { type: string, format: date-time }
+        channel: { type: string }
+    CarePlanRequest:
+      type: object
+      required: [patientId, goal, status, ownerId]
+      properties:
+        patientId: { type: string }
+        goal: { type: string }
+        status: { type: string }
+        ownerId: { type: string }
+security:
+  - bearerAuth: []
+paths:
+  /patients:
+    post:
+      summary: Onboard a patient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientRequest'
+      responses:
+        '201':
+          description: Patient created
+  /patients/{id}:
+    get:
+      summary: Retrieve a patient
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Patient retrieved
+  /appointments:
+    post:
+      summary: Book an appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentRequest'
+      responses:
+        '201':
+          description: Appointment created
+    get:
+      summary: List appointments
+      responses:
+        '200':
+          description: Appointment collection
+  /careplans:
+    post:
+      summary: Create a care plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarePlanRequest'
+      responses:
+        '201':
+          description: Care plan created
+  /consents:
+    post:
+      summary: Record consent
+      responses:
+        '201':
+          description: Consent recorded
+  /notifications:
+    post:
+      summary: Dispatch notification
+      responses:
+        '201':
+          description: Notification queued
+  /servicebus/messages:
+    post:
+      summary: Publish standardized message envelope
+      responses:
+        '201':
+          description: Message queued

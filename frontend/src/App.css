@@ -1,0 +1,141 @@
+:root {
+  color: #e8f0ff;
+  background: #081120;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: radial-gradient(circle at top, #16345f, #081120 48%);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.page-shell {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.hero h1 {
+  margin: 0.5rem 0;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+}
+
+.chip,
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(116, 183, 255, 0.16);
+  color: #9ed0ff;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: rgba(8, 17, 32, 0.86);
+  border: 1px solid rgba(148, 193, 255, 0.2);
+  border-radius: 20px;
+  padding: 1.25rem;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
+}
+
+.card-header,
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ed0ff;
+  font-size: 0.8rem;
+  margin: 0 0 0.35rem;
+}
+
+.primary-button {
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #4fc3f7, #5b7fff);
+  color: #04111f;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.button-row,
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.stacked-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.stacked-form input,
+.stacked-form select {
+  width: 100%;
+  border: 1px solid rgba(148, 193, 255, 0.3);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: rgba(13, 27, 52, 0.7);
+  color: #f4f9ff;
+}
+
+.stats-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  margin-top: 1rem;
+}
+
+.stats-grid div {
+  padding: 0.85rem;
+  border-radius: 16px;
+  background: rgba(148, 193, 255, 0.08);
+}
+
+.stats-grid strong {
+  display: block;
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+@media (max-width: 720px) {
+  .hero {
+    flex-direction: column;
+  }
+
+  .page-shell {
+    padding: 1rem;
+  }
+}

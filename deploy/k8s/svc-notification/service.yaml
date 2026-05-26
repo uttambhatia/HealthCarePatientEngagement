@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-notification
+spec:
+  selector:
+    app: svc-notification
+  ports:
+    - port: 80
+      targetPort: 8086

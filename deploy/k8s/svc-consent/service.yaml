@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-consent
+spec:
+  selector:
+    app: svc-consent
+  ports:
+    - port: 80
+      targetPort: 8084
