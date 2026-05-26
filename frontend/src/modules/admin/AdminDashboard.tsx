@@ -1,5 +1,5 @@
 import { Card } from '../../components/Card'
-import { useAuth } from '../../auth/AuthProvider'
+import { useAuth } from '../../auth/useAuth'
 import { canViewAdmin } from '../../utils/roleUtils'
 
 export function AdminDashboard() {

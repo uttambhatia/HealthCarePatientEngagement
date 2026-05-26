@@ -1,5 +1,5 @@
 import { Card } from '../../components/Card'
-import { useAppState } from '../../store/AppStateContext'
+import { useAppState } from '../../store/useAppState'
 
 export function NotificationsPanel() {
   const { liveUpdates } = useAppState()

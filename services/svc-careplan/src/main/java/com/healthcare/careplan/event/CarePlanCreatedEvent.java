@@ -6,7 +6,7 @@ public record CarePlanCreatedEvent(
         String aggregateId,
 String patientId,
 String goal,
-String status,
+String planStatus,
 String ownerId
 ) implements DomainEvent {
     @Override

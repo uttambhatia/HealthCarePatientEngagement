@@ -5,7 +5,7 @@ public record CarePlanAggregate(
         String status,
                 String patientId,
 String goal,
-String status,
+String planStatus,
 String ownerId
 ) {
 }

@@ -9,7 +9,7 @@ String patientId,
 @jakarta.validation.constraints.NotBlank
 String goal,
 @jakarta.validation.constraints.NotBlank
-String status,
+String planStatus,
 @jakarta.validation.constraints.NotBlank
 String ownerId
 ) {

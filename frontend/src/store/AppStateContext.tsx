@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type PropsWithChildren } from 'react'
+import { createContext, useMemo, type PropsWithChildren } from 'react'
 import { useRealtimeFeed } from '../hooks/useRealtimeFeed'
 
 type AppStateValue = {
@@ -19,10 +19,4 @@ export function AppStateProvider({ children }: PropsWithChildren) {
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>
 }
 
-export function useAppState() {
-  const context = useContext(AppStateContext)
-  if (!context) {
-    throw new Error('useAppState must be used within AppStateProvider')
-  }
-  return context
-}
+export { AppStateContext }

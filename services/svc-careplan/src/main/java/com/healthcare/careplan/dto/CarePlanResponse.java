@@ -5,7 +5,7 @@ public record CarePlanResponse(
         String status,
                 String patientId,
 String goal,
-String status,
+String planStatus,
 String ownerId
 ) {
 }

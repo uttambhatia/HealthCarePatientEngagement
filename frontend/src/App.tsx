@@ -8,7 +8,7 @@ import { TeleconsultationWorkspace } from './modules/teleconsultation/Teleconsul
 import { IotMonitoringDashboard } from './modules/iot/IotMonitoringDashboard'
 import { AdminDashboard } from './modules/admin/AdminDashboard'
 import { HomePage } from './pages/HomePage'
-import { useAuth } from './auth/AuthProvider'
+import { useAuth } from './auth/useAuth'
 
 function App() {
   const { session, loginAs, logout } = useAuth()

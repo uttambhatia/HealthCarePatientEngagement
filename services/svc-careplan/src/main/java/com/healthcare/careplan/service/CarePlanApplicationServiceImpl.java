@@ -32,7 +32,7 @@ package com.healthcare.careplan.service;
                         "DRAFT",
                         request.patientId(),
                 request.goal(),
-                request.status(),
+                request.planStatus(),
                 request.ownerId()
                 ));
                 integration.synchronizeCarePlan(aggregate, correlationId);
@@ -40,7 +40,7 @@ package com.healthcare.careplan.service;
                         aggregate.id(),
                         aggregate.patientId(),
                         aggregate.goal(),
-                        aggregate.status(),
+                        aggregate.planStatus(),
                         aggregate.ownerId()
                 ));
                 return map(aggregate);
@@ -67,7 +67,7 @@ public CarePlanResponse createManagedCarePlan(CreateCarePlanRequest request, Str
                         aggregate.status(),
                         aggregate.patientId(),
                 aggregate.goal(),
-                aggregate.status(),
+                aggregate.planStatus(),
                 aggregate.ownerId()
                 );
             }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react'
+import { createContext, useMemo, useState, type PropsWithChildren } from 'react'
 
 type Role = 'PATIENT' | 'DOCTOR' | 'ADMIN' | 'COORDINATOR'
 
@@ -18,14 +18,10 @@ const STORAGE_KEY = 'care-coordination-session'
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [session, setSession] = useState<AuthSession | null>(null)
-
-  useEffect(() => {
+  const [session, setSession] = useState<AuthSession | null>(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      setSession(JSON.parse(stored) as AuthSession)
-    }
-  }, [])
+    return stored ? (JSON.parse(stored) as AuthSession) : null
+  })
 
   const value = useMemo<AuthContextValue>(() => ({
     session,
@@ -47,10 +43,4 @@ export function AuthProvider({ children }: PropsWithChildren) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-  return context
-}
+export { AuthContext }
