@@ -1,0 +1,14 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      default-filters:
+        - AddResponseHeader=X-Zero-Trust, enforced
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

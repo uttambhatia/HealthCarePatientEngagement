@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-notification
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: svc-notification
+  template:
+    metadata:
+      labels:
+        app: svc-notification
+    spec:
+      containers:
+        - name: svc-notification
+          image: ghcr.io/uttambhatia/healthcarepatientengagement/svc-notification:latest
+          ports:
+            - containerPort: 8086
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: aks
+            - name: SERVICEBUS_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: servicebus-namespace
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8086
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8086

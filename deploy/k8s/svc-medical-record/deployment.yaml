@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-medical-record
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: svc-medical-record
+  template:
+    metadata:
+      labels:
+        app: svc-medical-record
+    spec:
+      containers:
+        - name: svc-medical-record
+          image: ghcr.io/uttambhatia/healthcarepatientengagement/svc-medical-record:latest
+          ports:
+            - containerPort: 8085
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: aks
+            - name: SERVICEBUS_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: servicebus-namespace
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085

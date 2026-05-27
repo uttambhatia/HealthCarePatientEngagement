@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-device-ingestion
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: svc-device-ingestion
+  template:
+    metadata:
+      labels:
+        app: svc-device-ingestion
+    spec:
+      containers:
+        - name: svc-device-ingestion
+          image: ghcr.io/uttambhatia/healthcarepatientengagement/svc-device-ingestion:latest
+          ports:
+            - containerPort: 8088
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: aks
+            - name: SERVICEBUS_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: servicebus-namespace
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8088
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8088

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-patient
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: svc-patient
+  template:
+    metadata:
+      labels:
+        app: svc-patient
+    spec:
+      containers:
+        - name: svc-patient
+          image: ghcr.io/uttambhatia/healthcarepatientengagement/svc-patient:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: aks
+            - name: SERVICEBUS_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: servicebus-namespace
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081

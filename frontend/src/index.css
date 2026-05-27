@@ -1,0 +1,27 @@
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+ul {
+  padding-left: 1.1rem;
+}
+
+p,
+li,
+span {
+  color: #d5e2f8;
+}
+
+h1,
+h2,
+h3 {
+  margin-top: 0;
+}

@@ -1,0 +1,24 @@
+server:
+  port: 8086
+spring:
+  application:
+    name: notification-service
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:application},%X{correlationId:-}]"
+platform:
+  azure:
+    servicebus:
+      fqdn: ${SERVICEBUS_NAMESPACE:}
+    eventhub:
+      fqdn: ${EVENTHUB_NAMESPACE:}
+    keyvault:
+      url: ${KEY_VAULT_URL:}
+  messaging:
+    retryAttempts: 3
+    deadLetterQueue: notification-service-dlq
