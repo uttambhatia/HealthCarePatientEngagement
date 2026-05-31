@@ -1,0 +1,305 @@
+You are a Senior Cloud Architect and Full Stack Engineer.
+
+Generate a complete, production-ready scaffolding for a 
+"Healthcare Patient Engagement – Care Coordination Platform" 
+based strictly on the provided architecture (HLD + LLD + API Specifications).
+
+The implementation MUST align with:
+- Microservices architecture
+- Event-driven design (Service Bus/Event Hub)
+- Azure cloud-native stack
+- Clean architecture + DDD
+- Modular, reusable, extensible design
+- Healthcare compliance (HIPAA/GDPR-ready)
+
+---------------------------------------------------
+1. ARCHITECTURE CONTEXT (MANDATORY ALIGNMENT)
+---------------------------------------------------
+
+Follow this architecture:
+
+Layers:
+1. Client Layer (Web + Mobile)
+2. Presentation Layer (React / Ionic)
+3. API Gateway Layer (Azure APIM / Gateway)
+4. Microservices Layer (AKS – Spring Boot)
+5. Integration Layer (Service Bus, IoT, FHIR, ACS)
+6. Data Layer (SQL, FHIR Store, Redis, Time-series DB)
+
+Key architectural patterns:
+- Domain-driven microservices (Patient, Appointment, CarePlan, etc.)
+- API-first (REST + OpenAPI)
+- Event-driven communication (async messaging)
+- Saga orchestration for workflows
+- API Gateway as centralized entry
+- Zero-trust security model
+
+---------------------------------------------------
+2. BACKEND SCAFFOLDING REQUIREMENTS
+---------------------------------------------------
+
+Technology:
+- Java Spring Boot (primary choice as per architecture)
+- Spring Cloud (for distributed systems)
+- Azure SDK integration
+- Docker + Kubernetes (AKS deployment ready)
+
+---------------------------------------------------
+2.1 MICROSERVICES (IMPLEMENT ALL)
+
+Create modular services:
+
+1. Patient Service
+2. Appointment Service
+3. Care Plan Service
+4. Consent Service
+5. Medical Record Service (FHIR integration)
+6. Notification Service (ACS)
+7. Telemetry Service
+8. Device Ingestion Service
+9. Alert Management Service
+10. Identity Adapter Service (AAD integration)
+11. Event Messaging Service (Service Bus wrapper)
+12. API Gateway / BFF Layer
+
+Ensure:
+- Domain boundaries strictly followed
+- Each service independently deployable 【1-ee40e8】
+
+---------------------------------------------------
+2.2 STANDARD MICROSERVICE STRUCTURE (MANDATORY)
+
+Each microservice must include:
+
+/src
+  /controller
+  /service
+  /domain
+  /repository
+  /dto
+  /event
+  /integration
+  /config
+  /security
+  /exception
+  /utils
+
+Implement:
+- Clean Architecture (Controller → Service → Domain → Infra)
+- Dependency inversion
+- Interface-based programming
+
+---------------------------------------------------
+2.3 API IMPLEMENTATION (STRICT)
+
+Use APIs from the specification:
+
+Examples:
+- POST /patients (Patient onboarding)
+- GET /patients/{id}
+- POST /appointments
+- GET /appointments
+- POST /careplans
+- POST /consents
+- POST /notifications
+- POST /servicebus/messages
+
+Each API must include:
+- Request DTOs
+- Response DTOs
+- Validation (Bean Validation)
+- Swagger (OpenAPI)
+- Exception handler
+- Logging with correlationId
+
+---------------------------------------------------
+2.4 EVENT-DRIVEN IMPLEMENTATION
+
+Implement messaging backbone:
+
+- Azure Service Bus / Event Hub
+- Publisher + Consumer pattern
+- Retry + Dead Letter Queue
+
+Events to generate:
+
+- PatientRegisteredEvent
+- AppointmentBookedEvent
+- CarePlanCreatedEvent
+- ConsentUpdatedEvent
+- TelemetryReceivedEvent
+- AlertTriggeredEvent
+- NotificationSentEvent
+
+Ensure:
+- Loose coupling via async messaging 【1-ee40e8】  
+- Event schema standardization
+
+---------------------------------------------------
+2.5 WORKFLOW / SAGA IMPLEMENTATION
+
+Implement Saga-based orchestration:
+
+Example:
+- Patient onboarding flow
+- Appointment booking + notification
+- Care plan lifecycle
+
+Include:
+- Compensation logic
+- Orchestration component
+
+---------------------------------------------------
+2.6 SECURITY IMPLEMENTATION
+
+Implement full security model:
+
+- OAuth2 / OIDC with Azure AD
+- JWT validation filter
+- RBAC enforcement (Patient, Doctor, Admin, Coordinator) 【2-20218a】  
+- API Gateway token enforcement
+- Input validation (OWASP compliant)
+- Secrets via Key Vault
+
+---------------------------------------------------
+2.7 INTEGRATION LAYER
+
+Implement adapters:
+
+- FHIR Adapter (medical records)
+- IoT Adapter (device telemetry via MQTT/HTTP)
+- ACS Adapter (notifications)
+- Service Bus Adapter
+
+Ensure:
+- Protocol abstraction layer
+- External API isolation
+
+---------------------------------------------------
+2.8 DATA LAYER
+
+Use polyglot persistence:
+
+- Azure SQL (transactional data)
+- FHIR Store (clinical data)
+- Redis (caching)
+- Time-series DB (telemetry)
+
+Implement:
+- Repository pattern
+- Service abstraction over DB
+
+---------------------------------------------------
+2.9 CROSS-CUTTING CONCERNS
+
+Implement across all services:
+
+- Centralized logging (SLF4J + correlation ID)
+- Distributed tracing
+- Exception handling
+- Retry policies
+- Health checks
+- Config management
+
+---------------------------------------------------
+3. FRONTEND SCAFFOLDING REQUIREMENTS
+---------------------------------------------------
+
+Technology:
+- React (preferred)
+- Redux / Context API
+- Make use of React to create advance component if needed.
+
+---------------------------------------------------
+3.1 FRONTEND MODULES
+
+Generate modular UI:
+
+- Authentication (OAuth login)
+- Patient Dashboard
+- Appointment Booking UI
+- Care Plan Management UI
+- Notifications Panel
+- Teleconsultation UI
+- IoT Monitoring Dashboard
+- Admin Dashboard
+
+---------------------------------------------------
+3.2 FRONTEND STRUCTURE
+
+/src
+  /modules
+  /components
+  /pages
+  /services (API layer)
+  /store (state management)
+  /hooks
+  /utils
+  /auth
+
+---------------------------------------------------
+3.3 FRONTEND FEATURES
+
+Include:
+
+- OAuth2 login with token handling
+- Role-based UI rendering
+- Dashboard widgets
+- API integration layer
+- Error handling interceptor
+- Responsive design
+- Real-time updates (WebSocket/events)
+
+---------------------------------------------------
+4. DEVOPS & DEPLOYMENT
+---------------------------------------------------
+
+Generate:
+
+- Dockerfile for each service
+- Kubernetes manifests:
+  - Deployment
+  - Service
+  - Ingress
+- Helm charts (optional)
+- CI/CD pipeline:
+  - Build (Maven)
+  - Dockerize
+  - Deploy to AKS
+
+---------------------------------------------------
+5. OUTPUT FORMAT
+---------------------------------------------------
+
+Provide:
+
+1. Complete folder structure (all services + frontend)
+2. Sample implementation for:
+   - Controller
+   - Service
+   - DTO
+   - Repository
+   - Event Publisher/Consumer
+3. API contract examples
+4. Frontend sample components
+5. Docker + Kubernetes configs
+
+---------------------------------------------------
+6. QUALITY REQUIREMENTS
+---------------------------------------------------
+
+- Production-grade code
+- Modular and reusable
+- Extensible for future services
+- Follows SOLID principles
+- Healthcare compliant (no PHI leakage)
+- Supports scaling and observability
+
+---------------------------------------------------
+
+IMPORTANT:
+- Do NOT create monolith
+- Follow microservices boundaries strictly
+- Ensure event-driven communication
+- Align exactly with domain modules and Azure-based architecture
+- Ensure consistent naming conventions (svc-patient, svc-careplan, etc.)
