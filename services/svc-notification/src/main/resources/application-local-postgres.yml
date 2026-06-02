@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${NOTIFICATION_DB_USERNAME:postgres}
+    password: ${NOTIFICATION_DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${NOTIFICATION_DB_DDL_AUTO:validate}
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:seed/local-postgres-schema.sql
+      data-locations: classpath:seed/local-postgres-data.sql
+      continue-on-error: false

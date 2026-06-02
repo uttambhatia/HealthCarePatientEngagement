@@ -9,4 +9,6 @@ public interface TelemetryApplicationService {
     TelemetryResponse recordTelemetry(CreateTelemetryRequest request, String correlationId);
     TelemetryResponse getTelemetry(String id);
     List<TelemetryResponse> listTelemetry();
+    List<TelemetryResponse> listTelemetryByPatient(String patientId, String metricType, String startTime, String endTime);
+    List<String> listMetricTypes(String patientId);
 }

@@ -13,6 +13,16 @@ import java.time.OffsetDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(UnsupportedNotificationChannelException.class)
+    public ResponseEntity<ApiError> handleUnsupportedChannel(UnsupportedNotificationChannelException exception) {
+        return ResponseEntity.badRequest().body(error("UNSUPPORTED_NOTIFICATION_CHANNEL", exception.getMessage()));
+    }
+
+    @ExceptionHandler(NotificationDeliveryFailedException.class)
+    public ResponseEntity<ApiError> handleDeliveryFailure(NotificationDeliveryFailedException exception) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error("NOTIFICATION_DELIVERY_FAILED", exception.getMessage()));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error("RESOURCE_NOT_FOUND", exception.getMessage()));

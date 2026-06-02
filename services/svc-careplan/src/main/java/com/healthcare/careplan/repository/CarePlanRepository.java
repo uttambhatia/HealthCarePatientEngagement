@@ -9,5 +9,6 @@ public interface CarePlanRepository {
     CarePlanAggregate save(CarePlanAggregate aggregate);
     Optional<CarePlanAggregate> findById(String id);
     List<CarePlanAggregate> findAll();
+    Optional<CarePlanAggregate> findLatestByPatientId(String patientId);
     void deleteById(String id);
 }

@@ -39,7 +39,7 @@ package com.healthcare.eventmessaging.controller;
 
             @Operation(summary = "Get EventMessaging resource")
             @GetMapping("/{id}")
-            public StandardResponse<ServiceBusMessageResponse> get(@PathVariable String id) {
+            public StandardResponse<ServiceBusMessageResponse> get(@PathVariable("id") String id) {
                 return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), service.getMessage(id));
             }
 

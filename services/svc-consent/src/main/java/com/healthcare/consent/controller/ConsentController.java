@@ -1,6 +1,7 @@
 package com.healthcare.consent.controller;
 
         import com.healthcare.consent.dto.CreateConsentRequest;
+        import com.healthcare.consent.dto.ConsentAccessResponse;
         import com.healthcare.consent.dto.ConsentResponse;
         import com.healthcare.consent.service.ConsentApplicationService;
         import com.healthcare.platform.common.api.StandardResponse;
@@ -14,6 +15,7 @@ package com.healthcare.consent.controller;
         import org.springframework.web.bind.annotation.PostMapping;
         import org.springframework.web.bind.annotation.RequestBody;
         import org.springframework.web.bind.annotation.RequestMapping;
+        import org.springframework.web.bind.annotation.RequestParam;
         import org.springframework.web.bind.annotation.ResponseStatus;
         import org.springframework.web.bind.annotation.RestController;
 
@@ -48,5 +50,27 @@ package com.healthcare.consent.controller;
 @GetMapping
 public StandardResponse<List<ConsentResponse>> list() {
     return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), service.listConsents());
+}
+
+@Operation(summary = "List consent history by patient and consent type")
+@GetMapping("/history")
+    public StandardResponse<List<ConsentResponse>> history(
+            @RequestParam("patientId") String patientId,
+            @RequestParam("consentType") String consentType) {
+    return new StandardResponse<>(
+            CorrelationIdHolder.get().orElse("n/a"),
+            service.listConsentHistory(patientId, consentType)
+    );
+}
+
+@Operation(summary = "Check whether consent allows access for a patient")
+@GetMapping("/check-access")
+    public StandardResponse<ConsentAccessResponse> checkAccess(
+            @RequestParam("patientId") String patientId,
+            @RequestParam("consentType") String consentType) {
+    return new StandardResponse<>(
+            CorrelationIdHolder.get().orElse("n/a"),
+            service.checkAccess(patientId, consentType)
+    );
 }
         }

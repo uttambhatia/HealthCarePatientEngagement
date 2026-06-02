@@ -1,0 +1,137 @@
+package com.healthcare.consent.integration;
+
+import com.azure.messaging.servicebus.ServiceBusClientBuilder;
+import com.azure.messaging.servicebus.ServiceBusErrorContext;
+import com.azure.messaging.servicebus.ServiceBusMessage;
+import com.azure.messaging.servicebus.ServiceBusProcessorClient;
+import com.azure.messaging.servicebus.ServiceBusReceivedMessageContext;
+import com.azure.messaging.servicebus.ServiceBusSenderClient;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.healthcare.consent.event.ConsentEventConsumer;
+import com.healthcare.consent.event.ConsentUpdatedEvent;
+import com.healthcare.platform.common.event.MessageEnvelope;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.time.OffsetDateTime;
+
+@Component
+public class ConsentQueueProcessor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConsentQueueProcessor.class);
+    private final ServiceBusClientBuilder serviceBusClientBuilder;
+    private final ConsentEventConsumer consentEventConsumer;
+    private final ObjectMapper objectMapper;
+    private final String queueName;
+    private final String deadLetterQueue;
+    private final boolean processorEnabled;
+    private final String serviceBusFqdn;
+    private ServiceBusProcessorClient processorClient;
+    private ServiceBusSenderClient deadLetterSender;
+
+    public ConsentQueueProcessor(
+            ObjectProvider<ServiceBusClientBuilder> serviceBusClientBuilderProvider,
+            ConsentEventConsumer consentEventConsumer,
+            ObjectMapper objectMapper,
+            @Value("${platform.messaging.channel:consent-service}") String queueName,
+            @Value("${platform.messaging.deadLetterQueue:consent-service-dlq}") String deadLetterQueue,
+            @Value("${platform.messaging.processorEnabled:true}") boolean processorEnabled,
+            @Value("${platform.azure.servicebus.fqdn:}") String serviceBusFqdn) {
+        this.serviceBusClientBuilder = serviceBusClientBuilderProvider.getIfAvailable();
+        this.consentEventConsumer = consentEventConsumer;
+        this.objectMapper = objectMapper;
+        this.queueName = queueName;
+        this.deadLetterQueue = deadLetterQueue;
+        this.processorEnabled = processorEnabled;
+        this.serviceBusFqdn = serviceBusFqdn;
+    }
+
+    @PostConstruct
+    public void start() {
+        if (!processorEnabled || serviceBusClientBuilder == null || serviceBusFqdn.isBlank()) {
+            return;
+        }
+        deadLetterSender = serviceBusClientBuilder.sender().queueName(deadLetterQueue).buildClient();
+        processorClient = serviceBusClientBuilder.processor().queueName(queueName).disableAutoComplete()
+                .processMessage(this::processMessage).processError(this::processError).buildProcessorClient();
+        processorClient.start();
+    }
+
+    @PreDestroy
+    public void stop() {
+        if (processorClient != null) {
+            processorClient.close();
+            processorClient = null;
+        }
+        if (deadLetterSender != null) {
+            deadLetterSender.close();
+            deadLetterSender = null;
+        }
+    }
+
+    private void processMessage(ServiceBusReceivedMessageContext context) {
+        String rawBody = context.getMessage().getBody().toString();
+        try {
+            JsonNode body = objectMapper.readTree(rawBody);
+            MessageEnvelope<ConsentUpdatedEvent> envelope = new MessageEnvelope<>(
+                    text(body, "correlationId", "n/a"),
+                    text(body, "eventType", "ConsentUpdatedEvent"),
+                    OffsetDateTime.now(),
+                    new ConsentUpdatedEvent(
+                            text(body, "aggregateId", ""),
+                            text(body, "patientId", ""),
+                            text(body, "consentType", ""),
+                            bool(body, "granted", false),
+                            number(body, "version", 1),
+                            text(body, "effectiveFrom", "")));
+            consentEventConsumer.handle(envelope);
+            context.complete();
+        } catch (Exception ex) {
+            deadLetter(context, rawBody);
+        }
+    }
+
+    private void processError(ServiceBusErrorContext errorContext) {
+        LOGGER.error("Consent processor error: {}", errorContext.getException().getMessage(), errorContext.getException());
+    }
+
+    private void deadLetter(ServiceBusReceivedMessageContext context, String rawBody) {
+        try {
+            if (deadLetterSender != null) {
+                deadLetterSender.sendMessage(new ServiceBusMessage(rawBody));
+            }
+            context.complete();
+        } catch (RuntimeException dlqError) {
+            context.abandon();
+        }
+    }
+
+    private String text(JsonNode node, String field, String fallback) {
+        JsonNode value = node.get(field);
+        if (value == null || value.isNull() || value.asText().isBlank()) {
+            return fallback;
+        }
+        return value.asText();
+    }
+
+    private boolean bool(JsonNode node, String field, boolean fallback) {
+        JsonNode value = node.get(field);
+        if (value == null || value.isNull()) {
+            return fallback;
+        }
+        return value.asBoolean(fallback);
+    }
+
+    private int number(JsonNode node, String field, int fallback) {
+        JsonNode value = node.get(field);
+        if (value == null || value.isNull()) {
+            return fallback;
+        }
+        return value.asInt(fallback);
+    }
+}

@@ -88,3 +88,155 @@ cd frontend
 npm install
 npm run build
 ```
+
+## Core services quick start (gateway + careplan + telemetry)
+
+Use this when validating telemetry-by-patient and careplan responsibility routes through API gateway.
+
+```powershell
+Set-Location scripts
+.\start-core-services.ps1
+```
+
+Optional flags:
+
+```powershell
+# include test phase while launching
+.\start-core-services.ps1 -SkipTests:$false
+
+# only stop listeners on 8080/8083/8087 and exit
+.\start-core-services.ps1 -StopOnly
+```
+
+Stop all three services:
+
+```powershell
+Set-Location scripts
+.\stop-core-services.ps1
+```
+
+After startup, verify:
+
+```powershell
+Invoke-WebRequest -UseBasicParsing "http://localhost:8080/api/telemetry/by-patient/pat-seed-1001?metricType=HEART_RATE"
+Invoke-WebRequest -UseBasicParsing "http://localhost:8080/api/careplans/responsibility/pat-seed-1001"
+```
+
+## UC-03 end-to-end quick run
+
+This quick flow validates Appointment Scheduling (UC-03) through API Gateway.
+
+1. Start backend services required for UC-03.
+
+```bash
+# from repository root, use separate terminals
+mvn -pl services/svc-consent spring-boot:run
+mvn -pl services/svc-appointment spring-boot:run
+mvn -pl services/api-gateway spring-boot:run
+```
+
+2. Optional: enable strict consent enforcement in appointment service.
+
+```bash
+set CONSENT_ENFORCEMENT_ENABLED=true
+set CONSENT_INTEGRATION_BASE_URL=http://localhost:8084
+```
+
+3. Book an appointment through gateway.
+
+```bash
+curl -X POST "http://localhost:8080/api/appointments" ^
+    -H "Content-Type: application/json" ^
+    -d "{\"patientId\":\"pat-1001\",\"providerId\":\"prov-44\",\"scheduledAt\":\"2026-06-15T09:30:00Z\",\"channel\":\"VIDEO\"}"
+```
+
+Expected: `201 Created` with `data.status=BOOKED`.
+
+4. Try duplicate booking for same provider and slot.
+
+```bash
+curl -X POST "http://localhost:8080/api/appointments" ^
+    -H "Content-Type: application/json" ^
+    -d "{\"patientId\":\"pat-1002\",\"providerId\":\"prov-44\",\"scheduledAt\":\"2026-06-15T09:30:00Z\",\"channel\":\"VIDEO\"}"
+```
+
+Expected: `409 Conflict` with error code `SLOT_ALREADY_BOOKED`.
+
+5. Fetch available slots for the provider.
+
+```bash
+curl "http://localhost:8080/api/appointments/available-slots?providerId=prov-44&date=2026-06-15"
+```
+
+Expected: `200 OK` and `data.availableSlots` does not include `2026-06-15T09:30:00Z`.
+
+## Local PostgreSQL profile (core services)
+
+Use this mode when you need local Postgres-backed verification for consent, appointment, and notification services.
+
+This profile runs SQL initialization in order on service startup:
+1. DDL from `seed/local-postgres-schema.sql`
+2. Seed data from `seed/local-postgres-data.sql`
+
+### Option A: standalone local PostgreSQL (no Docker)
+
+Create these databases in your local PostgreSQL instance before starting services:
+
+```sql
+CREATE DATABASE consentdb;
+CREATE DATABASE appointmentdb;
+CREATE DATABASE notificationdb;
+```
+
+### Option B: Docker Compose (optional)
+
+1. Start local Postgres container.
+
+```bash
+docker compose -f deploy/local/docker-compose.postgres.yml up -d
+```
+
+2. Start core services with `local-postgres` profile in separate terminals.
+
+```bash
+set SPRING_PROFILES_ACTIVE=local-postgres
+set CONSENT_DB_URL=jdbc:postgresql://localhost:5432/postgres
+set CONSENT_DB_USERNAME=postgres
+set CONSENT_DB_PASSWORD=postgres
+mvn -f services/svc-consent/pom.xml spring-boot:run
+```
+
+```bash
+set SPRING_PROFILES_ACTIVE=local-postgres
+set APPOINTMENT_DB_URL=jdbc:postgresql://localhost:5432/postgres
+set APPOINTMENT_DB_USERNAME=postgres
+set APPOINTMENT_DB_PASSWORD=postgres
+mvn -f services/svc-appointment/pom.xml spring-boot:run
+```
+
+```bash
+set SPRING_PROFILES_ACTIVE=local-postgres
+set NOTIFICATION_DB_URL=jdbc:postgresql://localhost:5432/postgres
+set NOTIFICATION_DB_USERNAME=postgres
+set NOTIFICATION_DB_PASSWORD=postgres
+mvn -f services/svc-notification/pom.xml spring-boot:run
+```
+
+```bash
+mvn -f services/api-gateway/pom.xml spring-boot:run
+```
+
+3. Validate booking flow through gateway.
+
+```bash
+curl -X POST "http://localhost:8080/api/appointments" ^
+    -H "Content-Type: application/json" ^
+    -d "{\"patientId\":\"pat-1001\",\"providerId\":\"prov-44\",\"scheduledAt\":\"2026-06-15T09:30:00Z\",\"channel\":\"VIDEO\"}"
+```
+
+4. Optional: enable consent enforcement and set consent integration URL.
+
+```bash
+set CONSENT_ENFORCEMENT_ENABLED=true
+set CONSENT_INTEGRATION_BASE_URL=http://localhost:8084
+```

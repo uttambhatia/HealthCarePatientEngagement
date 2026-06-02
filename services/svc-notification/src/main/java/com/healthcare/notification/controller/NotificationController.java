@@ -39,7 +39,7 @@ package com.healthcare.notification.controller;
 
             @Operation(summary = "Get Notification resource")
             @GetMapping("/{id}")
-            public StandardResponse<NotificationResponse> get(@PathVariable String id) {
+            public StandardResponse<NotificationResponse> get(@PathVariable("id") String id) {
                 return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), service.getNotification(id));
             }
 

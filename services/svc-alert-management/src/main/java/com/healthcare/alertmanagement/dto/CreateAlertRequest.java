@@ -1,16 +1,17 @@
 package com.healthcare.alertmanagement.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 public record CreateAlertRequest(
-@jakarta.validation.constraints.NotBlank
+@NotBlank
 String patientId,
-@jakarta.validation.constraints.NotBlank
+String deviceId,
+@NotBlank
 String severity,
-@jakarta.validation.constraints.NotBlank
+@NotBlank
 String triggerType,
-@jakarta.validation.constraints.NotBlank
+String metricValue,
+@NotBlank
 String summary
 ) {
 }

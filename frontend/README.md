@@ -11,6 +11,28 @@ Currently, two official plugins are available:
 
 The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
+## Environment Setup
+
+Create a local environment file before using OAuth sign-in:
+
+```bash
+cp .env.example .env.local
+```
+
+Set these values in `.env.local`:
+
+- `VITE_API_BASE_URL` (typically gateway URL, for example `http://localhost:8080`)
+- `VITE_OIDC_CLIENT_ID`
+- `VITE_OIDC_AUTHORIZATION_ENDPOINT`
+- `VITE_OIDC_TOKEN_ENDPOINT`
+- `VITE_OIDC_REDIRECT_URI`
+
+Optional values:
+
+- `VITE_OIDC_LOGOUT_ENDPOINT`
+- `VITE_OIDC_SCOPE`
+- `VITE_EVENTS_WS_URL` or `VITE_EVENTS_SSE_URL`
+
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:

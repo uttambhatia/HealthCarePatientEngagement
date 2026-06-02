@@ -12,3 +12,9 @@ management:
     web:
       exposure:
         include: health,info
+platform:
+  security:
+    enabled: ${PLATFORM_SECURITY_ENABLED:false}
+    oauth2:
+      jwk-set-uri: ${OAUTH2_JWK_SET_URI:https://login.microsoftonline.com/common/discovery/v2.0/keys}
+      issuer: ${OAUTH2_ISSUER:}

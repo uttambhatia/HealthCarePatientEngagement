@@ -9,5 +9,7 @@ public interface ConsentRepository {
     ConsentRecord save(ConsentRecord aggregate);
     Optional<ConsentRecord> findById(String id);
     List<ConsentRecord> findAll();
+    Optional<ConsentRecord> findLatestByPatientIdAndConsentType(String patientId, String consentType);
+    List<ConsentRecord> findHistoryByPatientIdAndConsentType(String patientId, String consentType);
     void deleteById(String id);
 }

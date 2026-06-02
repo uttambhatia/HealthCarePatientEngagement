@@ -3,6 +3,18 @@ server:
 spring:
   application:
     name: identity-adapter-service
+  datasource:
+    url: ${IDENTITY_ADAPTER_DB_URL:jdbc:h2:mem:identityadapterdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${IDENTITY_ADAPTER_DB_USERNAME:sa}
+    password: ${IDENTITY_ADAPTER_DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${IDENTITY_ADAPTER_DB_DDL_AUTO:update}
+    open-in-view: false
+  h2:
+    console:
+      enabled: ${IDENTITY_ADAPTER_H2_CONSOLE:false}
 management:
   endpoints:
     web:
@@ -19,6 +31,16 @@ platform:
       fqdn: ${EVENTHUB_NAMESPACE:}
     keyvault:
       url: ${KEY_VAULT_URL:}
+  security:
+    oauth2:
+      jwk-set-uri: ${OAUTH2_JWK_SET_URI:https://login.microsoftonline.com/common/discovery/v2.0/keys}
+      issuer: ${OAUTH2_ISSUER:}
+  integration:
+    azure-ad:
+      base-url: ${AZURE_AD_INTEGRATION_BASE_URL:}
+      path: ${AZURE_AD_INTEGRATION_PATH:/identity/assertions}
   messaging:
+    channel: ${IDENTITY_MESSAGING_CHANNEL:identity-adapter-service}
+    processorEnabled: ${IDENTITY_PROCESSOR_ENABLED:true}
     retryAttempts: 3
     deadLetterQueue: identity-adapter-service-dlq

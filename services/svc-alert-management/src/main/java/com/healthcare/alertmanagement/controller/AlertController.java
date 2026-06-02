@@ -39,7 +39,7 @@ package com.healthcare.alertmanagement.controller;
 
             @Operation(summary = "Get AlertManagement resource")
             @GetMapping("/{id}")
-            public StandardResponse<AlertResponse> get(@PathVariable String id) {
+            public StandardResponse<AlertResponse> get(@PathVariable("id") String id) {
                 return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), service.getAlert(id));
             }
 

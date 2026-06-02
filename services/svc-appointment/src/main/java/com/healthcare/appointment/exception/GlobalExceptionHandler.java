@@ -13,6 +13,36 @@ import java.time.OffsetDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(InsecureSessionConfigurationException.class)
+    public ResponseEntity<ApiError> handleInsecureSessionConfig(InsecureSessionConfigurationException exception) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error("INSECURE_SESSION_CONFIGURATION", exception.getMessage()));
+    }
+
+    @ExceptionHandler(ConsentAccessDeniedException.class)
+    public ResponseEntity<ApiError> handleConsentDenied(ConsentAccessDeniedException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error("CONSENT_ACCESS_DENIED", exception.getMessage()));
+    }
+
+    @ExceptionHandler(AppointmentNotEligibleException.class)
+    public ResponseEntity<ApiError> handleAppointmentNotEligible(AppointmentNotEligibleException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error("APPOINTMENT_NOT_ELIGIBLE", exception.getMessage()));
+    }
+
+    @ExceptionHandler(TeleconsultationSessionNotFoundException.class)
+    public ResponseEntity<ApiError> handleTeleconsultNotFound(TeleconsultationSessionNotFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error("TELECONSULTATION_NOT_FOUND", exception.getMessage()));
+    }
+
+    @ExceptionHandler(TeleconsultationNetworkException.class)
+    public ResponseEntity<ApiError> handleTeleconsultNetwork(TeleconsultationNetworkException exception) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error("TELECONSULTATION_NETWORK_FAILURE", exception.getMessage()));
+    }
+
+    @ExceptionHandler(SlotAlreadyBookedException.class)
+    public ResponseEntity<ApiError> handleSlotConflict(SlotAlreadyBookedException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error("SLOT_ALREADY_BOOKED", exception.getMessage()));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error("RESOURCE_NOT_FOUND", exception.getMessage()));
@@ -20,6 +50,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({MethodArgumentNotValidException.class, ConstraintViolationException.class})
     public ResponseEntity<ApiError> handleValidation(Exception exception) {
+        return ResponseEntity.badRequest().body(error("VALIDATION_ERROR", exception.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException exception) {
         return ResponseEntity.badRequest().body(error("VALIDATION_ERROR", exception.getMessage()));
     }
 

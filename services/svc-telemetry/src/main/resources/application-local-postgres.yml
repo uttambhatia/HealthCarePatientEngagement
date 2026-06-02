@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: ${TELEMETRY_DB_URL:jdbc:h2:mem:telemetrydb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${TELEMETRY_DB_USERNAME:sa}
+    password: ${TELEMETRY_DB_PASSWORD:}
+    driver-class-name: ${TELEMETRY_DB_DRIVER:org.h2.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: ${TELEMETRY_DB_DDL_AUTO:validate}
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:seed/local-postgres-schema.sql
+      data-locations: classpath:seed/local-postgres-data.sql
+      continue-on-error: false

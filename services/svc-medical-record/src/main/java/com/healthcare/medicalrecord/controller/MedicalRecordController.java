@@ -2,6 +2,7 @@ package com.healthcare.medicalrecord.controller;
 
         import com.healthcare.medicalrecord.dto.CreateMedicalRecordRequest;
         import com.healthcare.medicalrecord.dto.MedicalRecordResponse;
+        import com.healthcare.medicalrecord.dto.UpdateMedicalRecordRequest;
         import com.healthcare.medicalrecord.service.MedicalRecordApplicationService;
         import com.healthcare.platform.common.api.StandardResponse;
         import com.healthcare.platform.common.observability.CorrelationIdHolder;
@@ -12,6 +13,7 @@ package com.healthcare.medicalrecord.controller;
         import org.springframework.web.bind.annotation.GetMapping;
         import org.springframework.web.bind.annotation.PathVariable;
         import org.springframework.web.bind.annotation.PostMapping;
+        import org.springframework.web.bind.annotation.PutMapping;
         import org.springframework.web.bind.annotation.RequestBody;
         import org.springframework.web.bind.annotation.RequestMapping;
         import org.springframework.web.bind.annotation.ResponseStatus;
@@ -39,8 +41,17 @@ package com.healthcare.medicalrecord.controller;
 
             @Operation(summary = "Get MedicalRecord resource")
             @GetMapping("/{id}")
-            public StandardResponse<MedicalRecordResponse> get(@PathVariable String id) {
+            public StandardResponse<MedicalRecordResponse> get(@PathVariable("id") String id) {
                 return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), service.getMedicalRecord(id));
+            }
+
+            @Operation(summary = "Update MedicalRecord resource")
+            @PutMapping("/{id}")
+            public StandardResponse<MedicalRecordResponse> update(
+                    @PathVariable("id") String id,
+                    @Valid @RequestBody UpdateMedicalRecordRequest request) {
+                String correlationId = CorrelationIdHolder.get().orElse("n/a");
+                return new StandardResponse<>(correlationId, service.updateMedicalRecord(id, request, correlationId));
             }
 
 

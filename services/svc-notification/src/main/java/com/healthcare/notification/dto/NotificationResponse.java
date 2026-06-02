@@ -3,9 +3,11 @@ package com.healthcare.notification.dto;
 public record NotificationResponse(
         String id,
         String status,
-                String recipientId,
-String channel,
-String templateId,
-String message
+        String recipientId,
+        String channel,
+        String templateId,
+        String message,
+        int deliveryAttempts,
+        String lastError
 ) {
 }

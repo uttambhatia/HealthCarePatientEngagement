@@ -13,6 +13,16 @@ import java.time.OffsetDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(FhirValidationException.class)
+    public ResponseEntity<ApiError> handleFhirValidation(FhirValidationException exception) {
+        return ResponseEntity.badRequest().body(error("FHIR_VALIDATION_FAILED", exception.getMessage()));
+    }
+
+    @ExceptionHandler(VersionConflictException.class)
+    public ResponseEntity<ApiError> handleVersionConflict(VersionConflictException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error("VERSION_CONFLICT", exception.getMessage()));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error("RESOURCE_NOT_FOUND", exception.getMessage()));

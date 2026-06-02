@@ -3,6 +3,18 @@ server:
 spring:
   application:
     name: notification-service
+  datasource:
+    url: ${NOTIFICATION_DB_URL:jdbc:h2:mem:notificationdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${NOTIFICATION_DB_USERNAME:sa}
+    password: ${NOTIFICATION_DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${NOTIFICATION_DB_DDL_AUTO:update}
+    open-in-view: false
+  h2:
+    console:
+      enabled: ${NOTIFICATION_H2_CONSOLE:false}
 management:
   endpoints:
     web:
@@ -19,6 +31,27 @@ platform:
       fqdn: ${EVENTHUB_NAMESPACE:}
     keyvault:
       url: ${KEY_VAULT_URL:}
+  security:
+    oauth2:
+      jwk-set-uri: ${OAUTH2_JWK_SET_URI:https://login.microsoftonline.com/common/discovery/v2.0/keys}
+      issuer: ${OAUTH2_ISSUER:}
+  integration:
+    acs:
+      base-url: ${ACS_INTEGRATION_BASE_URL:}
+      path: ${ACS_INTEGRATION_PATH:/acs/notifications}
+    appointment:
+      base-url: ${FOLLOWUP_APPOINTMENT_BASE_URL:}
+      path: ${FOLLOWUP_APPOINTMENT_PATH:/appointments}
   messaging:
+    channel: ${NOTIFICATION_MESSAGING_CHANNEL:notification-service}
+    inboundChannel: ${NOTIFICATION_INBOUND_CHANNEL:appointment-service}
+    processorEnabled: ${NOTIFICATION_PROCESSOR_ENABLED:true}
     retryAttempts: 3
     deadLetterQueue: notification-service-dlq
+  teleconsult:
+    followup:
+      notification:
+        channel: ${TELECONSULT_FOLLOWUP_NOTIFICATION_CHANNEL:SMS}
+        templateId: ${TELECONSULT_FOLLOWUP_TEMPLATE_ID:teleconsult-followup-v1}
+      appointment:
+        channel: ${FOLLOWUP_APPOINTMENT_CHANNEL:VIDEO}

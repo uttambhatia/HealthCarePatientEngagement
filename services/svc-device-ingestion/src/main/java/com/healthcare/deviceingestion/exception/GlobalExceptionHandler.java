@@ -13,6 +13,21 @@ import java.time.OffsetDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(UnregisteredDeviceException.class)
+    public ResponseEntity<ApiError> handleUnregisteredDevice(UnregisteredDeviceException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error("DEVICE_NOT_REGISTERED", exception.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidTelemetryPayloadException.class)
+    public ResponseEntity<ApiError> handleInvalidPayload(InvalidTelemetryPayloadException exception) {
+        return ResponseEntity.badRequest().body(error("INVALID_TELEMETRY_PAYLOAD", exception.getMessage()));
+    }
+
+    @ExceptionHandler(TelemetryForwardingFailedException.class)
+    public ResponseEntity<ApiError> handleForwardingFailure(TelemetryForwardingFailedException exception) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error("TELEMETRY_FORWARDING_FAILED", exception.getMessage()));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error("RESOURCE_NOT_FOUND", exception.getMessage()));

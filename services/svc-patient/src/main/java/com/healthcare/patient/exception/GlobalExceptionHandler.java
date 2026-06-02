@@ -13,6 +13,11 @@ import java.time.OffsetDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(DuplicateRegistrationException.class)
+    public ResponseEntity<ApiError> handleDuplicate(DuplicateRegistrationException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error("DUPLICATE_REGISTRATION", exception.getMessage()));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error("RESOURCE_NOT_FOUND", exception.getMessage()));

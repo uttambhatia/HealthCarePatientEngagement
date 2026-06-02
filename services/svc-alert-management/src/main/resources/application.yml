@@ -3,6 +3,18 @@ server:
 spring:
   application:
     name: alert-management-service
+  datasource:
+    url: ${ALERT_MANAGEMENT_DB_URL:jdbc:h2:mem:alertmanagementdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${ALERT_MANAGEMENT_DB_USERNAME:sa}
+    password: ${ALERT_MANAGEMENT_DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${ALERT_MANAGEMENT_DB_DDL_AUTO:update}
+    open-in-view: false
+  h2:
+    console:
+      enabled: ${ALERT_MANAGEMENT_H2_CONSOLE:false}
 management:
   endpoints:
     web:
@@ -19,6 +31,30 @@ platform:
       fqdn: ${EVENTHUB_NAMESPACE:}
     keyvault:
       url: ${KEY_VAULT_URL:}
+  security:
+    oauth2:
+      jwk-set-uri: ${OAUTH2_JWK_SET_URI:https://login.microsoftonline.com/common/discovery/v2.0/keys}
+      issuer: ${OAUTH2_ISSUER:}
+  integration:
+    alert-escalation:
+      base-url: ${ALERT_ESCALATION_BASE_URL:}
+      path: ${ALERT_ESCALATION_PATH:/alerts/escalations}
+    telemetry:
+      alert-source-channel: ${ALERT_TELEMETRY_SOURCE_CHANNEL:telemetry-service}
+    device-patient:
+      mappings: ${ALERT_DEVICE_PATIENT_MAPPINGS:}
+  alert:
+    rules:
+      hr:
+        max: ${ALERT_RULE_HR_MAX:100}
+      glucose:
+        max: ${ALERT_RULE_GLUCOSE_MAX:140}
+      bp-systolic:
+        max: ${ALERT_RULE_BP_SYSTOLIC_MAX:140}
+      spo2:
+        min: ${ALERT_RULE_SPO2_MIN:92}
   messaging:
+    channel: ${ALERT_MESSAGING_CHANNEL:alert-management-service}
+    processorEnabled: ${ALERT_PROCESSOR_ENABLED:true}
     retryAttempts: 3
     deadLetterQueue: alert-management-service-dlq

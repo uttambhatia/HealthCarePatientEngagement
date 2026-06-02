@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: ${APPOINTMENT_DB_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${APPOINTMENT_DB_USERNAME:postgres}
+    password: ${APPOINTMENT_DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${APPOINTMENT_DB_DDL_AUTO:validate}
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:seed/local-postgres-schema.sql
+      data-locations: classpath:seed/local-postgres-data.sql
+      continue-on-error: false

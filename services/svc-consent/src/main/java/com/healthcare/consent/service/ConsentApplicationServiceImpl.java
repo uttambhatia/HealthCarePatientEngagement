@@ -1,6 +1,7 @@
 package com.healthcare.consent.service;
 
 import com.healthcare.consent.domain.ConsentRecord;
+import com.healthcare.consent.dto.ConsentAccessResponse;
 import com.healthcare.consent.dto.CreateConsentRequest;
 import com.healthcare.consent.dto.ConsentResponse;
 import com.healthcare.consent.event.ConsentUpdatedEvent;
@@ -27,12 +28,17 @@ public class ConsentApplicationServiceImpl implements ConsentApplicationService 
 
     @Override
     public ConsentResponse recordConsent(CreateConsentRequest request, String correlationId) {
+        int nextVersion = repository.findLatestByPatientIdAndConsentType(request.patientId(), request.consentType())
+            .map(existing -> existing.version() + 1)
+            .orElse(1);
+
         ConsentRecord aggregate = repository.save(new ConsentRecord(
                 UUID.randomUUID().toString(),
-                "RECORDED",
+            request.granted() ? "GRANTED" : "DENIED",
                 request.patientId(),
         request.consentType(),
-        String.valueOf(request.granted()),
+        request.granted(),
+        nextVersion,
         request.effectiveFrom()
         ));
         integration.publishAuditTrail(aggregate, correlationId);
@@ -41,6 +47,7 @@ public class ConsentApplicationServiceImpl implements ConsentApplicationService 
                 aggregate.patientId(),
                 aggregate.consentType(),
                 aggregate.granted(),
+            aggregate.version(),
                 aggregate.effectiveFrom()
         ));
         return map(aggregate);
@@ -57,6 +64,23 @@ public class ConsentApplicationServiceImpl implements ConsentApplicationService 
         return repository.findAll().stream().map(this::map).toList();
     }
 
+    @Override
+    public List<ConsentResponse> listConsentHistory(String patientId, String consentType) {
+        return repository.findHistoryByPatientIdAndConsentType(patientId, consentType).stream().map(this::map).toList();
+    }
+
+    @Override
+    public ConsentAccessResponse checkAccess(String patientId, String consentType) {
+        return repository.findLatestByPatientIdAndConsentType(patientId, consentType)
+                .map(consent -> {
+                    if (consent.granted()) {
+                        return new ConsentAccessResponse(patientId, consentType, true, "CONSENT_GRANTED", consent.version());
+                    }
+                    return new ConsentAccessResponse(patientId, consentType, false, "CONSENT_DENIED", consent.version());
+                })
+                .orElseGet(() -> new ConsentAccessResponse(patientId, consentType, false, "CONSENT_REQUIRED", null));
+    }
+
 
     private ConsentResponse map(ConsentRecord aggregate) {
         return new ConsentResponse(
@@ -65,6 +89,7 @@ public class ConsentApplicationServiceImpl implements ConsentApplicationService 
                 aggregate.patientId(),
         aggregate.consentType(),
         aggregate.granted(),
+            aggregate.version(),
         aggregate.effectiveFrom()
         );
     }

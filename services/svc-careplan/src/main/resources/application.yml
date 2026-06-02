@@ -3,6 +3,18 @@ server:
 spring:
   application:
     name: careplan-service
+  datasource:
+    url: ${CAREPLAN_DB_URL:jdbc:h2:mem:careplandb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${CAREPLAN_DB_USERNAME:sa}
+    password: ${CAREPLAN_DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${CAREPLAN_DB_DDL_AUTO:update}
+    open-in-view: false
+  h2:
+    console:
+      enabled: ${CAREPLAN_H2_CONSOLE:false}
 management:
   endpoints:
     web:
@@ -12,6 +24,9 @@ logging:
   pattern:
     level: "%5p [${spring.application.name:application},%X{correlationId:-}]"
 platform:
+  seed:
+    careplanResponsibility:
+      enabled: ${CAREPLAN_SEED_RESPONSIBILITY_ENABLED:true}
   azure:
     servicebus:
       fqdn: ${SERVICEBUS_NAMESPACE:}
@@ -19,6 +34,19 @@ platform:
       fqdn: ${EVENTHUB_NAMESPACE:}
     keyvault:
       url: ${KEY_VAULT_URL:}
+  security:
+    oauth2:
+      jwk-set-uri: ${OAUTH2_JWK_SET_URI:https://login.microsoftonline.com/common/discovery/v2.0/keys}
+      issuer: ${OAUTH2_ISSUER:}
+  integration:
+    fhir:
+      base-url: ${FHIR_INTEGRATION_BASE_URL:}
+      path: ${FHIR_INTEGRATION_PATH:/fhir/careplans}
+    notification:
+      base-url: ${NOTIFICATION_INTEGRATION_BASE_URL:}
+      path: ${NOTIFICATION_INTEGRATION_PATH:/notifications/careplans}
   messaging:
+    channel: ${CAREPLAN_MESSAGING_CHANNEL:careplan-service}
+    processorEnabled: ${CAREPLAN_PROCESSOR_ENABLED:true}
     retryAttempts: 3
     deadLetterQueue: careplan-service-dlq

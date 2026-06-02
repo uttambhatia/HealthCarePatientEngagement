@@ -3,6 +3,18 @@ server:
 spring:
   application:
     name: telemetry-service
+  datasource:
+    url: ${TELEMETRY_DB_URL:jdbc:h2:mem:telemetrydb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${TELEMETRY_DB_USERNAME:sa}
+    password: ${TELEMETRY_DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${TELEMETRY_DB_DDL_AUTO:update}
+    open-in-view: false
+  h2:
+    console:
+      enabled: ${TELEMETRY_H2_CONSOLE:false}
 management:
   endpoints:
     web:
@@ -19,6 +31,16 @@ platform:
       fqdn: ${EVENTHUB_NAMESPACE:}
     keyvault:
       url: ${KEY_VAULT_URL:}
+  security:
+    oauth2:
+      jwk-set-uri: ${OAUTH2_JWK_SET_URI:https://login.microsoftonline.com/common/discovery/v2.0/keys}
+      issuer: ${OAUTH2_ISSUER:}
+  integration:
+    time-series:
+      base-url: ${TIME_SERIES_INTEGRATION_BASE_URL:}
+      path: ${TIME_SERIES_INTEGRATION_PATH:/timeseries/telemetry}
   messaging:
+    channel: ${TELEMETRY_MESSAGING_CHANNEL:telemetry-service}
+    processorEnabled: ${TELEMETRY_PROCESSOR_ENABLED:true}
     retryAttempts: 3
     deadLetterQueue: telemetry-service-dlq

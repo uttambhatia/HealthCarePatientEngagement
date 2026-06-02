@@ -3,6 +3,18 @@ server:
 spring:
   application:
     name: appointment-service
+  datasource:
+    url: ${APPOINTMENT_DB_URL:jdbc:h2:mem:appointmentdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${APPOINTMENT_DB_USERNAME:sa}
+    password: ${APPOINTMENT_DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${APPOINTMENT_DB_DDL_AUTO:update}
+    open-in-view: false
+  h2:
+    console:
+      enabled: ${APPOINTMENT_H2_CONSOLE:false}
 management:
   endpoints:
     web:
@@ -19,6 +31,27 @@ platform:
       fqdn: ${EVENTHUB_NAMESPACE:}
     keyvault:
       url: ${KEY_VAULT_URL:}
+  security:
+    oauth2:
+      jwk-set-uri: ${OAUTH2_JWK_SET_URI:https://login.microsoftonline.com/common/discovery/v2.0/keys}
+      issuer: ${OAUTH2_ISSUER:}
+  integration:
+    notification:
+      base-url: ${NOTIFICATION_INTEGRATION_BASE_URL:}
+      path: ${NOTIFICATION_INTEGRATION_PATH:/notifications/appointments}
+    consent:
+      base-url: ${CONSENT_INTEGRATION_BASE_URL:}
+      path: ${CONSENT_INTEGRATION_PATH:/consents/check-access}
+      consentType: ${CONSENT_REQUIRED_TYPE:GENERAL_CARE}
+      enforcementEnabled: ${CONSENT_ENFORCEMENT_ENABLED:false}
+    teleconsult:
+      secure-base-url: ${TELECONSULT_SECURE_BASE_URL:https://teleconsult.healthcare.local}
+    medicalRecord:
+      base-url: ${MEDICAL_RECORD_INTEGRATION_BASE_URL:}
+      path: ${MEDICAL_RECORD_INTEGRATION_PATH:/medical-records}
+      fhirResourceType: ${MEDICAL_RECORD_FHIR_RESOURCE_TYPE:Encounter}
   messaging:
+    channel: ${APPOINTMENT_MESSAGING_CHANNEL:appointment-service}
+    processorEnabled: ${APPOINTMENT_PROCESSOR_ENABLED:true}
     retryAttempts: 3
     deadLetterQueue: appointment-service-dlq

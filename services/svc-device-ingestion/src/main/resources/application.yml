@@ -3,6 +3,18 @@ server:
 spring:
   application:
     name: device-ingestion-service
+  datasource:
+    url: ${DEVICE_INGESTION_DB_URL:jdbc:h2:mem:deviceingestiondb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${DEVICE_INGESTION_DB_USERNAME:sa}
+    password: ${DEVICE_INGESTION_DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${DEVICE_INGESTION_DB_DDL_AUTO:update}
+    open-in-view: false
+  h2:
+    console:
+      enabled: ${DEVICE_INGESTION_H2_CONSOLE:false}
 management:
   endpoints:
     web:
@@ -19,6 +31,21 @@ platform:
       fqdn: ${EVENTHUB_NAMESPACE:}
     keyvault:
       url: ${KEY_VAULT_URL:}
+  security:
+    oauth2:
+      jwk-set-uri: ${OAUTH2_JWK_SET_URI:https://login.microsoftonline.com/common/discovery/v2.0/keys}
+      issuer: ${OAUTH2_ISSUER:}
+  integration:
+    iot:
+      base-url: ${IOT_INTEGRATION_BASE_URL:}
+      path: ${IOT_INTEGRATION_PATH:/iot/messages}
+    telemetry:
+      base-url: ${TELEMETRY_INTEGRATION_BASE_URL:}
+      path: ${TELEMETRY_INTEGRATION_PATH:/telemetry}
+  deviceingestion:
+    registered-device-ids: ${REGISTERED_DEVICE_IDS:}
   messaging:
+    channel: ${DEVICE_INGESTION_MESSAGING_CHANNEL:device-ingestion-service}
+    processorEnabled: ${DEVICE_INGESTION_PROCESSOR_ENABLED:true}
     retryAttempts: 3
     deadLetterQueue: device-ingestion-service-dlq

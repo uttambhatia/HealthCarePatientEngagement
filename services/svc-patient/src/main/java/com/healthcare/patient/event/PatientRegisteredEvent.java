@@ -7,7 +7,10 @@ public record PatientRegisteredEvent(
 String externalReference,
 String givenName,
 String familyName,
-String birthDate
+String birthDate,
+String email,
+String phone,
+String demographics
 ) implements DomainEvent {
     @Override
     public String eventType() {

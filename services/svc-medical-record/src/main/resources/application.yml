@@ -3,6 +3,18 @@ server:
 spring:
   application:
     name: medical-record-service
+  datasource:
+    url: ${MEDICAL_RECORD_DB_URL:jdbc:h2:mem:medicalrecorddb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${MEDICAL_RECORD_DB_USERNAME:sa}
+    password: ${MEDICAL_RECORD_DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${MEDICAL_RECORD_DB_DDL_AUTO:update}
+    open-in-view: false
+  h2:
+    console:
+      enabled: ${MEDICAL_RECORD_H2_CONSOLE:false}
 management:
   endpoints:
     web:
@@ -19,6 +31,16 @@ platform:
       fqdn: ${EVENTHUB_NAMESPACE:}
     keyvault:
       url: ${KEY_VAULT_URL:}
+  security:
+    oauth2:
+      jwk-set-uri: ${OAUTH2_JWK_SET_URI:https://login.microsoftonline.com/common/discovery/v2.0/keys}
+      issuer: ${OAUTH2_ISSUER:}
+  integration:
+    fhir:
+      base-url: ${FHIR_INTEGRATION_BASE_URL:}
+      path: ${FHIR_INTEGRATION_PATH:/fhir/medical-records}
   messaging:
+    channel: ${MEDICAL_RECORD_MESSAGING_CHANNEL:medical-record-service}
+    processorEnabled: ${MEDICAL_RECORD_PROCESSOR_ENABLED:true}
     retryAttempts: 3
     deadLetterQueue: medical-record-service-dlq

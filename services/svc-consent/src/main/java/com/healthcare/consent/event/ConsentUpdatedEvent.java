@@ -6,7 +6,8 @@ public record ConsentUpdatedEvent(
         String aggregateId,
 String patientId,
 String consentType,
-String granted,
+boolean granted,
+int version,
 String effectiveFrom
 ) implements DomainEvent {
     @Override

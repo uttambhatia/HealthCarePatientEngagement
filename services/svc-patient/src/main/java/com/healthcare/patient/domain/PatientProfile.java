@@ -6,6 +6,9 @@ public record PatientProfile(
                 String externalReference,
 String givenName,
 String familyName,
-String birthDate
+String birthDate,
+String email,
+String phone,
+String demographics
 ) {
 }

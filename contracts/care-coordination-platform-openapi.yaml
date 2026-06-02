@@ -20,6 +20,7 @@ components:
         givenName: { type: string }
         familyName: { type: string }
         birthDate: { type: string, format: date }
+      example: { externalReference: "EXT-1001", givenName: "Ananya", familyName: "Sharma", birthDate: "1988-06-21" }
     AppointmentRequest:
       type: object
       required: [patientId, providerId, scheduledAt, channel]
@@ -28,14 +29,587 @@ components:
         providerId: { type: string }
         scheduledAt: { type: string, format: date-time }
         channel: { type: string }
+      example: { patientId: "pat-1001", providerId: "prov-44", scheduledAt: "2026-06-01T09:30:00Z", channel: "VIDEO" }
+    TeleconsultationCompleteRequest:
+      type: object
+      required: [consultationNotes]
+      properties:
+        consultationNotes: { type: string }
+        followUpRequired: { type: boolean }
+        nextFollowUpDate: { type: string, format: date-time }
+      example:
+        consultationNotes: Consultation completed; patient advised to continue current treatment and follow-up in 2 weeks.
+        followUpRequired: true
+        nextFollowUpDate: 2026-07-15T11:00:00Z
     CarePlanRequest:
       type: object
-      required: [patientId, goal, status, ownerId]
+      required: [patientId, goal, planStatus, ownerId, tasks]
       properties:
         patientId: { type: string }
         goal: { type: string }
-        status: { type: string }
+        planStatus: { type: string }
         ownerId: { type: string }
+        tasks:
+          type: array
+          items: { type: string }
+      example:
+        patientId: pat-1001
+        goal: Improve glycemic control
+        planStatus: ACTIVE
+        ownerId: clinician-91
+        tasks:
+          - Track fasting glucose daily
+          - Complete weekly nutrition review
+    CarePlanUpdateRequest:
+      type: object
+      required: [goal, planStatus, ownerId, tasks, expectedVersion]
+      properties:
+        goal: { type: string }
+        planStatus: { type: string }
+        ownerId: { type: string }
+        tasks:
+          type: array
+          items: { type: string }
+        expectedVersion: { type: integer, minimum: 1 }
+      example:
+        goal: Improve glycemic control and mobility
+        planStatus: ACTIVE
+        ownerId: clinician-91
+        tasks:
+          - Track fasting glucose daily
+          - Walk for 30 minutes
+        expectedVersion: 1
+    ConsentRequest:
+      type: object
+      required: [patientId, consentType, granted, effectiveFrom]
+      properties:
+        patientId: { type: string }
+        consentType: { type: string }
+        granted: { type: boolean }
+        effectiveFrom: { type: string, format: date-time }
+      example: { patientId: "pat-1001", consentType: "RESEARCH", granted: true, effectiveFrom: "2026-05-31T10:00:00Z" }
+    NotificationRequest:
+      type: object
+      required: [recipientId, channel, templateId, message]
+      properties:
+        recipientId: { type: string }
+        channel:
+          type: string
+          enum: [SMS, EMAIL, PUSH]
+        templateId: { type: string }
+        message: { type: string }
+      example: { recipientId: "pat-1001", channel: "SMS", templateId: "appt-reminder-v1", message: "Your appointment is tomorrow at 09:30." }
+    ServiceBusMessageRequest:
+      type: object
+      required: [channel, eventName, payload, messageType]
+      properties:
+        channel: { type: string }
+        eventName: { type: string }
+        payload: { type: string }
+        messageType: { type: string }
+      example: { channel: "care-events", eventName: "AppointmentBooked", payload: "{\"appointmentId\":\"apt-2001\"}", messageType: "DOMAIN_EVENT" }
+    AlertRequest:
+      type: object
+      required: [patientId, severity, triggerType, summary]
+      properties:
+        patientId: { type: string }
+        deviceId:
+          type: string
+          description: Optional originating device identifier when alert is telemetry-driven
+        severity: { type: string }
+        triggerType: { type: string }
+        metricValue:
+          type: string
+          description: Numeric telemetry value used for threshold evaluation when provided
+        summary: { type: string }
+      example: { patientId: "pat-1001", deviceId: "dev-22", severity: "HIGH", triggerType: "HEART_RATE", metricValue: "124", summary: "Heart rate exceeded configured threshold." }
+    TelemetryRequest:
+      type: object
+      required: [deviceId, metricType, metricValue, recordedAt]
+      properties:
+        deviceId: { type: string }
+        metricType: { type: string }
+        metricValue: { type: string }
+        recordedAt: { type: string, format: date-time }
+      example: { deviceId: "dev-22", metricType: "HEART_RATE", metricValue: "124", recordedAt: "2026-05-31T10:05:00Z" }
+    MedicalRecordRequest:
+      type: object
+      required: [patientId, fhirResourceType, resourceReference, summary]
+      properties:
+        patientId: { type: string }
+        fhirResourceType: { type: string }
+        resourceReference: { type: string }
+        summary: { type: string }
+      example: { patientId: "pat-1001", fhirResourceType: "Observation", resourceReference: "Observation/obs-332", summary: "HbA1c measured at 7.4" }
+    MedicalRecordUpdateRequest:
+      type: object
+      required: [fhirResourceType, resourceReference, summary, expectedVersion]
+      properties:
+        fhirResourceType: { type: string }
+        resourceReference: { type: string }
+        summary: { type: string }
+        expectedVersion: { type: integer, minimum: 1 }
+      example:
+        fhirResourceType: Condition
+        resourceReference: Condition/cond-332
+        summary: Follow-up diagnosis updated after consultation
+        expectedVersion: 1
+    DeviceIngestionRequest:
+      type: object
+      required: [deviceId, protocol, payload, receivedAt]
+      properties:
+        deviceId: { type: string }
+        protocol:
+          type: string
+          enum: [MQTT, HTTP, AMQP]
+        payload:
+          type: string
+          description: JSON string with at least one supported metric key (bp, hr, glucose, spo2, temperature)
+        receivedAt: { type: string, format: date-time }
+      example: { deviceId: "dev-22", protocol: "MQTT", payload: "{\"spo2\":97}", receivedAt: "2026-05-31T10:07:00Z" }
+    IdentityAssertionRequest:
+      type: object
+      required: [subject, tenantId, role, tokenId]
+      properties:
+        subject: { type: string }
+        tenantId: { type: string }
+        role: { type: string }
+        tokenId: { type: string }
+      example: { subject: "user@healthcare.example", tenantId: "tenant-77", role: "CARE_MANAGER", tokenId: "tok-93ab" }
+    PatientResponse:
+      type: object
+      required: [id, status, externalReference, givenName, familyName, birthDate]
+      properties:
+        id: { type: string }
+        status: { type: string }
+        externalReference: { type: string }
+        givenName: { type: string }
+        familyName: { type: string }
+        birthDate: { type: string }
+      example: { id: "pat-1001", status: "ACTIVE", externalReference: "EXT-1001", givenName: "Ananya", familyName: "Sharma", birthDate: "1988-06-21" }
+    AppointmentResponse:
+      type: object
+      required: [id, status, patientId, providerId, scheduledAt, channel]
+      properties:
+        id: { type: string }
+        status: { type: string }
+        patientId: { type: string }
+        providerId: { type: string }
+        scheduledAt: { type: string }
+        channel: { type: string }
+      example: { id: "apt-2001", status: "BOOKED", patientId: "pat-1001", providerId: "prov-44", scheduledAt: "2026-06-01T09:30:00Z", channel: "VIDEO" }
+    TeleconsultationResponse:
+      type: object
+      required: [sessionId, appointmentId, status, doctorJoinUrl, patientJoinUrl, startedAt, interactionLogs]
+      properties:
+        sessionId: { type: string }
+        appointmentId: { type: string }
+        status: { type: string }
+        doctorJoinUrl: { type: string }
+        patientJoinUrl: { type: string }
+        startedAt: { type: string, format: date-time }
+        joinedAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time }
+        consultationNotes: { type: string }
+        followUpRequired: { type: boolean }
+        nextFollowUpDate: { type: string, format: date-time }
+        interactionLogs:
+          type: array
+          items: { type: string }
+      example:
+        sessionId: tcs-5001
+        appointmentId: apt-2001
+        status: IN_PROGRESS
+        doctorJoinUrl: https://teleconsult.healthcare.local/session/tcs-5001?role=DOCTOR
+        patientJoinUrl: https://teleconsult.healthcare.local/session/tcs-5001?role=PATIENT
+        startedAt: 2026-06-20T10:25:00Z
+        joinedAt: 2026-06-20T10:30:30Z
+        completedAt:
+        consultationNotes:
+        followUpRequired: false
+        nextFollowUpDate:
+        interactionLogs:
+          - 2026-06-20T10:25:00Z | Teleconsultation initiated by doctor
+          - 2026-06-20T10:30:30Z | Patient joined teleconsultation session
+    AvailableSlotResponse:
+      type: object
+      required: [providerId, date, availableSlots]
+      properties:
+        providerId: { type: string }
+        date: { type: string, format: date }
+        availableSlots:
+          type: array
+          items: { type: string, format: date-time }
+      example:
+        providerId: prov-44
+        date: 2026-06-01
+        availableSlots:
+          - 2026-06-01T09:00:00Z
+          - 2026-06-01T09:30:00Z
+          - 2026-06-01T10:00:00Z
+    CarePlanResponse:
+      type: object
+      required: [id, status, patientId, goal, planStatus, ownerId, tasks, version]
+      properties:
+        id: { type: string }
+        status: { type: string }
+        patientId: { type: string }
+        goal: { type: string }
+        planStatus: { type: string }
+        ownerId: { type: string }
+        tasks:
+          type: array
+          items: { type: string }
+        version: { type: integer }
+      example:
+        id: cp-3001
+        status: MANAGED
+        patientId: pat-1001
+        goal: Improve glycemic control
+        planStatus: ACTIVE
+        ownerId: clinician-91
+        tasks:
+          - Track fasting glucose daily
+          - Complete weekly nutrition review
+        version: 1
+    CarePlanResponsibilityResponse:
+      type: object
+      required: [patientId, ownerId, carePlanId, planStatus, version]
+      properties:
+        patientId: { type: string }
+        ownerId: { type: string }
+        carePlanId: { type: string }
+        planStatus: { type: string }
+        version: { type: integer }
+      example:
+        patientId: pat-1001
+        ownerId: clinician-91
+        carePlanId: cp-3001
+        planStatus: ACTIVE
+        version: 2
+    ConsentResponse:
+      type: object
+      required: [id, status, patientId, consentType, granted, effectiveFrom]
+      properties:
+        id: { type: string }
+        status: { type: string }
+        patientId: { type: string }
+        consentType: { type: string }
+        granted: { type: string }
+        effectiveFrom: { type: string }
+      example: { id: "con-401", status: "RECORDED", patientId: "pat-1001", consentType: "RESEARCH", granted: "true", effectiveFrom: "2026-05-31T10:00:00Z" }
+    NotificationResponse:
+      type: object
+      required: [id, status, recipientId, channel, templateId, message, deliveryAttempts]
+      properties:
+        id: { type: string }
+        status:
+          type: string
+          enum: [QUEUED, DELIVERED, FAILED]
+        recipientId: { type: string }
+        channel:
+          type: string
+          enum: [SMS, EMAIL, PUSH]
+        templateId: { type: string }
+        message: { type: string }
+        deliveryAttempts: { type: integer, minimum: 0 }
+        lastError: { type: string }
+      example: { id: "not-501", status: "DELIVERED", recipientId: "pat-1001", channel: "SMS", templateId: "appt-reminder-v1", message: "Your appointment is tomorrow at 09:30.", deliveryAttempts: 1, lastError: null }
+    ServiceBusMessageResponse:
+      type: object
+      required: [id, status, channel, eventName, payload, messageType, recordedAt, integrityHash]
+      properties:
+        id: { type: string }
+        status:
+          type: string
+          enum: [QUEUED, ANOMALY_DETECTED]
+        channel: { type: string }
+        eventName: { type: string }
+        payload: { type: string }
+        messageType: { type: string }
+        recordedAt: { type: string, format: date-time }
+        integrityHash: { type: string }
+        anomalyReason: { type: string }
+      example: { id: "msg-601", status: "QUEUED", channel: "care-events", eventName: "AppointmentBooked", payload: "{\"appointmentId\":\"apt-2001\"}", messageType: "DOMAIN_EVENT", recordedAt: "2026-06-22T12:59:00Z", integrityHash: "abc123hash", anomalyReason: null }
+    AlertResponse:
+      type: object
+      required: [id, status, patientId, severity, triggerType, summary]
+      properties:
+        id: { type: string }
+        status:
+          type: string
+          enum: [OPEN, SUPPRESSED, ESCALATION_FAILED]
+        patientId: { type: string }
+        deviceId:
+          type: string
+          nullable: true
+        severity: { type: string }
+        triggerType: { type: string }
+        summary: { type: string }
+      example: { id: "alt-701", status: "OPEN", patientId: "pat-1001", deviceId: "dev-22", severity: "HIGH", triggerType: "HEART_RATE", summary: "Heart rate exceeded configured threshold." }
+    TelemetryResponse:
+      type: object
+      required: [id, status, deviceId, metricType, metricValue, recordedAt]
+      properties:
+        id: { type: string }
+        status: { type: string }
+        deviceId: { type: string }
+        metricType: { type: string }
+        metricValue: { type: string }
+        recordedAt: { type: string }
+      example: { id: "tel-801", status: "RECORDED", deviceId: "dev-22", metricType: "HEART_RATE", metricValue: "124", recordedAt: "2026-05-31T10:05:00Z" }
+    MedicalRecordResponse:
+      type: object
+      required: [id, status, patientId, fhirResourceType, resourceReference, summary, version]
+      properties:
+        id: { type: string }
+        status: { type: string }
+        patientId: { type: string }
+        fhirResourceType: { type: string }
+        resourceReference: { type: string }
+        summary: { type: string }
+        version: { type: integer, minimum: 1 }
+      example: { id: "mr-901", status: "SYNCED", patientId: "pat-1001", fhirResourceType: "Observation", resourceReference: "Observation/obs-332", summary: "HbA1c measured at 7.4", version: 1 }
+    DeviceIngestionResponse:
+      type: object
+      required: [id, status, deviceId, protocol, payload, receivedAt]
+      properties:
+        id: { type: string }
+        status: { type: string }
+        deviceId: { type: string }
+        protocol: { type: string }
+        payload: { type: string }
+        receivedAt: { type: string }
+      example: { id: "ing-1001", status: "INGESTED", deviceId: "dev-22", protocol: "MQTT", payload: "{\"spo2\":97}", receivedAt: "2026-05-31T10:07:00Z" }
+    IdentityResponse:
+      type: object
+      required: [id, status, subject, tenantId, role, tokenId]
+      properties:
+        id: { type: string }
+        status: { type: string }
+        subject: { type: string }
+        tenantId: { type: string }
+        role: { type: string }
+        tokenId: { type: string }
+      example: { id: "ida-1101", status: "VALIDATED", subject: "user@healthcare.example", tenantId: "tenant-77", role: "CARE_MANAGER", tokenId: "tok-93ab" }
+    PatientEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/PatientResponse' }
+    PatientListEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/PatientResponse' }
+    AppointmentEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/AppointmentResponse' }
+    AppointmentListEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/AppointmentResponse' }
+    TeleconsultationEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/TeleconsultationResponse' }
+    AvailableSlotEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/AvailableSlotResponse' }
+    CarePlanEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/CarePlanResponse' }
+    CarePlanListEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/CarePlanResponse' }
+    CarePlanResponsibilityEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/CarePlanResponsibilityResponse' }
+    ConsentEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/ConsentResponse' }
+    ConsentListEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/ConsentResponse' }
+    NotificationEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/NotificationResponse' }
+    NotificationListEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/NotificationResponse' }
+    ServiceBusMessageEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/ServiceBusMessageResponse' }
+    ServiceBusMessageListEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/ServiceBusMessageResponse' }
+    AlertEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/AlertResponse' }
+    AlertListEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/AlertResponse' }
+    TelemetryEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/TelemetryResponse' }
+    TelemetryListEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/TelemetryResponse' }
+    TelemetryMetricTypeListEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data:
+          type: array
+          items: { type: string }
+    MedicalRecordEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/MedicalRecordResponse' }
+    MedicalRecordListEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/MedicalRecordResponse' }
+    DeviceIngestionEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/DeviceIngestionResponse' }
+    DeviceIngestionListEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/DeviceIngestionResponse' }
+    IdentityAssertionEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/IdentityResponse' }
+    IdentityAssertionListEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/IdentityResponse' }
+    ApiError:
+      type: object
+      required: [correlationId, code, message, timestamp]
+      properties:
+        correlationId: { type: string }
+        code: { type: string }
+        message: { type: string }
+        timestamp: { type: string, format: date-time }
+      example: { correlationId: "corr-123", code: "RESOURCE_NOT_FOUND", message: "Patient record not found: pat-404", timestamp: "2026-05-31T10:10:00Z" }
+  responses:
+    BadRequestResponse:
+      description: Validation or request error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example: { correlationId: "corr-123", code: "VALIDATION_ERROR", message: "Validation failed", timestamp: "2026-05-31T10:11:00Z" }
+    NotFoundResponse:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example: { correlationId: "corr-123", code: "RESOURCE_NOT_FOUND", message: "Resource not found", timestamp: "2026-05-31T10:11:20Z" }
+    ConflictResponse:
+      description: Business rule conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example: { correlationId: "corr-123", code: "SLOT_ALREADY_BOOKED", message: "Slot is already booked", timestamp: "2026-05-31T10:11:30Z" }
+    InternalServerErrorResponse:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example: { correlationId: "corr-123", code: "INTERNAL_ERROR", message: "Unexpected server error", timestamp: "2026-05-31T10:11:40Z" }
 security:
   - bearerAuth: []
 paths:
@@ -48,9 +622,53 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatientRequest'
+            examples:
+              onboardPatient:
+                value:
+                  externalReference: EXT-1001
+                  givenName: Ananya
+                  familyName: Sharma
+                  birthDate: 1988-06-21
       responses:
         '201':
           description: Patient created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PatientEnvelope' }
+              examples:
+                created:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: pat-1001
+                      status: ACTIVE
+                      externalReference: EXT-1001
+                      givenName: Ananya
+                      familyName: Sharma
+                      birthDate: 1988-06-21
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '409': { $ref: '#/components/responses/ConflictResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    get:
+      summary: List patients
+      responses:
+        '200':
+          description: Patient collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PatientListEnvelope' }
+              examples:
+                list:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      - id: pat-1001
+                        status: ACTIVE
+                        externalReference: EXT-1001
+                        givenName: Ananya
+                        familyName: Sharma
+                        birthDate: 1988-06-21
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /patients/{id}:
     get:
       summary: Retrieve a patient
@@ -62,6 +680,55 @@ paths:
       responses:
         '200':
           description: Patient retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PatientEnvelope' }
+              examples:
+                found:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: pat-1001
+                      status: ACTIVE
+                      externalReference: EXT-1001
+                      givenName: Ananya
+                      familyName: Sharma
+                      birthDate: 1988-06-21
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /appointments/available-slots:
+    get:
+      summary: List available slots for a provider on a specific date
+      parameters:
+        - in: query
+          name: providerId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: date
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Available slots retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AvailableSlotEnvelope' }
+              examples:
+                availableSlots:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      providerId: prov-44
+                      date: 2026-06-01
+                      availableSlots:
+                        - 2026-06-01T09:00:00Z
+                        - 2026-06-01T09:30:00Z
+                        - 2026-06-01T10:00:00Z
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '503': { $ref: '#/components/responses/InternalServerErrorResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /appointments:
     post:
       summary: Book an appointment
@@ -71,14 +738,202 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AppointmentRequest'
+            examples:
+              bookAppointment:
+                value:
+                  patientId: pat-1001
+                  providerId: prov-44
+                  scheduledAt: 2026-06-01T09:30:00Z
+                  channel: VIDEO
       responses:
         '201':
           description: Appointment created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AppointmentEnvelope' }
+              examples:
+                created:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: apt-2001
+                      status: BOOKED
+                      patientId: pat-1001
+                      providerId: prov-44
+                      scheduledAt: 2026-06-01T09:30:00Z
+                      channel: VIDEO
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '503': { $ref: '#/components/responses/InternalServerErrorResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
     get:
       summary: List appointments
       responses:
         '200':
           description: Appointment collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AppointmentListEnvelope' }
+              examples:
+                list:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      - id: apt-2001
+                        status: BOOKED
+                        patientId: pat-1001
+                        providerId: prov-44
+                        scheduledAt: 2026-06-01T09:30:00Z
+                        channel: VIDEO
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /appointments/{id}:
+    get:
+      summary: Retrieve an appointment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Appointment retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AppointmentEnvelope' }
+              examples:
+                found:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: apt-2001
+                      status: BOOKED
+                      patientId: pat-1001
+                      providerId: prov-44
+                      scheduledAt: 2026-06-01T09:30:00Z
+                      channel: VIDEO
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /appointments/{id}/teleconsult/start:
+    post:
+      summary: Start teleconsultation session for appointment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Teleconsultation session started
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TeleconsultationEnvelope' }
+              examples:
+                started:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      sessionId: tcs-5001
+                      appointmentId: apt-2001
+                      status: INITIATED
+                      doctorJoinUrl: https://teleconsult.healthcare.local/session/tcs-5001?role=DOCTOR
+                      patientJoinUrl: https://teleconsult.healthcare.local/session/tcs-5001?role=PATIENT
+                      startedAt: 2026-06-20T10:25:00Z
+                      joinedAt:
+                      completedAt:
+                      consultationNotes:
+                      followUpRequired: false
+                      nextFollowUpDate:
+                      interactionLogs:
+                        - 2026-06-20T10:25:00Z | Teleconsultation initiated by doctor
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '409': { $ref: '#/components/responses/ConflictResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /appointments/{id}/teleconsult/join:
+    post:
+      summary: Join teleconsultation session as patient
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Teleconsultation session joined
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TeleconsultationEnvelope' }
+              examples:
+                joined:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      sessionId: tcs-5001
+                      appointmentId: apt-2001
+                      status: IN_PROGRESS
+                      doctorJoinUrl: https://teleconsult.healthcare.local/session/tcs-5001?role=DOCTOR
+                      patientJoinUrl: https://teleconsult.healthcare.local/session/tcs-5001?role=PATIENT
+                      startedAt: 2026-06-20T10:25:00Z
+                      joinedAt: 2026-06-20T10:30:30Z
+                      completedAt:
+                      consultationNotes:
+                      followUpRequired: false
+                      nextFollowUpDate:
+                      interactionLogs:
+                        - 2026-06-20T10:25:00Z | Teleconsultation initiated by doctor
+                        - 2026-06-20T10:30:30Z | Patient joined teleconsultation session
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '409': { $ref: '#/components/responses/ConflictResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /appointments/{id}/teleconsult/complete:
+    post:
+      summary: Complete teleconsultation and update EHR notes
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeleconsultationCompleteRequest'
+            examples:
+              complete:
+                value:
+                  consultationNotes: Consultation completed and medication plan reviewed.
+                  followUpRequired: true
+                  nextFollowUpDate: 2026-07-15T11:00:00Z
+      responses:
+        '200':
+          description: Teleconsultation completed and notes recorded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TeleconsultationEnvelope' }
+              examples:
+                completed:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      sessionId: tcs-5001
+                      appointmentId: apt-2001
+                      status: COMPLETED
+                      doctorJoinUrl: https://teleconsult.healthcare.local/session/tcs-5001?role=DOCTOR
+                      patientJoinUrl: https://teleconsult.healthcare.local/session/tcs-5001?role=PATIENT
+                      startedAt: 2026-06-20T10:25:00Z
+                      joinedAt: 2026-06-20T10:30:30Z
+                      completedAt: 2026-06-20T11:05:10Z
+                      consultationNotes: Consultation completed and medication plan reviewed.
+                      followUpRequired: true
+                      nextFollowUpDate: 2026-07-15T11:00:00Z
+                      interactionLogs:
+                        - 2026-06-20T10:25:00Z | Teleconsultation initiated by doctor
+                        - 2026-06-20T10:30:30Z | Patient joined teleconsultation session
+                        - 2026-06-20T11:05:10Z | Doctor completed teleconsultation and notes were recorded
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '409': { $ref: '#/components/responses/ConflictResponse' }
+        '503': { $ref: '#/components/responses/InternalServerErrorResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /careplans:
     post:
       summary: Create a care plan
@@ -88,24 +943,929 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CarePlanRequest'
+            examples:
+              createCarePlan:
+                value:
+                  patientId: pat-1001
+                  goal: Improve glycemic control
+                  planStatus: ACTIVE
+                  ownerId: clinician-91
+                  tasks:
+                    - Track fasting glucose daily
+                    - Complete weekly nutrition review
       responses:
         '201':
           description: Care plan created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CarePlanEnvelope' }
+              examples:
+                created:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: cp-3001
+                      status: MANAGED
+                      patientId: pat-1001
+                      goal: Improve glycemic control
+                      planStatus: ACTIVE
+                      ownerId: clinician-91
+                      tasks:
+                        - Track fasting glucose daily
+                        - Complete weekly nutrition review
+                      version: 1
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    get:
+      summary: List care plans
+      responses:
+        '200':
+          description: Care plan collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CarePlanListEnvelope' }
+              examples:
+                list:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      - id: cp-3001
+                        status: MANAGED
+                        patientId: pat-1001
+                        goal: Improve glycemic control
+                        planStatus: ACTIVE
+                        ownerId: clinician-91
+                        tasks:
+                          - Track fasting glucose daily
+                          - Complete weekly nutrition review
+                        version: 1
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /careplans/{id}:
+    put:
+      summary: Update a care plan
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarePlanUpdateRequest'
+            examples:
+              updateCarePlan:
+                value:
+                  goal: Improve glycemic control and mobility
+                  planStatus: ACTIVE
+                  ownerId: clinician-91
+                  tasks:
+                    - Track fasting glucose daily
+                    - Walk for 30 minutes
+                  expectedVersion: 1
+      responses:
+        '200':
+          description: Care plan updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CarePlanEnvelope' }
+              examples:
+                updated:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: cp-3001
+                      status: MANAGED
+                      patientId: pat-1001
+                      goal: Improve glycemic control and mobility
+                      planStatus: ACTIVE
+                      ownerId: clinician-91
+                      tasks:
+                        - Track fasting glucose daily
+                        - Walk for 30 minutes
+                      version: 2
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '409': { $ref: '#/components/responses/ConflictResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    get:
+      summary: Retrieve a care plan
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Care plan retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CarePlanEnvelope' }
+              examples:
+                found:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: cp-3001
+                      status: MANAGED
+                      patientId: pat-1001
+                      goal: Improve glycemic control
+                      planStatus: ACTIVE
+                      ownerId: clinician-91
+                      tasks:
+                        - Track fasting glucose daily
+                        - Complete weekly nutrition review
+                      version: 1
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /careplans/responsibility/{patientId}:
+    get:
+      summary: Retrieve care coordinator responsibility for a patient
+      parameters:
+        - in: path
+          name: patientId
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Responsibility retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CarePlanResponsibilityEnvelope' }
+              examples:
+                found:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      patientId: pat-1001
+                      ownerId: clinician-91
+                      carePlanId: cp-3001
+                      planStatus: ACTIVE
+                      version: 2
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /consents:
     post:
       summary: Record consent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentRequest'
+            examples:
+              recordConsent:
+                value:
+                  patientId: pat-1001
+                  consentType: RESEARCH
+                  granted: true
+                  effectiveFrom: 2026-05-31T10:00:00Z
       responses:
         '201':
           description: Consent recorded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConsentEnvelope' }
+              examples:
+                created:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: con-401
+                      status: RECORDED
+                      patientId: pat-1001
+                      consentType: RESEARCH
+                      granted: "true"
+                      effectiveFrom: 2026-05-31T10:00:00Z
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    get:
+      summary: List consents
+      responses:
+        '200':
+          description: Consent collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConsentListEnvelope' }
+              examples:
+                list:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      - id: con-401
+                        status: RECORDED
+                        patientId: pat-1001
+                        consentType: RESEARCH
+                        granted: "true"
+                        effectiveFrom: 2026-05-31T10:00:00Z
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /consents/{id}:
+    get:
+      summary: Retrieve a consent
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Consent retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConsentEnvelope' }
+              examples:
+                found:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: con-401
+                      status: RECORDED
+                      patientId: pat-1001
+                      consentType: RESEARCH
+                      granted: "true"
+                      effectiveFrom: 2026-05-31T10:00:00Z
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /notifications:
     post:
       summary: Dispatch notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+            examples:
+              dispatchNotification:
+                value:
+                  recipientId: pat-1001
+                  channel: SMS
+                  templateId: appt-reminder-v1
+                  message: Your appointment is tomorrow at 09:30.
       responses:
         '201':
           description: Notification queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationEnvelope' }
+              examples:
+                created:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: not-501
+                      status: DELIVERED
+                      recipientId: pat-1001
+                      channel: SMS
+                      templateId: appt-reminder-v1
+                      message: Your appointment is tomorrow at 09:30.
+                      deliveryAttempts: 1
+                      lastError:
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '503': { $ref: '#/components/responses/InternalServerErrorResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    get:
+      summary: List notifications
+      responses:
+        '200':
+          description: Notification collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationListEnvelope' }
+              examples:
+                list:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      - id: not-501
+                        status: DELIVERED
+                        recipientId: pat-1001
+                        channel: SMS
+                        templateId: appt-reminder-v1
+                        message: Your appointment is tomorrow at 09:30.
+                        deliveryAttempts: 1
+                        lastError:
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /notifications/{id}:
+    get:
+      summary: Retrieve a notification
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Notification retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationEnvelope' }
+              examples:
+                found:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: not-501
+                      status: DELIVERED
+                      recipientId: pat-1001
+                      channel: SMS
+                      templateId: appt-reminder-v1
+                      message: Your appointment is tomorrow at 09:30.
+                      deliveryAttempts: 1
+                      lastError:
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /servicebus/messages:
     post:
       summary: Publish standardized message envelope
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceBusMessageRequest'
+            examples:
+              publishEnvelope:
+                value:
+                  channel: care-events
+                  eventName: AppointmentBooked
+                  payload: '{"appointmentId":"apt-2001"}'
+                  messageType: DOMAIN_EVENT
       responses:
         '201':
           description: Message queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServiceBusMessageEnvelope' }
+              examples:
+                created:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: msg-601
+                      status: QUEUED
+                      channel: care-events
+                      eventName: AppointmentBooked
+                      payload: '{"appointmentId":"apt-2001"}'
+                      messageType: DOMAIN_EVENT
+                      recordedAt: 2026-06-22T12:59:00Z
+                      integrityHash: abc123hash
+                      anomalyReason:
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '503': { $ref: '#/components/responses/InternalServerErrorResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    get:
+      summary: List service bus messages
+      responses:
+        '200':
+          description: Service bus message collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServiceBusMessageListEnvelope' }
+              examples:
+                list:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      - id: msg-601
+                        status: QUEUED
+                        channel: care-events
+                        eventName: AppointmentBooked
+                        payload: '{"appointmentId":"apt-2001"}'
+                        messageType: DOMAIN_EVENT
+                        recordedAt: 2026-06-22T12:59:00Z
+                        integrityHash: abc123hash
+                        anomalyReason:
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /servicebus/messages/{id}:
+    get:
+      summary: Retrieve a service bus message
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Service bus message retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServiceBusMessageEnvelope' }
+              examples:
+                found:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: msg-601
+                      status: QUEUED
+                      channel: care-events
+                      eventName: AppointmentBooked
+                      payload: '{"appointmentId":"apt-2001"}'
+                      messageType: DOMAIN_EVENT
+                      recordedAt: 2026-06-22T12:59:00Z
+                      integrityHash: abc123hash
+                      anomalyReason:
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /alerts:
+    post:
+      summary: Trigger a clinical alert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRequest'
+            examples:
+              triggerAlert:
+                value:
+                  patientId: pat-1001
+                  deviceId: dev-22
+                  severity: HIGH
+                  triggerType: VITAL_THRESHOLD
+                  summary: Heart rate exceeded configured threshold.
+      responses:
+        '201':
+          description: Alert created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlertEnvelope' }
+              examples:
+                created:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: alt-701
+                      status: OPEN
+                      patientId: pat-1001
+                      deviceId: dev-22
+                      severity: HIGH
+                      triggerType: VITAL_THRESHOLD
+                      summary: Heart rate exceeded configured threshold.
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    get:
+      summary: List alerts
+      responses:
+        '200':
+          description: Alert collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlertListEnvelope' }
+              examples:
+                list:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      - id: alt-701
+                        status: OPEN
+                        patientId: pat-1001
+                        deviceId: dev-22
+                        severity: HIGH
+                        triggerType: VITAL_THRESHOLD
+                        summary: Heart rate exceeded configured threshold.
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /alerts/{id}:
+    get:
+      summary: Retrieve an alert
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Alert retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlertEnvelope' }
+              examples:
+                found:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: alt-701
+                      status: OPEN
+                      patientId: pat-1001
+                      deviceId: dev-22
+                      severity: HIGH
+                      triggerType: VITAL_THRESHOLD
+                      summary: Heart rate exceeded configured threshold.
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /telemetry/by-patient/{patientId}:
+    get:
+      summary: List telemetry readings for a patient
+      parameters:
+        - in: path
+          name: patientId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: metricType
+          required: false
+          schema: { type: string }
+        - in: query
+          name: startTime
+          required: false
+          schema: { type: string, format: date-time }
+        - in: query
+          name: endTime
+          required: false
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Patient telemetry collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TelemetryListEnvelope' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /telemetry/metric-types:
+    get:
+      summary: List available telemetry metric types
+      parameters:
+        - in: query
+          name: patientId
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: Telemetry metric type collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TelemetryMetricTypeListEnvelope' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /telemetry:
+    post:
+      summary: Record telemetry reading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryRequest'
+            examples:
+              recordTelemetry:
+                value:
+                  deviceId: dev-22
+                  metricType: HEART_RATE
+                  metricValue: '124'
+                  recordedAt: 2026-05-31T10:05:00Z
+      responses:
+        '201':
+          description: Telemetry recorded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TelemetryEnvelope' }
+              examples:
+                created:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: tel-801
+                      status: RECORDED
+                      deviceId: dev-22
+                      metricType: HEART_RATE
+                      metricValue: '124'
+                      recordedAt: 2026-05-31T10:05:00Z
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    get:
+      summary: List telemetry readings
+      responses:
+        '200':
+          description: Telemetry collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TelemetryListEnvelope' }
+              examples:
+                list:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      - id: tel-801
+                        status: RECORDED
+                        deviceId: dev-22
+                        metricType: HEART_RATE
+                        metricValue: '124'
+                        recordedAt: 2026-05-31T10:05:00Z
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /telemetry/{id}:
+    get:
+      summary: Retrieve telemetry reading
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Telemetry retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TelemetryEnvelope' }
+              examples:
+                found:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: tel-801
+                      status: RECORDED
+                      deviceId: dev-22
+                      metricType: HEART_RATE
+                      metricValue: '124'
+                      recordedAt: 2026-05-31T10:05:00Z
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /medical-records:
+    post:
+      summary: Synchronize medical record snapshot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalRecordRequest'
+            examples:
+              syncMedicalRecord:
+                value:
+                  patientId: pat-1001
+                  fhirResourceType: Observation
+                  resourceReference: Observation/obs-332
+                  summary: HbA1c measured at 7.4
+      responses:
+        '201':
+          description: Medical record synchronized
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MedicalRecordEnvelope' }
+              examples:
+                created:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: mr-901
+                      status: SYNCED
+                      patientId: pat-1001
+                      fhirResourceType: Observation
+                      resourceReference: Observation/obs-332
+                      summary: HbA1c measured at 7.4
+                      version: 1
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    get:
+      summary: List medical records
+      responses:
+        '200':
+          description: Medical record collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MedicalRecordListEnvelope' }
+              examples:
+                list:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      - id: mr-901
+                        status: SYNCED
+                        patientId: pat-1001
+                        fhirResourceType: Observation
+                        resourceReference: Observation/obs-332
+                        summary: HbA1c measured at 7.4
+                        version: 1
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /medical-records/{id}:
+    get:
+      summary: Retrieve medical record snapshot
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Medical record retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MedicalRecordEnvelope' }
+              examples:
+                found:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: mr-901
+                      status: SYNCED
+                      patientId: pat-1001
+                      fhirResourceType: Observation
+                      resourceReference: Observation/obs-332
+                      summary: HbA1c measured at 7.4
+                      version: 1
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    put:
+      summary: Update medical record snapshot
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalRecordUpdateRequest'
+            examples:
+              updateMedicalRecord:
+                value:
+                  fhirResourceType: Condition
+                  resourceReference: Condition/cond-332
+                  summary: Follow-up diagnosis updated after consultation
+                  expectedVersion: 1
+      responses:
+        '200':
+          description: Medical record updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MedicalRecordEnvelope' }
+              examples:
+                updated:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: mr-901
+                      status: SYNCED
+                      patientId: pat-1001
+                      fhirResourceType: Condition
+                      resourceReference: Condition/cond-332
+                      summary: Follow-up diagnosis updated after consultation
+                      version: 2
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '409': { $ref: '#/components/responses/ConflictResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /devices/events:
+    post:
+      summary: Ingest device signal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceIngestionRequest'
+            examples:
+              ingestDeviceSignal:
+                value:
+                  deviceId: dev-22
+                  protocol: MQTT
+                  payload: '{"spo2":97}'
+                  receivedAt: 2026-05-31T10:07:00Z
+      responses:
+        '201':
+          description: Device signal ingested
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceIngestionEnvelope' }
+              examples:
+                created:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: ing-1001
+                      status: INGESTED
+                      deviceId: dev-22
+                      protocol: MQTT
+                      payload: '{"spo2":97}'
+                      receivedAt: 2026-05-31T10:07:00Z
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    get:
+      summary: List ingested device events
+      responses:
+        '200':
+          description: Device event collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceIngestionListEnvelope' }
+              examples:
+                list:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      - id: ing-1001
+                        status: INGESTED
+                        deviceId: dev-22
+                        protocol: MQTT
+                        payload: '{"spo2":97}'
+                        receivedAt: 2026-05-31T10:07:00Z
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /devices/events/{id}:
+    get:
+      summary: Retrieve ingested device event
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Device event retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceIngestionEnvelope' }
+              examples:
+                found:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: ing-1001
+                      status: INGESTED
+                      deviceId: dev-22
+                      protocol: MQTT
+                      payload: '{"spo2":97}'
+                      receivedAt: 2026-05-31T10:07:00Z
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /identity/assertions:
+    post:
+      summary: Validate and store identity assertion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityAssertionRequest'
+            examples:
+              validateIdentityAssertion:
+                value:
+                  subject: user@healthcare.example
+                  tenantId: tenant-77
+                  role: CARE_MANAGER
+                  tokenId: tok-93ab
+      responses:
+        '201':
+          description: Identity assertion validated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IdentityAssertionEnvelope' }
+              examples:
+                created:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: ida-1101
+                      status: VALIDATED
+                      subject: user@healthcare.example
+                      tenantId: tenant-77
+                      role: CARE_MANAGER
+                      tokenId: tok-93ab
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    get:
+      summary: List identity assertions
+      responses:
+        '200':
+          description: Identity assertion collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IdentityAssertionListEnvelope' }
+              examples:
+                list:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      - id: ida-1101
+                        status: VALIDATED
+                        subject: user@healthcare.example
+                        tenantId: tenant-77
+                        role: CARE_MANAGER
+                        tokenId: tok-93ab
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /identity/assertions/{id}:
+    get:
+      summary: Retrieve identity assertion
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Identity assertion retrieved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IdentityAssertionEnvelope' }
+              examples:
+                found:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      id: ida-1101
+                      status: VALIDATED
+                      subject: user@healthcare.example
+                      tenantId: tenant-77
+                      role: CARE_MANAGER
+                      tokenId: tok-93ab
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }

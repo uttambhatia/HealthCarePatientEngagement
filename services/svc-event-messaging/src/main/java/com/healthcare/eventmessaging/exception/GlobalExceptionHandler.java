@@ -13,6 +13,11 @@ import java.time.OffsetDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(MonitoringDispatchFailedException.class)
+    public ResponseEntity<ApiError> handleMonitoringFailure(MonitoringDispatchFailedException exception) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error("MONITORING_DISPATCH_FAILED", exception.getMessage()));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error("RESOURCE_NOT_FOUND", exception.getMessage()));

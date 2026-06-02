@@ -3,9 +3,10 @@ package com.healthcare.consent.domain;
 public record ConsentRecord(
         String id,
         String status,
-                String patientId,
+        String patientId,
 String consentType,
-String granted,
+boolean granted,
+int version,
 String effectiveFrom
 ) {
 }

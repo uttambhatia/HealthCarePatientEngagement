@@ -39,7 +39,7 @@ package com.healthcare.deviceingestion.controller;
 
             @Operation(summary = "Get DeviceIngestion resource")
             @GetMapping("/{id}")
-            public StandardResponse<DeviceIngestionResponse> get(@PathVariable String id) {
+            public StandardResponse<DeviceIngestionResponse> get(@PathVariable("id") String id) {
                 return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), service.getDeviceSignal(id));
             }
 

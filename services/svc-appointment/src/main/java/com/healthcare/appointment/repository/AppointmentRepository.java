@@ -9,5 +9,7 @@ public interface AppointmentRepository {
     AppointmentRecord save(AppointmentRecord aggregate);
     Optional<AppointmentRecord> findById(String id);
     List<AppointmentRecord> findAll();
+    boolean existsBookedSlot(String providerId, String scheduledAt);
+    List<AppointmentRecord> findBookedSlotsByProviderAndDate(String providerId, String datePrefix);
     void deleteById(String id);
 }
