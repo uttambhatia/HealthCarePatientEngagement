@@ -49,7 +49,6 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         env:
-          VITE_API_BASE_URL: ${{ github.event.inputs.apiBaseUrl || vars.UI_VITE_API_BASE_URL }}
           VITE_OIDC_CLIENT_ID: ${{ vars.UI_VITE_OIDC_CLIENT_ID }}
           VITE_OIDC_AUTHORIZATION_ENDPOINT: ${{ vars.UI_VITE_OIDC_AUTHORIZATION_ENDPOINT }}
           VITE_OIDC_TOKEN_ENDPOINT: ${{ vars.UI_VITE_OIDC_TOKEN_ENDPOINT }}
@@ -64,7 +63,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: frontend/dist
+          path: |
+            frontend/dist
+            frontend/server.js
 
   deploy:
     needs: build
@@ -79,7 +80,10 @@ jobs:
 
       - name: Package frontend artifact
         run: |
-          cd frontend-dist
+          mkdir -p release
+          cp -R frontend-dist/dist release/dist
+          cp frontend-dist/server.js release/server.js
+          cd release
           zip -r ../frontend-dist.zip .
 
       - name: Deploy to Azure Web App (Kudu ZipDeploy)

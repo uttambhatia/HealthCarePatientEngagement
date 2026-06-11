@@ -3,7 +3,8 @@ export type ApiOptions = RequestInit & { token?: string }
 type ErrorInterceptor = (error: ApiError) => void
 type AuthTokenGetter = () => string | null
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
+const API_BASE_URL = rawApiBaseUrl ? rawApiBaseUrl.replace(/\/$/, '') : ''
 const BYPASS_AUTH = import.meta.env.VITE_BYPASS_AUTH === 'true'
 
 let authTokenGetter: AuthTokenGetter | null = null
@@ -33,7 +34,12 @@ function buildUrl(input: string) {
   if (/^https?:\/\//i.test(input)) {
     return input
   }
-  return `${API_BASE_URL}${input}`
+
+  if (!API_BASE_URL) {
+    return input
+  }
+
+  return `${API_BASE_URL}${input.startsWith('/') ? input : `/${input}`}`
 }
 
 function createCorrelationId() {
