@@ -70,8 +70,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment || 'dev' }}
-    env:
-      HAS_PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE != '' }}
     steps:
       - name: Download build artifact
         uses: actions/download-artifact@v4
@@ -79,17 +77,24 @@ jobs:
           name: frontend-dist
           path: frontend-dist
 
-      - name: Azure login (OIDC)
-        if: ${{ env.HAS_PUBLISH_PROFILE != 'true' }}
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Package frontend artifact
+        run: |
+          cd frontend-dist
+          zip -r ../frontend-dist.zip .
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ github.event.inputs.appServiceName || vars.UI_APP_SERVICE_NAME }}
-          package: frontend-dist
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+      - name: Deploy to Azure Web App (Kudu ZipDeploy)
+        env:
+          AZURE_WEBAPP_PUBLISH_USERNAME: ${{ secrets.AZURE_WEBAPP_PUBLISH_USERNAME }}
+          AZURE_WEBAPP_PUBLISH_PASSWORD: ${{ secrets.AZURE_WEBAPP_PUBLISH_PASSWORD }}
+          KUDU_ZIPDEPLOY_URL: ${{ vars.UI_KUDU_ZIPDEPLOY_URL || format('https://{0}.scm.azurewebsites.net/api/zipdeploy', github.event.inputs.appServiceName || vars.UI_APP_SERVICE_NAME) }}
+        run: |
+          HTTP_CODE=$(curl -sS -o /tmp/zipdeploy.out -w "%{http_code}" \
+            -u "$AZURE_WEBAPP_PUBLISH_USERNAME:$AZURE_WEBAPP_PUBLISH_PASSWORD" \
+            -X POST "$KUDU_ZIPDEPLOY_URL?isAsync=true" \
+            --data-binary "@frontend-dist.zip")
+
+          echo "ZipDeploy response code: $HTTP_CODE"
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            cat /tmp/zipdeploy.out
+            exit 1
+          fi
