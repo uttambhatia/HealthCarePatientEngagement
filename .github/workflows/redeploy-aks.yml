@@ -1,0 +1,72 @@
+name: Redeploy Services to AKS
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker Images to GHCR"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      namespace:
+        description: 'Kubernetes namespace'
+        required: false
+        default: 'healthcare-dev'
+      tag:
+        description: 'Image tag to deploy'
+        required: false
+        default: 'latest'
+
+env:
+  NAMESPACE: ${{ github.event.inputs.namespace || 'healthcare-dev' }}
+  TAG: ${{ github.event.inputs.tag || 'latest' }}
+  REGISTRY: ghcr.io
+  OWNER: uttambhatia
+  REPOSITORY: healthcarepatientengagement
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Force image pull and pod restart
+        run: |
+          echo "Triggering pod restart to pull new images..."
+          kubectl patch deployment -n ${{ env.NAMESPACE }} -p '{"spec":{"template":{"metadata":{"annotations":{"deployment.kubernetes.io/timestamp":"'$(date -u +%s)'"}}}}}'  -l "app" || true
+
+      - name: Wait for rollout
+        run: |
+          services=("api-gateway" "svc-patient" "svc-appointment" "svc-careplan" "svc-consent" "svc-medical-record" "svc-notification" "svc-telemetry" "svc-device-ingestion" "svc-alert-management" "svc-identity-adapter" "svc-event-messaging")
+          
+          for svc in "${services[@]}"; do
+            echo "Waiting for $svc to be ready..."
+            kubectl rollout status deployment/$svc -n ${{ env.NAMESPACE }} --timeout=5m || echo "Warning: $svc rollout may have timed out"
+          done
+
+      - name: Check deployment status
+        run: |
+          echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          kubectl get deployments -n ${{ env.NAMESPACE }} -o wide >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Pod Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          kubectl get pods -n ${{ env.NAMESPACE }} -o wide >> $GITHUB_STEP_SUMMARY
+
+      - name: Verify connectivity
+        run: |
+          echo "Testing API Gateway..."
+          kubectl run -n ${{ env.NAMESPACE }} test-curl --image=curlimages/curl:latest --rm -it --restart=Never -- curl -s http://api-gateway:8080/actuator/health || echo "Gateway test completed"

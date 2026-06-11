@@ -1,0 +1,198 @@
+name: Build and Push Docker Images to GHCR
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'services/**'
+      - 'platform-common/**'
+      - 'pom.xml'
+      - '.github/workflows/build-and-push-images.yml'
+  workflow_dispatch:
+    inputs:
+      registry:
+        description: 'Container registry'
+        required: false
+        default: 'ghcr.io'
+      owner:
+        description: 'Registry owner/organization'
+        required: false
+        default: 'uttambhatia'
+      tag:
+        description: 'Image tag'
+        required: false
+        default: 'latest'
+
+env:
+  REGISTRY: ${{ github.event.inputs.registry || 'ghcr.io' }}
+  OWNER: ${{ github.event.inputs.owner || 'uttambhatia' }}
+  REPOSITORY: healthcarepatientengagement
+  TAG: ${{ github.event.inputs.tag || 'latest' }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build parent and platform-common
+        run: |
+          mvn -N install
+          mvn -pl platform-common install -DskipTests -q
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push api-gateway
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/api-gateway
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/api-gateway:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push svc-patient
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/svc-patient
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-patient:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push svc-appointment
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/svc-appointment
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-appointment:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push svc-careplan
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/svc-careplan
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-careplan:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push svc-consent
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/svc-consent
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-consent:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push svc-medical-record
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/svc-medical-record
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-medical-record:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push svc-notification
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/svc-notification
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-notification:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push svc-telemetry
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/svc-telemetry
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-telemetry:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push svc-device-ingestion
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/svc-device-ingestion
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-device-ingestion:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push svc-alert-management
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/svc-alert-management
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-alert-management:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push svc-identity-adapter
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/svc-identity-adapter
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-identity-adapter:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push svc-event-messaging
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/svc-event-messaging
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-event-messaging:${{ env.TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Successfully built and pushed 12 services to GHCR" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** ${{ env.REGISTRY }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Owner:** ${{ env.OWNER }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository:** ${{ env.REPOSITORY }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ env.TAG }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Services:" >> $GITHUB_STEP_SUMMARY
+          echo "- api-gateway" >> $GITHUB_STEP_SUMMARY
+          echo "- svc-patient" >> $GITHUB_STEP_SUMMARY
+          echo "- svc-appointment" >> $GITHUB_STEP_SUMMARY
+          echo "- svc-careplan" >> $GITHUB_STEP_SUMMARY
+          echo "- svc-consent" >> $GITHUB_STEP_SUMMARY
+          echo "- svc-medical-record" >> $GITHUB_STEP_SUMMARY
+          echo "- svc-notification" >> $GITHUB_STEP_SUMMARY
+          echo "- svc-telemetry" >> $GITHUB_STEP_SUMMARY
+          echo "- svc-device-ingestion" >> $GITHUB_STEP_SUMMARY
+          echo "- svc-alert-management" >> $GITHUB_STEP_STEP_SUMMARY
+          echo "- svc-identity-adapter" >> $GITHUB_STEP_SUMMARY
+          echo "- svc-event-messaging" >> $GITHUB_STEP_SUMMARY
