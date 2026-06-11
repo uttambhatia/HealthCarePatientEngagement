@@ -78,8 +78,29 @@ Implemented services:
 Backend:
 
 ```bash
+bash scripts/run-infra-dr-guardrails.sh
 mvn test
 ```
+
+`scripts/validate-correlation-id-contract.sh` now enforces reusable request-header coverage on all path items plus response-header coverage for all success (`200`/`201`) and standard error responses.
+
+Scheduled enforcement:
+
+- Monthly and on-demand workflow: `.github/workflows/infra-dr-guardrails.yml`
+- On every run, workflow uploads `guardrail-report.txt`; guardrail failures fail the workflow.
+- Minimum Azure rollout plan (infra + services): `docs/Azure_Deployment_Minimum_Plan.md`
+- Dev/prod rollout checklist: `docs/Azure_Env_Dev_Prod_Checklist.md`
+- Dev/prod secret templates: `deploy/k8s/env/dev/platform-secrets.dev.template.yaml`, `deploy/k8s/env/prod/platform-secrets.prod.template.yaml`
+- Dev/prod env value templates: `deploy/k8s/env/dev/dev.env.template`, `deploy/k8s/env/prod/prod.env.template`
+- Secret rendering helper: `deploy/k8s/env/render-platform-secret.ps1`
+- Dev one-command rollout script: `deploy/k8s/env/dev/apply-dev.ps1`
+- Prod one-command rollout script: `deploy/k8s/env/prod/apply-prod.ps1`
+- Frontend App Service deployment workflow: `.github/workflows/frontend-appservice.yml`
+- Frontend App Service env templates: `deploy/appservice/frontend/dev.appsettings.template`, `deploy/appservice/frontend/prod.appsettings.template`
+- Preflight mode supported: `-Preflight` validates kubectl context, namespace, and secret template completeness without applying resources.
+- DR evidence files should be maintained in:
+    - `docs/dr/evidence/drills/`
+    - `docs/dr/evidence/backups/`
 
 Frontend:
 
@@ -88,6 +109,12 @@ cd frontend
 npm install
 npm run build
 ```
+
+Frontend deployment (App Service, architecture path Browser -> App Service UI -> APIM -> API Gateway -> services):
+
+1. Configure repository `vars` from the environment template files under `deploy/appservice/frontend/`.
+2. Configure repository or environment `secrets`: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
+3. Run `.github/workflows/frontend-appservice.yml` (or push to `main` with frontend changes).
 
 ## Core services quick start (gateway + careplan + telemetry)
 

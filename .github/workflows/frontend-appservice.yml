@@ -1,0 +1,91 @@
+name: Frontend UI Deploy (App Service)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-appservice.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+      appServiceName:
+        description: 'Azure App Service name'
+        required: true
+      apiBaseUrl:
+        description: 'APIM base URL exposed to browser (e.g. https://api.example.com)'
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: ${{ github.event.inputs.apiBaseUrl || vars.UI_VITE_API_BASE_URL }}
+          VITE_OIDC_CLIENT_ID: ${{ vars.UI_VITE_OIDC_CLIENT_ID }}
+          VITE_OIDC_AUTHORIZATION_ENDPOINT: ${{ vars.UI_VITE_OIDC_AUTHORIZATION_ENDPOINT }}
+          VITE_OIDC_TOKEN_ENDPOINT: ${{ vars.UI_VITE_OIDC_TOKEN_ENDPOINT }}
+          VITE_OIDC_LOGOUT_ENDPOINT: ${{ vars.UI_VITE_OIDC_LOGOUT_ENDPOINT }}
+          VITE_OIDC_REDIRECT_URI: ${{ vars.UI_VITE_OIDC_REDIRECT_URI }}
+          VITE_OIDC_SCOPE: ${{ vars.UI_VITE_OIDC_SCOPE }}
+          VITE_EVENTS_WS_URL: ${{ vars.UI_VITE_EVENTS_WS_URL }}
+          VITE_EVENTS_SSE_URL: ${{ vars.UI_VITE_EVENTS_SSE_URL }}
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend-dist
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ github.event.inputs.appServiceName || vars.UI_APP_SERVICE_NAME }}
+          package: frontend-dist

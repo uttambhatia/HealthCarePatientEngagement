@@ -1,0 +1,10 @@
+UI_APP_SERVICE_NAME=<dev-ui-appservice-name>
+UI_VITE_API_BASE_URL=https://<dev-apim-hostname>
+UI_VITE_OIDC_CLIENT_ID=<dev-entra-client-id>
+UI_VITE_OIDC_AUTHORIZATION_ENDPOINT=https://login.microsoftonline.com/<dev-tenant-id>/oauth2/v2.0/authorize
+UI_VITE_OIDC_TOKEN_ENDPOINT=https://login.microsoftonline.com/<dev-tenant-id>/oauth2/v2.0/token
+UI_VITE_OIDC_LOGOUT_ENDPOINT=https://login.microsoftonline.com/<dev-tenant-id>/oauth2/v2.0/logout
+UI_VITE_OIDC_REDIRECT_URI=https://<dev-ui-hostname>
+UI_VITE_OIDC_SCOPE=openid profile email api://<dev-api-app-id-uri>/.default
+UI_VITE_EVENTS_WS_URL=
+UI_VITE_EVENTS_SSE_URL=
