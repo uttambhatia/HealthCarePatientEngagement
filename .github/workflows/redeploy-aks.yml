@@ -39,11 +39,27 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Set up kubeconfig
+      - name: Authenticate to Azure and get AKS credentials
         run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
+          # Install Azure CLI if needed and authenticate
+          az login --service-principal \
+            -u ${{ secrets.AZURE_CLIENT_ID }} \
+            -p "${{ secrets.AZURE_CLIENT_SECRET }}" \
+            --tenant ${{ secrets.AZURE_TENANT_ID }} || \
+          az login --identity \
+            --username ${{ secrets.AZURE_CLIENT_ID }} || \
+          echo "::error::Unable to authenticate to Azure. Ensure AZURE_CLIENT_SECRET is set."
+          
+          # Get AKS credentials
+          az aks get-credentials \
+            --resource-group HealthCarePatientEngagement-RG \
+            --name HealthCarePatientEngagement-AKS \
+            --overwrite-existing --admin || \
+          az aks get-credentials \
+            --resource-group HealthCarePatientEngagement-RG \
+            --name HealthCarePatientEngagement-AKS \
+            --overwrite-existing
+          
           kubectl cluster-info
 
       - name: Force image pull and pod restart
