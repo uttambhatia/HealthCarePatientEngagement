@@ -40,9 +40,15 @@ package com.healthcare.consent.controller;
             @PostMapping
             @ResponseStatus(HttpStatus.CREATED)
             public StandardResponse<ConsentResponse> create(@Valid @RequestBody CreateConsentRequest request) {
-                enforcePatientScope(request.patientId());
+                CreateConsentRequest effective = request;
+                if (isPatientPrincipal()) {
+                    String scopedPatientId = patientScopeClaim().orElseThrow(this::forbidden);
+                    if (!scopedPatientId.equalsIgnoreCase(request.patientId())) {
+                        effective = new CreateConsentRequest(scopedPatientId, request.consentType(), request.granted(), request.effectiveFrom());
+                    }
+                }
                 String correlationId = CorrelationIdHolder.get().orElse("n/a");
-                return new StandardResponse<>(correlationId, service.recordConsent(request, correlationId));
+                return new StandardResponse<>(correlationId, service.recordConsent(effective, correlationId));
             }
 
             @Operation(summary = "Get Consent resource")

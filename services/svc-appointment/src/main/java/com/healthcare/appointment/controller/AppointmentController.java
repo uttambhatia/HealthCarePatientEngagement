@@ -42,9 +42,15 @@ public class AppointmentController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public StandardResponse<AppointmentResponse> create(@Valid @RequestBody CreateAppointmentRequest request) {
-        enforcePatientScope(request.patientId());
+        CreateAppointmentRequest effective = request;
+        if (isPatientPrincipal()) {
+            String scopedPatientId = patientScopeClaim().orElseThrow(this::forbidden);
+            if (!scopedPatientId.equalsIgnoreCase(request.patientId())) {
+                effective = new CreateAppointmentRequest(scopedPatientId, request.providerId(), request.scheduledAt(), request.channel());
+            }
+        }
         String correlationId = CorrelationIdHolder.get().orElse("n/a");
-        return new StandardResponse<>(correlationId, service.bookAppointment(request, correlationId));
+        return new StandardResponse<>(correlationId, service.bookAppointment(effective, correlationId));
     }
 
     @Operation(summary = "Get Appointment resource")
