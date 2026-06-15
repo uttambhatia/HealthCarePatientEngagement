@@ -48,41 +48,52 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         continue-on-error: true
 
-      - name: Get AKS credentials
+      - name: Verify AKS cluster access
         run: |
-          echo "Getting AKS credentials from rg-azuser7080_mml.local-1nLQA/aks-hpe-devx..."
-          az aks get-credentials \
+          echo "Verifying access to AKS cluster..."
+          az aks command invoke \
             --resource-group "rg-azuser7080_mml.local-1nLQA" \
             --name "aks-hpe-devx" \
-            --overwrite-existing --admin 2>/dev/null || \
-          az aks get-credentials \
-            --resource-group "rg-azuser7080_mml.local-1nLQA" \
-            --name "aks-hpe-devx" \
-            --overwrite-existing
-          
-          kubectl cluster-info
+            --command "kubectl cluster-info"
 
       - name: Force image pull and pod restart
         run: |
           echo "Applying api-gateway deployment with new configuration..."
-          kubectl apply -f deploy/k8s/api-gateway/deployment.yaml -n ${{ env.NAMESPACE }}
+          az aks command invoke \
+            --resource-group "rg-azuser7080_mml.local-1nLQA" \
+            --name "aks-hpe-devx" \
+            --file deploy/k8s/api-gateway/deployment.yaml \
+            --command "kubectl apply -f /tmp/aks-resource.yaml -n ${{ env.NAMESPACE }}"
+          
           echo "Triggering pod restart..."
-          kubectl rollout restart deployment/api-gateway -n ${{ env.NAMESPACE }}
+          az aks command invoke \
+            --resource-group "rg-azuser7080_mml.local-1nLQA" \
+            --name "aks-hpe-devx" \
+            --command "kubectl rollout restart deployment/api-gateway -n ${{ env.NAMESPACE }}"
 
       - name: Wait for rollout
         run: |
           echo "Waiting for api-gateway to be ready..."
-          kubectl rollout status deployment/api-gateway -n ${{ env.NAMESPACE }} --timeout=5m
+          az aks command invoke \
+            --resource-group "rg-azuser7080_mml.local-1nLQA" \
+            --name "aks-hpe-devx" \
+            --command "kubectl rollout status deployment/api-gateway -n ${{ env.NAMESPACE }} --timeout=5m"
 
       - name: Check deployment status
         run: |
           echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          kubectl get deployments -n ${{ env.NAMESPACE }} -o wide >> $GITHUB_STEP_SUMMARY
+          az aks command invoke \
+            --resource-group "rg-azuser7080_mml.local-1nLQA" \
+            --name "aks-hpe-devx" \
+            --command "kubectl get deployments -n ${{ env.NAMESPACE }} -o wide" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Pod Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          kubectl get pods -n ${{ env.NAMESPACE }} -o wide >> $GITHUB_STEP_SUMMARY
+          az aks command invoke \
+            --resource-group "rg-azuser7080_mml.local-1nLQA" \
+            --name "aks-hpe-devx" \
+            --command "kubectl get pods -n ${{ env.NAMESPACE }} -o wide" >> $GITHUB_STEP_SUMMARY
 
       - name: Verify connectivity
         run: |
