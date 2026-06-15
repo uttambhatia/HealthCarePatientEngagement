@@ -40,15 +40,11 @@ jobs:
           version: 'latest'
 
       - name: Set up kubeconfig
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Get AKS credentials
         run: |
-          az aks get-credentials --resource-group HealthCarePatientEngagement-RG --name HealthCarePatientEngagement-AKS --overwrite-existing
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+          kubectl cluster-info
 
       - name: Force image pull and pod restart
         run: |
