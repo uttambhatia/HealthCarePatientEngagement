@@ -55,27 +55,27 @@ spec:
             - name: PLATFORM_SECURITY_ENABLED
               value: "true"
             - name: PLATFORM_ROUTES_PATIENTS_URI
-              value: "http://svc-patient:8081"
+              value: "http://svc-patient:80"
             - name: PLATFORM_ROUTES_APPOINTMENTS_URI
-              value: "http://svc-appointment:8082"
+              value: "http://svc-appointment:80"
             - name: PLATFORM_ROUTES_CONSENTS_URI
-              value: "http://svc-consent:8084"
+              value: "http://svc-consent:80"
             - name: PLATFORM_ROUTES_CAREPLANS_URI
-              value: "http://svc-careplan:8085"
+              value: "http://svc-careplan:80"
             - name: PLATFORM_ROUTES_MEDICAL_RECORDS_URI
-              value: "http://svc-medical-record:8086"
+              value: "http://svc-medical-record:80"
             - name: PLATFORM_ROUTES_NOTIFICATIONS_URI
-              value: "http://svc-notification:8087"
+              value: "http://svc-notification:80"
             - name: PLATFORM_ROUTES_TELEMETRY_URI
-              value: "http://svc-telemetry:8088"
+              value: "http://svc-telemetry:80"
             - name: PLATFORM_ROUTES_DEVICE_EVENTS_URI
-              value: "http://svc-device-ingestion:8089"
+              value: "http://svc-device-ingestion:80"
             - name: PLATFORM_ROUTES_ALERTS_URI
-              value: "http://svc-alert-management:8090"
+              value: "http://svc-alert-management:80"
             - name: PLATFORM_ROUTES_IDENTITY_ASSERTIONS_URI
-              value: "http://svc-identity-adapter:8091"
+              value: "http://svc-identity-adapter:80"
             - name: PLATFORM_ROUTES_SERVICEBUS_MESSAGES_URI
-              value: "http://svc-event-messaging:8092"
+              value: "http://svc-event-messaging:80"
             - name: SERVICEBUS_NAMESPACE
               valueFrom:
                 secretKeyRef:

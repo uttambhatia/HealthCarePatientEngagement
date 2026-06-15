@@ -8,37 +8,37 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class GatewayRoutesConfig {
-    @Value("${platform.routes.patients-uri:http://svc-patient:8081}")
+    @Value("${platform.routes.patients-uri:http://svc-patient:80}")
     private String patientsUri;
 
-    @Value("${platform.routes.appointments-uri:http://svc-appointment:8082}")
+    @Value("${platform.routes.appointments-uri:http://svc-appointment:80}")
     private String appointmentsUri;
 
-    @Value("${platform.routes.careplans-uri:http://svc-careplan:8083}")
+    @Value("${platform.routes.careplans-uri:http://svc-careplan:80}")
     private String careplansUri;
 
-    @Value("${platform.routes.consents-uri:http://svc-consent:8084}")
+    @Value("${platform.routes.consents-uri:http://svc-consent:80}")
     private String consentsUri;
 
-    @Value("${platform.routes.medical-records-uri:http://svc-medical-record:8085}")
+    @Value("${platform.routes.medical-records-uri:http://svc-medical-record:80}")
     private String medicalRecordsUri;
 
-    @Value("${platform.routes.notifications-uri:http://svc-notification:8086}")
+    @Value("${platform.routes.notifications-uri:http://svc-notification:80}")
     private String notificationsUri;
 
-    @Value("${platform.routes.telemetry-uri:http://svc-telemetry:8087}")
+    @Value("${platform.routes.telemetry-uri:http://svc-telemetry:80}")
     private String telemetryUri;
 
-    @Value("${platform.routes.device-events-uri:http://svc-device-ingestion:8088}")
+    @Value("${platform.routes.device-events-uri:http://svc-device-ingestion:80}")
     private String deviceEventsUri;
 
-    @Value("${platform.routes.alerts-uri:http://svc-alert-management:8089}")
+    @Value("${platform.routes.alerts-uri:http://svc-alert-management:80}")
     private String alertsUri;
 
-    @Value("${platform.routes.identity-assertions-uri:http://svc-identity-adapter:8090}")
+    @Value("${platform.routes.identity-assertions-uri:http://svc-identity-adapter:80}")
     private String identityAssertionsUri;
 
-    @Value("${platform.routes.servicebus-messages-uri:http://svc-event-messaging:8091}")
+    @Value("${platform.routes.servicebus-messages-uri:http://svc-event-messaging:80}")
     private String servicebusMessagesUri;
 
     @Bean

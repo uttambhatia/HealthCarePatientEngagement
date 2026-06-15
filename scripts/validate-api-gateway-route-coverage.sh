@@ -39,18 +39,32 @@ required_paths=(
   'path("/api/servicebus/messages", "/api/servicebus/messages/**")'
 )
 
-required_uris=(
-  'uri("http://localhost:8081")'
-  'uri("http://localhost:8082")'
-  'uri("http://localhost:8083")'
-  'uri("http://localhost:8084")'
-  'uri("http://localhost:8085")'
-  'uri("http://localhost:8086")'
-  'uri("http://localhost:8087")'
-  'uri("http://localhost:8088")'
-  'uri("http://localhost:8089")'
-  'uri("http://localhost:8090")'
-  'uri("http://localhost:8091")'
+required_uri_bindings=(
+  'uri(patientsUri)'
+  'uri(appointmentsUri)'
+  'uri(careplansUri)'
+  'uri(consentsUri)'
+  'uri(medicalRecordsUri)'
+  'uri(notificationsUri)'
+  'uri(telemetryUri)'
+  'uri(deviceEventsUri)'
+  'uri(alertsUri)'
+  'uri(identityAssertionsUri)'
+  'uri(servicebusMessagesUri)'
+)
+
+required_uri_properties=(
+  '@Value("${platform.routes.patients-uri:http://svc-patient:80}")'
+  '@Value("${platform.routes.appointments-uri:http://svc-appointment:80}")'
+  '@Value("${platform.routes.careplans-uri:http://svc-careplan:80}")'
+  '@Value("${platform.routes.consents-uri:http://svc-consent:80}")'
+  '@Value("${platform.routes.medical-records-uri:http://svc-medical-record:80}")'
+  '@Value("${platform.routes.notifications-uri:http://svc-notification:80}")'
+  '@Value("${platform.routes.telemetry-uri:http://svc-telemetry:80}")'
+  '@Value("${platform.routes.device-events-uri:http://svc-device-ingestion:80}")'
+  '@Value("${platform.routes.alerts-uri:http://svc-alert-management:80}")'
+  '@Value("${platform.routes.identity-assertions-uri:http://svc-identity-adapter:80}")'
+  '@Value("${platform.routes.servicebus-messages-uri:http://svc-event-messaging:80}")'
 )
 
 failed=0
@@ -69,9 +83,16 @@ for expected in "${required_paths[@]}"; do
   fi
 done
 
-for expected in "${required_uris[@]}"; do
+for expected in "${required_uri_bindings[@]}"; do
   if ! grep -Fq "${expected}" "${GATEWAY_CONFIG}"; then
-    echo "Missing gateway upstream URI: ${expected}" >&2
+    echo "Missing gateway upstream route binding: ${expected}" >&2
+    failed=1
+  fi
+done
+
+for expected in "${required_uri_properties[@]}"; do
+  if ! grep -Fq "${expected}" "${GATEWAY_CONFIG}"; then
+    echo "Missing gateway route property default: ${expected}" >&2
     failed=1
   fi
 done
