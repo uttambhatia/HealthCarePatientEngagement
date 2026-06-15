@@ -197,6 +197,6 @@ jobs:
           echo "- svc-notification" >> $GITHUB_STEP_SUMMARY
           echo "- svc-telemetry" >> $GITHUB_STEP_SUMMARY
           echo "- svc-device-ingestion" >> $GITHUB_STEP_SUMMARY
-          echo "- svc-alert-management" >> $GITHUB_STEP_STEP_SUMMARY
+          echo "- svc-alert-management" >> $GITHUB_STEP_SUMMARY
           echo "- svc-identity-adapter" >> $GITHUB_STEP_SUMMARY
           echo "- svc-event-messaging" >> $GITHUB_STEP_SUMMARY
