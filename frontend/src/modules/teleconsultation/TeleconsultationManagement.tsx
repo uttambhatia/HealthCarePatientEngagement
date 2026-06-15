@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import { Card } from '../../components/Card'
 import { LabelWithIcon } from '../../components/LabelWithIcon'
+import { MetricCardIcon } from '../../components/MetricCardIcon'
 import { completeTeleconsultation, joinTeleconsultation, listAppointments, startTeleconsultation, type AppointmentResponse, type TeleconsultationResponse } from '../../services/platformApi'
 
 export function TeleconsultationManagement() {
@@ -206,14 +207,17 @@ export function TeleconsultationManagement() {
     <Card title="Tele-consultation management" eyebrow="Remote care delivery">
       <div className="teleconsult-summary-row">
         <div className="metric-card metric-card--volume">
+          <MetricCardIcon variant="volume" />
           <span>Upcoming appointments</span>
           <strong>{appointments.length}</strong>
         </div>
         <div className="metric-card metric-card--activity">
+          <MetricCardIcon variant="activity" />
           <span>Active sessions</span>
           <strong>{activeSessions.length}</strong>
         </div>
         <div className={`metric-card metric-card--status metric-card--status-${teleconsultMetricStatus}`}>
+          <MetricCardIcon variant="status" />
           <span>Session status</span>
           <strong>{videoCallActive ? videoCallActive.status : 'None'}</strong>
         </div>
@@ -311,7 +315,7 @@ export function TeleconsultationManagement() {
           <div className="carousel-controls" aria-label="Session history navigation">
             <button
               type="button"
-              className="secondary-button carousel-button"
+              className={`${historyPage >= totalHistoryPages - 1 ? 'primary-button' : 'secondary-button'} carousel-button`}
               onClick={() => setHistoryPage((page) => Math.max(0, page - 1))}
               disabled={historyPage === 0}
             >
@@ -319,7 +323,7 @@ export function TeleconsultationManagement() {
             </button>
             <button
               type="button"
-              className="secondary-button carousel-button"
+              className={`${historyPage < totalHistoryPages - 1 ? 'primary-button' : 'secondary-button'} carousel-button`}
               onClick={() => setHistoryPage((page) => Math.min(totalHistoryPages - 1, page + 1))}
               disabled={historyPage >= totalHistoryPages - 1}
             >

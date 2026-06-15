@@ -5,8 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -94,5 +98,70 @@ class MedicalRecordControllerIntegrationTest {
                         .content(invalidUpdatePayload))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("VERSION_CONFLICT"));
+    }
+
+    @Test
+    void shouldFilterMedicalRecordsForPatientScopeOnList() throws Exception {
+        mockMvc.perform(post("/medical-records")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "patientId": "pat-http-mr-3001",
+                                  "fhirResourceType": "Observation",
+                                  "resourceReference": "Observation/obs-http-3001",
+                                  "summary": "Patient scoped record 1"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/medical-records")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "patientId": "pat-http-mr-4002",
+                                  "fhirResourceType": "Observation",
+                                  "resourceReference": "Observation/obs-http-4002",
+                                  "summary": "Patient scoped record 2"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/medical-records").with(patientJwt("pat-http-mr-3001")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].patientId").value("pat-http-mr-3001"));
+    }
+
+    @Test
+    void shouldRejectGetMedicalRecordForPatientScopeMismatch() throws Exception {
+        String createdResponse = mockMvc.perform(post("/medical-records")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "patientId": "pat-http-mr-5001",
+                                  "fhirResourceType": "Observation",
+                                  "resourceReference": "Observation/obs-http-5001",
+                                  "summary": "Restricted record"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String recordId = createdResponse.replaceAll(".*\\\"id\\\":\\\"([^\\\"]+)\\\".*", "$1");
+
+        mockMvc.perform(get("/medical-records/{id}", recordId)
+                        .with(patientJwt("pat-http-mr-other")))
+                .andExpect(status().isForbidden());
+    }
+
+    private RequestPostProcessor patientJwt(String patientId) {
+        return jwt()
+                .jwt(jwt -> jwt
+                        .claim("patientId", patientId)
+                        .claim("sub", patientId)
+                        .claim("roles", java.util.List.of("PATIENT")))
+                .authorities(new SimpleGrantedAuthority("ROLE_PATIENT"));
     }
 }

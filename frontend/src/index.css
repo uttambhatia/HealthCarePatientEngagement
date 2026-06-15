@@ -1,5 +1,5 @@
 html {
-  color-scheme: dark;
+  color-scheme: light;
   scroll-behavior: smooth;
 }
 
@@ -21,12 +21,6 @@ button {
 
 button:hover {
   transform: translateY(-1px);
-}
-
-p,
-li,
-span {
-  color: #d5e2f8;
 }
 
 h1,

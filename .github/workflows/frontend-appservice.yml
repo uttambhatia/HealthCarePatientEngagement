@@ -49,12 +49,14 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         env:
+          VITE_API_BASE_URL: ${{ github.event.inputs.apiBaseUrl || vars.UI_VITE_API_BASE_URL || '' }}
           VITE_OIDC_CLIENT_ID: ${{ vars.UI_VITE_OIDC_CLIENT_ID }}
           VITE_OIDC_AUTHORIZATION_ENDPOINT: ${{ vars.UI_VITE_OIDC_AUTHORIZATION_ENDPOINT }}
           VITE_OIDC_TOKEN_ENDPOINT: ${{ vars.UI_VITE_OIDC_TOKEN_ENDPOINT }}
           VITE_OIDC_LOGOUT_ENDPOINT: ${{ vars.UI_VITE_OIDC_LOGOUT_ENDPOINT }}
           VITE_OIDC_REDIRECT_URI: ${{ vars.UI_VITE_OIDC_REDIRECT_URI }}
           VITE_OIDC_SCOPE: ${{ vars.UI_VITE_OIDC_SCOPE }}
+          VITE_BYPASS_AUTH: ${{ vars.UI_VITE_BYPASS_AUTH || 'false' }}
           VITE_EVENTS_WS_URL: ${{ vars.UI_VITE_EVENTS_WS_URL }}
           VITE_EVENTS_SSE_URL: ${{ vars.UI_VITE_EVENTS_SSE_URL }}
         run: npm run build

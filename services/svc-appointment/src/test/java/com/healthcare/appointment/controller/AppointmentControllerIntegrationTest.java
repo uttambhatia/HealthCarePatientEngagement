@@ -5,12 +5,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -171,5 +174,73 @@ class AppointmentControllerIntegrationTest {
                         .content(invalidCompletePayload))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void shouldFilterAppointmentsForPatientScopeOnList() throws Exception {
+        mockMvc.perform(post("/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "patientId": "pat-scope-1001",
+                                  "providerId": "prov-scope-1",
+                                  "scheduledAt": "2026-07-11T09:00:00Z",
+                                  "channel": "VIDEO"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "patientId": "pat-scope-2002",
+                                  "providerId": "prov-scope-2",
+                                  "scheduledAt": "2026-07-11T09:30:00Z",
+                                  "channel": "VIDEO"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/appointments").with(patientJwt("pat-scope-1001")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].patientId").value("pat-scope-1001"));
+    }
+
+    @Test
+    void shouldRejectTeleconsultJoinWhenPatientScopeMismatches() throws Exception {
+        String appointmentId = mockMvc.perform(post("/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "patientId": "pat-owner-3001",
+                                  "providerId": "prov-owner-88",
+                                  "scheduledAt": "2026-07-12T10:00:00Z",
+                                  "channel": "VIDEO"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString()
+                .replaceAll(".*\\\"id\\\":\\\"([^\\\"]+)\\\".*", "$1");
+
+        mockMvc.perform(post("/appointments/{id}/teleconsult/start", appointmentId))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/appointments/{id}/teleconsult/join", appointmentId)
+                        .with(patientJwt("pat-other-3999")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+    }
+
+    private RequestPostProcessor patientJwt(String patientId) {
+        return jwt()
+                .jwt(jwt -> jwt
+                        .claim("patientId", patientId)
+                        .claim("sub", patientId)
+                        .claim("roles", java.util.List.of("PATIENT")))
+                .authorities(new SimpleGrantedAuthority("ROLE_PATIENT"));
     }
 }

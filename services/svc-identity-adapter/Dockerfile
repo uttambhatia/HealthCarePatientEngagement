@@ -1,6 +1,8 @@
 FROM eclipse-temurin:17-jre
+RUN groupadd --system --gid 10001 appuser && useradd --system --uid 10001 --gid 10001 --create-home appuser
 WORKDIR /app
 ARG JAR_FILE=target/svc-identity-adapter-0.1.0-SNAPSHOT.jar
-COPY ${JAR_FILE} app.jar
+COPY --chown=10001:10001 ${JAR_FILE} app.jar
+USER 10001
 EXPOSE 8090
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

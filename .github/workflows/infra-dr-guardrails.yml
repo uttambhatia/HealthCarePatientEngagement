@@ -1,0 +1,32 @@
+name: Infra DR Guardrails
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 1 * *"
+
+permissions:
+  contents: read
+
+jobs:
+  guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run infra and DR guardrails
+        id: guardrails
+        continue-on-error: true
+        run: bash scripts/run-infra-dr-guardrails.sh guardrail-report.txt
+
+      - name: Upload guardrail report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: infra-dr-guardrail-report
+          path: guardrail-report.txt
+
+      - name: Mark workflow failed when guardrails fail
+        if: steps.guardrails.outcome == 'failure'
+        run: exit 1

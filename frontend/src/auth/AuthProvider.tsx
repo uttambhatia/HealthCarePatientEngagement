@@ -14,7 +14,7 @@ type AuthContextValue = {
   authReady: boolean
   authError: string | null
   isOidcConfigured: boolean
-  loginWithOidc: () => Promise<void>
+  loginWithOidc: (loginHint?: string) => Promise<void>
   loginAs: (role: Role) => void
   logout: () => void
 }
@@ -188,12 +188,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
           expires_in?: number
         }
 
-        const claims = decodeJwtPayload(payload.id_token ?? payload.access_token)
+        // Access token carries API app-role claims; ID token carries profile/display claims.
+        const roleClaims = decodeJwtPayload(payload.access_token)
+        const identityClaims = decodeJwtPayload(payload.id_token ?? payload.access_token)
         const nextSession: AuthSession = {
           accessToken: payload.access_token,
           idToken: payload.id_token,
-          role: mapRoleFromClaims(claims),
-          displayName: mapDisplayName(claims),
+          role: mapRoleFromClaims(roleClaims),
+          displayName: mapDisplayName(identityClaims),
           expiresAt: payload.expires_in ? Date.now() + payload.expires_in * 1000 : undefined,
         }
 
@@ -228,7 +230,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     authReady,
     authError,
     isOidcConfigured,
-    loginWithOidc: async () => {
+    loginWithOidc: async (loginHint?: string) => {
       if (!isOidcConfigured) {
         setAuthError(null)
         return
@@ -249,6 +251,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
       authUrl.searchParams.set('state', state)
       authUrl.searchParams.set('code_challenge', challenge)
       authUrl.searchParams.set('code_challenge_method', 'S256')
+
+      const normalizedLoginHint = loginHint?.trim()
+      if (normalizedLoginHint) {
+        authUrl.searchParams.set('login_hint', normalizedLoginHint)
+      }
 
       window.location.assign(authUrl.toString())
     },

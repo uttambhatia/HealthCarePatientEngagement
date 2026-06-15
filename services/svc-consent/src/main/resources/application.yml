@@ -7,7 +7,6 @@ spring:
     url: ${CONSENT_DB_URL:jdbc:h2:mem:consentdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
     username: ${CONSENT_DB_USERNAME:sa}
     password: ${CONSENT_DB_PASSWORD:}
-    driver-class-name: org.h2.Driver
   jpa:
     hibernate:
       ddl-auto: ${CONSENT_DB_DDL_AUTO:update}
@@ -32,9 +31,11 @@ platform:
     keyvault:
       url: ${KEY_VAULT_URL:}
   security:
+    enabled: ${PLATFORM_SECURITY_ENABLED:false}
     oauth2:
       jwk-set-uri: ${OAUTH2_JWK_SET_URI:https://login.microsoftonline.com/common/discovery/v2.0/keys}
       issuer: ${OAUTH2_ISSUER:}
+      audience: ${OAUTH2_AUDIENCE:}
   integration:
     audit:
       base-url: ${AUDIT_INTEGRATION_BASE_URL:}

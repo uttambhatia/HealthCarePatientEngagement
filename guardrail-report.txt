@@ -1,0 +1,579 @@
+Running infrastructure and DR guardrails
+
+==> validate-k8s-security-env.sh
+Validating Kubernetes OAuth2 env wiring in /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/deploy/k8s
+Checking deploy/k8s/api-gateway/deployment.yaml
+Checking deploy/k8s/svc-alert-management/deployment.yaml
+Checking deploy/k8s/svc-appointment/deployment.yaml
+Checking deploy/k8s/svc-careplan/deployment.yaml
+Checking deploy/k8s/svc-consent/deployment.yaml
+Checking deploy/k8s/svc-device-ingestion/deployment.yaml
+Checking deploy/k8s/svc-event-messaging/deployment.yaml
+Checking deploy/k8s/svc-identity-adapter/deployment.yaml
+Checking deploy/k8s/svc-medical-record/deployment.yaml
+Checking deploy/k8s/svc-notification/deployment.yaml
+Checking deploy/k8s/svc-patient/deployment.yaml
+Checking deploy/k8s/svc-telemetry/deployment.yaml
+Checking deploy/k8s/platform-secrets.template.yaml
+Validation passed: Kubernetes OAuth2 env wiring is complete.
+PASS: validate-k8s-security-env.sh
+
+==> validate-k8s-deployment-baseline.sh
+Validating Kubernetes deployment baseline in /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/deploy/k8s
+Checking deploy/k8s/api-gateway/deployment.yaml
+Checking deploy/k8s/svc-alert-management/deployment.yaml
+Checking deploy/k8s/svc-appointment/deployment.yaml
+Checking deploy/k8s/svc-careplan/deployment.yaml
+Checking deploy/k8s/svc-consent/deployment.yaml
+Checking deploy/k8s/svc-device-ingestion/deployment.yaml
+Checking deploy/k8s/svc-event-messaging/deployment.yaml
+Checking deploy/k8s/svc-identity-adapter/deployment.yaml
+Checking deploy/k8s/svc-medical-record/deployment.yaml
+Checking deploy/k8s/svc-notification/deployment.yaml
+Checking deploy/k8s/svc-patient/deployment.yaml
+Checking deploy/k8s/svc-telemetry/deployment.yaml
+Validation passed: Kubernetes deployment baseline is complete.
+PASS: validate-k8s-deployment-baseline.sh
+
+==> validate-k8s-routing-hygiene.sh
+Validating Kubernetes service/ingress routing hygiene in /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/deploy/k8s
+Checking deploy/k8s/api-gateway/deployment.yaml
+Checking deploy/k8s/svc-alert-management/deployment.yaml
+Checking deploy/k8s/svc-appointment/deployment.yaml
+Checking deploy/k8s/svc-careplan/deployment.yaml
+Checking deploy/k8s/svc-consent/deployment.yaml
+Checking deploy/k8s/svc-device-ingestion/deployment.yaml
+Checking deploy/k8s/svc-event-messaging/deployment.yaml
+Checking deploy/k8s/svc-identity-adapter/deployment.yaml
+Checking deploy/k8s/svc-medical-record/deployment.yaml
+Checking deploy/k8s/svc-notification/deployment.yaml
+Checking deploy/k8s/svc-patient/deployment.yaml
+Checking deploy/k8s/svc-telemetry/deployment.yaml
+Checking deploy/k8s/api-gateway/ingress.yaml
+Validation passed: service and ingress routing hygiene is complete.
+PASS: validate-k8s-routing-hygiene.sh
+
+==> validate-k8s-networkpolicy-hygiene.sh
+Validating Kubernetes NetworkPolicy hygiene in /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/deploy/k8s
+Checking deploy/k8s/api-gateway/deployment.yaml
+Checking deploy/k8s/svc-alert-management/deployment.yaml
+Checking deploy/k8s/svc-appointment/deployment.yaml
+Checking deploy/k8s/svc-careplan/deployment.yaml
+Checking deploy/k8s/svc-consent/deployment.yaml
+Checking deploy/k8s/svc-device-ingestion/deployment.yaml
+Checking deploy/k8s/svc-event-messaging/deployment.yaml
+Checking deploy/k8s/svc-identity-adapter/deployment.yaml
+Checking deploy/k8s/svc-medical-record/deployment.yaml
+Checking deploy/k8s/svc-notification/deployment.yaml
+Checking deploy/k8s/svc-patient/deployment.yaml
+Checking deploy/k8s/svc-telemetry/deployment.yaml
+Validation passed: Kubernetes NetworkPolicy hygiene is complete.
+PASS: validate-k8s-networkpolicy-hygiene.sh
+
+==> validate-k8s-resilience-hygiene.sh
+Validating Kubernetes resilience hygiene (HPA + PDB) in /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/deploy/k8s
+Checking deploy/k8s/api-gateway
+Checking deploy/k8s/svc-patient
+Checking deploy/k8s/svc-appointment
+Checking deploy/k8s/svc-careplan
+Checking deploy/k8s/svc-consent
+Checking deploy/k8s/svc-medical-record
+Checking deploy/k8s/svc-telemetry
+Validation passed: resilience hygiene is complete for critical services.
+PASS: validate-k8s-resilience-hygiene.sh
+
+==> validate-k8s-scheduling-hygiene.sh
+Validating Kubernetes scheduling hygiene (anti-affinity + spread constraints)
+Checking deploy/k8s/api-gateway/deployment.yaml
+Checking deploy/k8s/svc-patient/deployment.yaml
+Checking deploy/k8s/svc-appointment/deployment.yaml
+Checking deploy/k8s/svc-careplan/deployment.yaml
+Checking deploy/k8s/svc-consent/deployment.yaml
+Checking deploy/k8s/svc-medical-record/deployment.yaml
+Checking deploy/k8s/svc-telemetry/deployment.yaml
+Validation passed: scheduling hygiene is complete for critical services.
+PASS: validate-k8s-scheduling-hygiene.sh
+
+==> validate-k8s-observability-env.sh
+Validating Kubernetes observability env wiring
+Checking deploy/k8s/api-gateway/deployment.yaml
+Checking deploy/k8s/svc-patient/deployment.yaml
+Checking deploy/k8s/svc-appointment/deployment.yaml
+Checking deploy/k8s/svc-careplan/deployment.yaml
+Checking deploy/k8s/svc-consent/deployment.yaml
+Checking deploy/k8s/svc-medical-record/deployment.yaml
+Checking deploy/k8s/svc-notification/deployment.yaml
+Checking deploy/k8s/svc-telemetry/deployment.yaml
+Checking deploy/k8s/svc-device-ingestion/deployment.yaml
+Checking deploy/k8s/svc-alert-management/deployment.yaml
+Checking deploy/k8s/svc-identity-adapter/deployment.yaml
+Checking deploy/k8s/svc-event-messaging/deployment.yaml
+Validation passed: observability env wiring is complete.
+PASS: validate-k8s-observability-env.sh
+
+==> validate-k8s-runtime-security-hygiene.sh
+Validating Kubernetes runtime security hygiene
+Checking deploy/k8s/api-gateway/deployment.yaml
+Checking deploy/k8s/svc-alert-management/deployment.yaml
+Checking deploy/k8s/svc-appointment/deployment.yaml
+Checking deploy/k8s/svc-careplan/deployment.yaml
+Checking deploy/k8s/svc-consent/deployment.yaml
+Checking deploy/k8s/svc-device-ingestion/deployment.yaml
+Checking deploy/k8s/svc-event-messaging/deployment.yaml
+Checking deploy/k8s/svc-identity-adapter/deployment.yaml
+Checking deploy/k8s/svc-medical-record/deployment.yaml
+Checking deploy/k8s/svc-notification/deployment.yaml
+Checking deploy/k8s/svc-patient/deployment.yaml
+Checking deploy/k8s/svc-telemetry/deployment.yaml
+Validation passed: runtime security hygiene is complete.
+PASS: validate-k8s-runtime-security-hygiene.sh
+
+==> validate-k8s-rollout-hygiene.sh
+Validating Kubernetes rollout hygiene (strategy + startupProbe)
+Checking deploy/k8s/api-gateway/deployment.yaml
+Checking deploy/k8s/svc-patient/deployment.yaml
+Checking deploy/k8s/svc-appointment/deployment.yaml
+Checking deploy/k8s/svc-careplan/deployment.yaml
+Checking deploy/k8s/svc-consent/deployment.yaml
+Checking deploy/k8s/svc-medical-record/deployment.yaml
+Checking deploy/k8s/svc-telemetry/deployment.yaml
+Validation passed: rollout hygiene is complete for critical services.
+PASS: validate-k8s-rollout-hygiene.sh
+
+==> validate-k8s-azure-sql-env.sh
+Validating Azure SQL + managed identity environment wiring in /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/deploy/k8s
+Checking deploy/k8s/svc-patient/deployment.yaml
+Checking deploy/k8s/svc-appointment/deployment.yaml
+Checking deploy/k8s/svc-careplan/deployment.yaml
+Checking deploy/k8s/svc-consent/deployment.yaml
+Checking deploy/k8s/svc-medical-record/deployment.yaml
+Checking deploy/k8s/svc-notification/deployment.yaml
+Checking deploy/k8s/svc-telemetry/deployment.yaml
+Checking deploy/k8s/svc-device-ingestion/deployment.yaml
+Checking deploy/k8s/svc-alert-management/deployment.yaml
+Checking deploy/k8s/svc-identity-adapter/deployment.yaml
+Checking deploy/k8s/svc-event-messaging/deployment.yaml
+Checking deploy/k8s/platform-secrets.template.yaml
+Validation passed: Azure SQL + managed identity wiring is complete.
+PASS: validate-k8s-azure-sql-env.sh
+
+==> validate-k8s-private-endpoint-env.sh
+Validating private-endpoint dependency environment wiring in /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/deploy/k8s
+Checking deploy/k8s/svc-patient/deployment.yaml
+Checking deploy/k8s/svc-appointment/deployment.yaml
+Checking deploy/k8s/svc-careplan/deployment.yaml
+Checking deploy/k8s/svc-consent/deployment.yaml
+Checking deploy/k8s/svc-medical-record/deployment.yaml
+Checking deploy/k8s/svc-notification/deployment.yaml
+Checking deploy/k8s/svc-telemetry/deployment.yaml
+Checking deploy/k8s/svc-device-ingestion/deployment.yaml
+Checking deploy/k8s/svc-alert-management/deployment.yaml
+Checking deploy/k8s/svc-identity-adapter/deployment.yaml
+Checking deploy/k8s/svc-event-messaging/deployment.yaml
+Checking deploy/k8s/platform-secrets.template.yaml
+Validation passed: private-endpoint dependency wiring is complete.
+PASS: validate-k8s-private-endpoint-env.sh
+
+==> validate-integration-adapter-readiness.sh
+Validating integration adapter readiness (FHIR + Service Bus + health exposure)
+Validation passed: integration adapter readiness is complete.
+PASS: validate-integration-adapter-readiness.sh
+
+==> validate-integration-reliability-hygiene.sh
+Validating integration reliability hygiene (retry and DLQ contracts)
+Validation passed: integration reliability hygiene is complete.
+PASS: validate-integration-reliability-hygiene.sh
+
+==> validate-integration-adapter-contract-tests.sh
+Running integration adapter contract tests
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] healthcare-patient-engagement                                      [pom]
+[INFO] platform-common                                                    [jar]
+[INFO] svc-patient                                                        [jar]
+[INFO] 
+[INFO] -------< com.healthcare.platform:healthcare-patient-engagement >--------
+[INFO] Building healthcare-patient-engagement 0.1.0-SNAPSHOT              [1/3]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --------------< com.healthcare.platform:platform-common >---------------
+[INFO] Building platform-common 0.1.0-SNAPSHOT                            [2/3]
+[INFO]   from platform-common/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ platform-common ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ platform-common ---
+[INFO] Recompiling the module because of added or removed source files.
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 10 source files with javac [debug release 17] to target/classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ platform-common ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ platform-common ---
+[INFO] Recompiling the module because of changed dependency.
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 1 source file with javac [debug release 17] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ platform-common ---
+[INFO] 
+[INFO] ----------------< com.healthcare.platform:svc-patient >-----------------
+[INFO] Building svc-patient 0.1.0-SNAPSHOT                                [3/3]
+[INFO]   from services/svc-patient/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ svc-patient ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ svc-patient ---
+[INFO] Recompiling the module because of changed dependency.
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 23 source files with javac [debug release 17] to target/classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ svc-patient ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/services/svc-patient/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ svc-patient ---
+[INFO] Recompiling the module because of changed dependency.
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 3 source files with javac [debug release 17] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ svc-patient ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.healthcare.patient.integration.PatientFhirAdapterContractTest
+16:21:20.403 [main] WARN com.healthcare.patient.integration.PatientFhirAdapter -- Patient FHIR integration attempt failed aggregateId=pat-1 correlationId=corr-123 attempt=1 maxAttempts=2 error=500 Internal Server Error: [no body]
+16:21:20.447 [main] WARN com.healthcare.patient.integration.PatientFhirAdapter -- Patient FHIR integration attempt failed aggregateId=pat-1 correlationId=corr-123 attempt=2 maxAttempts=2 error=500 Internal Server Error: [no body]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.23 s -- in com.healthcare.patient.integration.PatientFhirAdapterContractTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for healthcare-patient-engagement 0.1.0-SNAPSHOT:
+[INFO] 
+[INFO] healthcare-patient-engagement ...................... SUCCESS [  0.020 s]
+[INFO] platform-common .................................... SUCCESS [ 11.158 s]
+[INFO] svc-patient ........................................ SUCCESS [ 31.114 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  44.468 s
+[INFO] Finished at: 2026-06-14T16:21:21Z
+[INFO] ------------------------------------------------------------------------
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] healthcare-patient-engagement                                      [pom]
+[INFO] platform-common                                                    [jar]
+[INFO] svc-event-messaging                                                [jar]
+[INFO] 
+[INFO] -------< com.healthcare.platform:healthcare-patient-engagement >--------
+[INFO] Building healthcare-patient-engagement 0.1.0-SNAPSHOT              [1/3]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --------------< com.healthcare.platform:platform-common >---------------
+[INFO] Building platform-common 0.1.0-SNAPSHOT                            [2/3]
+[INFO]   from platform-common/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ platform-common ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ platform-common ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ platform-common ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ platform-common ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ platform-common ---
+[INFO] 
+[INFO] ------------< com.healthcare.platform:svc-event-messaging >-------------
+[INFO] Building svc-event-messaging 0.1.0-SNAPSHOT                        [3/3]
+[INFO]   from services/svc-event-messaging/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ svc-event-messaging ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ svc-event-messaging ---
+[INFO] Recompiling the module because of added or removed source files.
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 23 source files with javac [debug release 17] to target/classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ svc-event-messaging ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/services/svc-event-messaging/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ svc-event-messaging ---
+[INFO] Recompiling the module because of changed dependency.
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 3 source files with javac [debug release 17] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ svc-event-messaging ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.healthcare.eventmessaging.integration.ServiceBusAdapterContractTest
+16:22:02.580 [main] WARN com.healthcare.eventmessaging.integration.ServiceBusAdapter -- Service bus integration attempt failed aggregateId=msg-1 correlationId=corr-123 attempt=1 maxAttempts=2 error=500 Internal Server Error: [no body]
+16:22:02.620 [main] WARN com.healthcare.eventmessaging.integration.ServiceBusAdapter -- Service bus integration attempt failed aggregateId=msg-1 correlationId=corr-123 attempt=2 maxAttempts=2 error=500 Internal Server Error: [no body]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.485 s -- in com.healthcare.eventmessaging.integration.ServiceBusAdapterContractTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for healthcare-patient-engagement 0.1.0-SNAPSHOT:
+[INFO] 
+[INFO] healthcare-patient-engagement ...................... SUCCESS [  0.020 s]
+[INFO] platform-common .................................... SUCCESS [  3.453 s]
+[INFO] svc-event-messaging ................................ SUCCESS [ 27.320 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  32.437 s
+[INFO] Finished at: 2026-06-14T16:22:03Z
+[INFO] ------------------------------------------------------------------------
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] healthcare-patient-engagement                                      [pom]
+[INFO] platform-common                                                    [jar]
+[INFO] svc-medical-record                                                 [jar]
+[INFO] 
+[INFO] -------< com.healthcare.platform:healthcare-patient-engagement >--------
+[INFO] Building healthcare-patient-engagement 0.1.0-SNAPSHOT              [1/3]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --------------< com.healthcare.platform:platform-common >---------------
+[INFO] Building platform-common 0.1.0-SNAPSHOT                            [2/3]
+[INFO]   from platform-common/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ platform-common ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ platform-common ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ platform-common ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ platform-common ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ platform-common ---
+[INFO] 
+[INFO] -------------< com.healthcare.platform:svc-medical-record >-------------
+[INFO] Building svc-medical-record 0.1.0-SNAPSHOT                         [3/3]
+[INFO]   from services/svc-medical-record/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ svc-medical-record ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ svc-medical-record ---
+[INFO] Recompiling the module because of added or removed source files.
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 23 source files with javac [debug release 17] to target/classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ svc-medical-record ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/services/svc-medical-record/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ svc-medical-record ---
+[INFO] Recompiling the module because of changed dependency.
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 3 source files with javac [debug release 17] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ svc-medical-record ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.healthcare.medicalrecord.integration.FhirAdapterContractTest
+16:22:45.086 [main] WARN com.healthcare.medicalrecord.integration.FhirAdapter -- Medical record FHIR integration attempt failed aggregateId=mr-1 correlationId=corr-123 attempt=1 maxAttempts=2 error=500 Internal Server Error: [no body]
+16:22:45.127 [main] WARN com.healthcare.medicalrecord.integration.FhirAdapter -- Medical record FHIR integration attempt failed aggregateId=mr-1 correlationId=corr-123 attempt=2 maxAttempts=2 error=500 Internal Server Error: [no body]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.911 s -- in com.healthcare.medicalrecord.integration.FhirAdapterContractTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for healthcare-patient-engagement 0.1.0-SNAPSHOT:
+[INFO] 
+[INFO] healthcare-patient-engagement ...................... SUCCESS [  0.019 s]
+[INFO] platform-common .................................... SUCCESS [  3.551 s]
+[INFO] svc-medical-record ................................. SUCCESS [ 28.005 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  33.212 s
+[INFO] Finished at: 2026-06-14T16:22:45Z
+[INFO] ------------------------------------------------------------------------
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] healthcare-patient-engagement                                      [pom]
+[INFO] platform-common                                                    [jar]
+[INFO] svc-careplan                                                       [jar]
+[INFO] 
+[INFO] -------< com.healthcare.platform:healthcare-patient-engagement >--------
+[INFO] Building healthcare-patient-engagement 0.1.0-SNAPSHOT              [1/3]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --------------< com.healthcare.platform:platform-common >---------------
+[INFO] Building platform-common 0.1.0-SNAPSHOT                            [2/3]
+[INFO]   from platform-common/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ platform-common ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ platform-common ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ platform-common ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ platform-common ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ platform-common ---
+[INFO] 
+[INFO] ----------------< com.healthcare.platform:svc-careplan >----------------
+[INFO] Building svc-careplan 0.1.0-SNAPSHOT                               [3/3]
+[INFO]   from services/svc-careplan/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ svc-careplan ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ svc-careplan ---
+[INFO] Recompiling the module because of added or removed source files.
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 27 source files with javac [debug release 17] to target/classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ svc-careplan ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/services/svc-careplan/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ svc-careplan ---
+[INFO] Recompiling the module because of changed dependency.
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 3 source files with javac [debug release 17] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ svc-careplan ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.healthcare.careplan.integration.CarePlanFhirAdapterContractTest
+16:23:28.929 [main] WARN com.healthcare.careplan.integration.CarePlanFhirAdapter -- Careplan FHIR integration attempt failed aggregateId=cp-1 correlationId=corr-123 attempt=1 maxAttempts=2 error=500 Internal Server Error: [no body]
+16:23:28.977 [main] WARN com.healthcare.careplan.integration.CarePlanFhirAdapter -- Careplan FHIR integration attempt failed aggregateId=cp-1 correlationId=corr-123 attempt=2 maxAttempts=2 error=500 Internal Server Error: [no body]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.320 s -- in com.healthcare.careplan.integration.CarePlanFhirAdapterContractTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for healthcare-patient-engagement 0.1.0-SNAPSHOT:
+[INFO] 
+[INFO] healthcare-patient-engagement ...................... SUCCESS [  0.021 s]
+[INFO] platform-common .................................... SUCCESS [  3.460 s]
+[INFO] svc-careplan ....................................... SUCCESS [ 29.481 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  34.543 s
+[INFO] Finished at: 2026-06-14T16:23:29Z
+[INFO] ------------------------------------------------------------------------
+Integration adapter contract tests passed.
+PASS: validate-integration-adapter-contract-tests.sh
+
+==> validate-integration-correlation-id-propagation.sh
+Validating integration adapter correlation-id propagation contract tests
+Validation passed: integration adapter contract tests enforce X-Correlation-Id propagation.
+PASS: validate-integration-correlation-id-propagation.sh
+
+==> validate-api-gateway-route-coverage.sh
+Validating API gateway route coverage
+Validation passed: API gateway route coverage includes all platform service routes.
+PASS: validate-api-gateway-route-coverage.sh
+
+==> validate-api-gateway-security-policy.sh
+Validating API gateway security policy
+Validation passed: API gateway security policy covers route-level authorization and correlation header exposure.
+PASS: validate-api-gateway-security-policy.sh
+
+==> validate-correlation-id-contract.sh
+Validating correlation-id contract and runtime propagation
+Validation passed: correlation-id contract and runtime propagation are aligned.
+PASS: validate-correlation-id-contract.sh
+
+==> validate-openapi-controller-coverage.sh
+Validating OpenAPI coverage against implemented controller mappings
+Validation passed: OpenAPI contract covers implemented controller paths.
+PASS: validate-openapi-controller-coverage.sh
+
+==> validate-openapi-operation-parity.sh
+Validating OpenAPI operation and parameter parity
+Validation passed: OpenAPI operation and parameter parity is intact.
+PASS: validate-openapi-operation-parity.sh
+
+==> validate-dr-readiness-artifacts.sh
+Validating DR readiness artifacts
+Checking docs/Disaster_Recovery_Runbook.md
+Checking docs/dr/DR_Drill_Report_Template.md
+Checking docs/dr/DR_Backup_Verification_Log_Template.md
+Checking docs/dr/evidence/drills
+Checking docs/dr/evidence/backups
+Validation passed: DR readiness artifacts are complete.
+PASS: validate-dr-readiness-artifacts.sh
+
+==> validate-dr-evidence-freshness.sh
+Validating DR evidence freshness
+Checking monthly backup evidence for 2026-06
+Checking quarterly drill evidence for 2026 (months 04|05|06)
+Validation passed: DR evidence is fresh for current period.
+PASS: validate-dr-evidence-freshness.sh
+
+Guardrail run passed.

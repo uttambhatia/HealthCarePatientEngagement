@@ -7,7 +7,6 @@ spring:
     url: ${NOTIFICATION_DB_URL:jdbc:h2:mem:notificationdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
     username: ${NOTIFICATION_DB_USERNAME:sa}
     password: ${NOTIFICATION_DB_PASSWORD:}
-    driver-class-name: org.h2.Driver
   jpa:
     hibernate:
       ddl-auto: ${NOTIFICATION_DB_DDL_AUTO:update}
@@ -32,9 +31,11 @@ platform:
     keyvault:
       url: ${KEY_VAULT_URL:}
   security:
+    enabled: ${PLATFORM_SECURITY_ENABLED:false}
     oauth2:
       jwk-set-uri: ${OAUTH2_JWK_SET_URI:https://login.microsoftonline.com/common/discovery/v2.0/keys}
       issuer: ${OAUTH2_ISSUER:}
+      audience: ${OAUTH2_AUDIENCE:}
   integration:
     acs:
       base-url: ${ACS_INTEGRATION_BASE_URL:}

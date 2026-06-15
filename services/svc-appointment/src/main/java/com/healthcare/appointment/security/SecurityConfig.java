@@ -8,7 +8,10 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
@@ -17,6 +20,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableMethodSecurity
@@ -34,12 +38,17 @@ public class SecurityConfig {
         @ConditionalOnProperty(prefix = "platform.security", name = "enabled", havingValue = "true")
         public JwtDecoder jwtDecoder(
                 @org.springframework.beans.factory.annotation.Value("${platform.security.oauth2.jwk-set-uri:https://login.microsoftonline.com/common/discovery/v2.0/keys}") String jwkSetUri,
-                @org.springframework.beans.factory.annotation.Value("${platform.security.oauth2.issuer:}") String issuer) {
-            NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
-            if (issuer != null && !issuer.isBlank()) {
-                OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuer);
-                decoder.setJwtValidator(withIssuer);
+                @org.springframework.beans.factory.annotation.Value("${platform.security.oauth2.issuer:}") String issuer,
+                @org.springframework.beans.factory.annotation.Value("${platform.security.oauth2.audience:}") String audience) {
+            if (issuer == null || issuer.isBlank() || audience == null || audience.isBlank()) {
+                throw new IllegalStateException("platform.security.oauth2.issuer and platform.security.oauth2.audience are required when security is enabled");
             }
+            NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+            OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuer);
+            OAuth2TokenValidator<Jwt> withAudience = token -> token.getAudience().stream().anyMatch(audience::equals)
+                    ? OAuth2TokenValidatorResult.success()
+                    : OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "The required audience is missing", null));
+            decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(withIssuer, withAudience));
             return decoder;
         }
 
@@ -52,7 +61,12 @@ public class SecurityConfig {
                     .ignoringRequestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**"))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/appointments/**").hasAnyRole("ADMIN", "DOCTOR", "COORDINATOR", "PATIENT")
+                .requestMatchers(HttpMethod.GET, "/appointments", "/appointments/**").hasAnyRole("PATIENT", "DOCTOR", "COORDINATOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/appointments").hasAnyRole("PATIENT", "DOCTOR", "COORDINATOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/appointments/*/teleconsult/start").hasAnyRole("DOCTOR", "COORDINATOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/appointments/*/teleconsult/join").hasAnyRole("PATIENT", "DOCTOR", "COORDINATOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/appointments/*/teleconsult/complete").hasAnyRole("DOCTOR", "COORDINATOR", "ADMIN")
+                .requestMatchers("/appointments/**").hasAnyRole("COORDINATOR", "ADMIN")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
             .httpBasic(Customizer.withDefaults());

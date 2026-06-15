@@ -1,5 +1,4 @@
 import type { PropsWithChildren, ReactNode } from 'react'
-import { Card } from '../components/Card'
 
 type HomePageProps = PropsWithChildren<{
   isAuthenticated?: boolean
@@ -15,13 +14,93 @@ export function HomePage({
   connectionStatus = 'checking',
   headerActions,
 }: HomePageProps) {
-  const trustSignals = ['HIPAA-ready care workflows', 'FHIR-based care records', 'Reliable care delivery', 'Connected care teams']
+  const trustSignals = [
+    { label: 'HIPAA-ready security', tone: 'safe' },
+    { label: 'FHIR interoperability', tone: 'interop' },
+    { label: '24x7 care continuity', tone: 'care' },
+    { label: 'Coordinated team workflows', tone: 'team' },
+  ] as const
+  const carePaths = [
+    {
+      title: 'For patients',
+      tone: 'patient',
+      badge: 'PT',
+      description: 'Register quickly, track appointments, and receive follow-up guidance in one place.',
+    },
+    {
+      title: 'For clinicians',
+      tone: 'clinician',
+      badge: 'MD',
+      description: 'Review patient context, update care plans, and coordinate secure handoffs without friction.',
+    },
+    {
+      title: 'For coordinators and admins',
+      tone: 'operations',
+      badge: 'OPS',
+      description: 'Monitor operations, prioritize escalations, and maintain policy-aligned care delivery.',
+    },
+  ] as const
   const breadcrumbCurrent = isAuthenticated ? 'Dashboard' : 'Login'
   const welcomeName = username?.split('@')[0] ?? 'Guest'
   const isConnected = connectionStatus === 'up' || connectionStatus === 'auth-required'
   const connectionStatusLabel = isConnected
     ? 'Connection status is healthy'
     : 'Connection status is unhealthy'
+  const statusBanner = !isAuthenticated && connectionStatus === 'auth-required'
+    ? {
+        tone: 'auth',
+        title: 'Secure access required',
+        message: 'Complete secure sign-in to access protected backend services.',
+        action: 'Recommended action: Sign in securely from the right panel.',
+      }
+    : !isAuthenticated && connectionStatus === 'down'
+      ? {
+          tone: 'down',
+          title: 'Backend is temporarily unavailable',
+          message: 'Some live platform capabilities may be delayed right now.',
+          action: 'Recommended action: Use role-based preview and retry secure sign-in shortly.',
+        }
+      : null
+
+  function renderTrustIcon(tone: (typeof trustSignals)[number]['tone']) {
+    if (tone === 'safe') {
+      return (
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <path d="M12 3.2 5.3 6.1v5.7c0 4.1 2.5 7.8 6.7 9.2 4.2-1.4 6.7-5.1 6.7-9.2V6.1L12 3.2z" />
+          <path d="m9.2 12.3 2 2 3.7-3.8" />
+        </svg>
+      )
+    }
+
+    if (tone === 'interop') {
+      return (
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <rect x="3.5" y="6" width="7.5" height="5.6" rx="1.2" />
+          <rect x="13" y="12.4" width="7.5" height="5.6" rx="1.2" />
+          <path d="M10.2 8.8h3.5c1.5 0 2.7 1.2 2.7 2.7v0.5" />
+          <path d="m14.1 14.3 2.1-2.1 2.1 2.1" />
+        </svg>
+      )
+    }
+
+    if (tone === 'care') {
+      return (
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <path d="M4 12h3.1l2.1-3.7 2.4 7.1 2.1-4.1H20" />
+          <path d="M21 8.8c0-1.8-1.4-3.3-3.2-3.3-1.3 0-2.4.7-3 1.8-.6-1.1-1.7-1.8-3-1.8-1.8 0-3.2 1.5-3.2 3.3 0 3.9 6.2 7.2 6.2 7.2S21 12.7 21 8.8Z" />
+        </svg>
+      )
+    }
+
+    return (
+      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+        <circle cx="8" cy="9" r="2.3" />
+        <circle cx="16" cy="9" r="2.3" />
+        <path d="M3.8 17.3c.7-2 2.4-3.2 4.2-3.2s3.5 1.2 4.2 3.2" />
+        <path d="M11.8 17.3c.7-2 2.4-3.2 4.2-3.2s3.5 1.2 4.2 3.2" />
+      </svg>
+    )
+  }
 
   return (
     <main className="page-shell">
@@ -55,47 +134,51 @@ export function HomePage({
         </div>
       </header>
 
+      {!isAuthenticated ? (
+        <section className="home-clinical-brief" aria-label="Clinical support notice">
+          <strong>Clinical continuity:</strong> For urgent follow-ups, complete secure sign-in first so care teams can review the latest patient context.
+        </section>
+      ) : null}
+
+      {statusBanner ? (
+        <section className={`home-status-banner home-status-banner--${statusBanner.tone}`} role="status" aria-live="polite">
+          <strong>{statusBanner.title}</strong>
+          <span>{statusBanner.message}</span>
+          <small>{statusBanner.action}</small>
+        </section>
+      ) : null}
+
       <section className="breadcrumb-strip" aria-label="Breadcrumb">
         <span>Home</span>
         <span className="breadcrumb-separator">/</span>
         <strong>{breadcrumbCurrent}</strong>
       </section>
 
-      <section className="assurance-strip" aria-label="Platform trust signals">
+      <ul className="assurance-strip" aria-label="Platform trust signals">
         {trustSignals.map((item) => (
-          <span key={item} className="assurance-pill">{item}</span>
+          <li key={item.label} className={`assurance-pill assurance-pill--${item.tone}`}>
+            <span className="assurance-pill-icon" aria-hidden="true">{renderTrustIcon(item.tone)}</span>
+            <span>{item.label}</span>
+          </li>
         ))}
-      </section>
-
-      {children}
+      </ul>
 
       {!isAuthenticated ? (
-        <section className="experience-card-shell">
-          <Card title="Experience highlights" eyebrow="Team feedback" centeredHeader>
-            <section className="experience-band" aria-label="Experience highlights">
-              <article className="experience-panel testimonial-panel">
-                <p className="eyebrow">Team feedback</p>
-                <h2>Care coordination designed for patients, clinicians, and families.</h2>
-                <p>
-                  Keep registration, appointments, care plans, and communication in one guided journey.
-                  The experience supports smoother handoffs and clearer follow-up.
-                </p>
-                <p className="testimonial-signoff">Care Operations Leadership</p>
-              </article>
-
-              <article className="experience-panel mobile-panel">
-                <p className="eyebrow">Mobile-first extension</p>
-                <h3>Continue care updates from web to mobile</h3>
-                <p>
-                  Share reminders, care updates, and triage context in a mobile-friendly view so care teams and
-                  families stay aligned away from the desktop.
-                </p>
-                <button type="button" className="secondary-button">Preview mobile experience</button>
-              </article>
-            </section>
-          </Card>
+        <section className="home-guidance-strip" aria-label="Role guidance">
+          {carePaths.map((path) => (
+            <article key={path.title} className="home-guidance-card" aria-label={`${path.title} guidance`}>
+              <p className="eyebrow">Care pathway</p>
+              <h3>
+                <span className={`home-guidance-icon home-guidance-icon--${path.tone}`} aria-hidden="true">{path.badge}</span>
+                <span>{path.title}</span>
+              </h3>
+              <p>{path.description}</p>
+            </article>
+          ))}
         </section>
       ) : null}
+
+      {children}
     </main>
   )
 }

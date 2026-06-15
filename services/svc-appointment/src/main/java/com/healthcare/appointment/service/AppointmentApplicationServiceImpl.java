@@ -23,6 +23,10 @@ import com.healthcare.appointment.repository.TeleconsultationSessionRepository;
 import com.healthcare.platform.common.messaging.MessagingPort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -32,6 +36,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -185,6 +190,8 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
         TeleconsultationSession session = teleconsultationRepository.findByAppointmentId(appointmentId)
                 .orElseThrow(() -> new TeleconsultationSessionNotFoundException(appointmentId));
 
+        enforcePatientScope(session.patientId());
+
         if (TELECONSULT_COMPLETED.equals(session.status())) {
             throw new AppointmentNotEligibleException(appointmentId, "teleconsultation already completed");
         }
@@ -217,6 +224,8 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
     public TeleconsultationResponse completeTeleconsultation(String appointmentId, CompleteTeleconsultationRequest request, String correlationId) {
         TeleconsultationSession session = teleconsultationRepository.findByAppointmentId(appointmentId)
                 .orElseThrow(() -> new TeleconsultationSessionNotFoundException(appointmentId));
+
+        enforcePatientScope(session.patientId());
 
         if (TELECONSULT_COMPLETED.equals(session.status())) {
             return mapTeleconsultation(session);
@@ -363,5 +372,39 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
                 session.nextFollowUpDate(),
                 session.interactionLogs()
         );
+    }
+
+    private void enforcePatientScope(String requestedPatientId) {
+        if (!isPatientPrincipal()) {
+            return;
+        }
+
+        String patientScope = patientScopeClaim().orElseThrow(() -> new AccessDeniedException("Patient scope violation"));
+        if (requestedPatientId == null || !requestedPatientId.equalsIgnoreCase(patientScope)) {
+            throw new AccessDeniedException("Patient scope violation");
+        }
+    }
+
+    private boolean isPatientPrincipal() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null
+                && authentication.isAuthenticated()
+                && authentication.getAuthorities().stream().anyMatch(authority -> "ROLE_PATIENT".equals(authority.getAuthority()));
+    }
+
+    private Optional<String> patientScopeClaim() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof JwtAuthenticationToken jwtAuthenticationToken)) {
+            return Optional.empty();
+        }
+
+        String[] candidateClaims = {"patientId", "patient_id", "externalReference", "external_reference", "sub"};
+        for (String candidate : candidateClaims) {
+            String claimValue = jwtAuthenticationToken.getToken().getClaimAsString(candidate);
+            if (claimValue != null && !claimValue.isBlank()) {
+                return Optional.of(claimValue);
+            }
+        }
+        return Optional.empty();
     }
 }

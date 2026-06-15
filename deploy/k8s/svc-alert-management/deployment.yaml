@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: svc-alert-management
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: svc-alert-management
@@ -12,24 +12,102 @@ spec:
       labels:
         app: svc-alert-management
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: svc-alert-management
           image: ghcr.io/uttambhatia/healthcarepatientengagement/svc-alert-management:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8089
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: aks
+            - name: PLATFORM_SECURITY_ENABLED
+              value: "true"
+            - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+              value: com.microsoft.sqlserver.jdbc.SQLServerDriver
             - name: SERVICEBUS_NAMESPACE
               valueFrom:
                 secretKeyRef:
                   name: platform-secrets
                   key: servicebus-namespace
+            - name: EVENTHUB_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: eventhub-namespace
+            - name: KEY_VAULT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: key-vault-url
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: otel-otlp-endpoint
+            - name: ALERT_MANAGEMENT_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: azure-sql-jdbc-url
+            - name: ALERT_MANAGEMENT_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: azure-sql-username
+            - name: ALERT_MANAGEMENT_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: azure-sql-password
+            - name: AZURE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: azure-managed-identity-client-id
+            - name: OAUTH2_ISSUER
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: oauth2-issuer
+            - name: OAUTH2_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: oauth2-audience
+            - name: OAUTH2_JWK_SET_URI
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: oauth2-jwk-set-uri
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8089
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8089
+            failureThreshold: 30
+            periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8089
+

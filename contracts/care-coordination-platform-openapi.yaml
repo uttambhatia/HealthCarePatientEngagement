@@ -11,6 +11,19 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  parameters:
+    CorrelationIdHeader:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      description: Correlation identifier propagated across the platform.
+      schema:
+        type: string
+  headers:
+    CorrelationIdResponseHeader:
+      description: Correlation identifier propagated across the platform.
+      schema:
+        type: string
   schemas:
     PatientRequest:
       type: object
@@ -298,6 +311,21 @@ components:
         granted: { type: string }
         effectiveFrom: { type: string }
       example: { id: "con-401", status: "RECORDED", patientId: "pat-1001", consentType: "RESEARCH", granted: "true", effectiveFrom: "2026-05-31T10:00:00Z" }
+    ConsentAccessResponse:
+      type: object
+      required: [patientId, consentType, accessAllowed, reason]
+      properties:
+        patientId: { type: string }
+        consentType: { type: string }
+        accessAllowed: { type: boolean }
+        reason: { type: string }
+        latestVersion: { type: integer, minimum: 1 }
+      example:
+        patientId: pat-1001
+        consentType: RESEARCH
+        accessAllowed: true
+        reason: Active granted consent exists
+        latestVersion: 3
     NotificationResponse:
       type: object
       required: [id, status, recipientId, channel, templateId, message, deliveryAttempts]
@@ -466,6 +494,12 @@ components:
         data:
           type: array
           items: { $ref: '#/components/schemas/ConsentResponse' }
+    ConsentAccessEnvelope:
+      type: object
+      required: [correlationId, data]
+      properties:
+        correlationId: { type: string }
+        data: { $ref: '#/components/schemas/ConsentAccessResponse' }
     NotificationEnvelope:
       type: object
       required: [correlationId, data]
@@ -584,6 +618,9 @@ components:
   responses:
     BadRequestResponse:
       description: Validation or request error
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/CorrelationIdResponseHeader'
       content:
         application/json:
           schema:
@@ -591,6 +628,9 @@ components:
           example: { correlationId: "corr-123", code: "VALIDATION_ERROR", message: "Validation failed", timestamp: "2026-05-31T10:11:00Z" }
     NotFoundResponse:
       description: Resource not found
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/CorrelationIdResponseHeader'
       content:
         application/json:
           schema:
@@ -598,6 +638,9 @@ components:
           example: { correlationId: "corr-123", code: "RESOURCE_NOT_FOUND", message: "Resource not found", timestamp: "2026-05-31T10:11:20Z" }
     ConflictResponse:
       description: Business rule conflict
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/CorrelationIdResponseHeader'
       content:
         application/json:
           schema:
@@ -605,6 +648,9 @@ components:
           example: { correlationId: "corr-123", code: "SLOT_ALREADY_BOOKED", message: "Slot is already booked", timestamp: "2026-05-31T10:11:30Z" }
     InternalServerErrorResponse:
       description: Unexpected server error
+      headers:
+        X-Correlation-Id:
+          $ref: '#/components/headers/CorrelationIdResponseHeader'
       content:
         application/json:
           schema:
@@ -614,6 +660,8 @@ security:
   - bearerAuth: []
 paths:
   /patients:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Onboard a patient
       requestBody:
@@ -632,6 +680,9 @@ paths:
       responses:
         '201':
           description: Patient created
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PatientEnvelope' }
@@ -654,6 +705,9 @@ paths:
       responses:
         '200':
           description: Patient collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PatientListEnvelope' }
@@ -670,6 +724,8 @@ paths:
                         birthDate: 1988-06-21
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /patients/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: Retrieve a patient
       parameters:
@@ -680,6 +736,9 @@ paths:
       responses:
         '200':
           description: Patient retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PatientEnvelope' }
@@ -697,6 +756,8 @@ paths:
         '404': { $ref: '#/components/responses/NotFoundResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /appointments/available-slots:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: List available slots for a provider on a specific date
       parameters:
@@ -711,6 +772,9 @@ paths:
       responses:
         '200':
           description: Available slots retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AvailableSlotEnvelope' }
@@ -730,6 +794,8 @@ paths:
         '503': { $ref: '#/components/responses/InternalServerErrorResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /appointments:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Book an appointment
       requestBody:
@@ -748,6 +814,9 @@ paths:
       responses:
         '201':
           description: Appointment created
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AppointmentEnvelope' }
@@ -770,6 +839,9 @@ paths:
       responses:
         '200':
           description: Appointment collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AppointmentListEnvelope' }
@@ -786,6 +858,8 @@ paths:
                         channel: VIDEO
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /appointments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: Retrieve an appointment
       parameters:
@@ -796,6 +870,9 @@ paths:
       responses:
         '200':
           description: Appointment retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AppointmentEnvelope' }
@@ -813,6 +890,8 @@ paths:
         '404': { $ref: '#/components/responses/NotFoundResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /appointments/{id}/teleconsult/start:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Start teleconsultation session for appointment
       parameters:
@@ -823,6 +902,9 @@ paths:
       responses:
         '200':
           description: Teleconsultation session started
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TeleconsultationEnvelope' }
@@ -848,6 +930,8 @@ paths:
         '409': { $ref: '#/components/responses/ConflictResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /appointments/{id}/teleconsult/join:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Join teleconsultation session as patient
       parameters:
@@ -858,6 +942,9 @@ paths:
       responses:
         '200':
           description: Teleconsultation session joined
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TeleconsultationEnvelope' }
@@ -884,6 +971,8 @@ paths:
         '409': { $ref: '#/components/responses/ConflictResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /appointments/{id}/teleconsult/complete:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Complete teleconsultation and update EHR notes
       parameters:
@@ -906,6 +995,9 @@ paths:
       responses:
         '200':
           description: Teleconsultation completed and notes recorded
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TeleconsultationEnvelope' }
@@ -935,6 +1027,8 @@ paths:
         '503': { $ref: '#/components/responses/InternalServerErrorResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /careplans:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Create a care plan
       requestBody:
@@ -956,6 +1050,9 @@ paths:
       responses:
         '201':
           description: Care plan created
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/CarePlanEnvelope' }
@@ -981,6 +1078,9 @@ paths:
       responses:
         '200':
           description: Care plan collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/CarePlanListEnvelope' }
@@ -1001,6 +1101,8 @@ paths:
                         version: 1
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /careplans/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     put:
       summary: Update a care plan
       parameters:
@@ -1027,6 +1129,9 @@ paths:
       responses:
         '200':
           description: Care plan updated
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/CarePlanEnvelope' }
@@ -1059,6 +1164,9 @@ paths:
       responses:
         '200':
           description: Care plan retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/CarePlanEnvelope' }
@@ -1080,6 +1188,8 @@ paths:
         '404': { $ref: '#/components/responses/NotFoundResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /careplans/responsibility/{patientId}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: Retrieve care coordinator responsibility for a patient
       parameters:
@@ -1090,6 +1200,9 @@ paths:
       responses:
         '200':
           description: Responsibility retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/CarePlanResponsibilityEnvelope' }
@@ -1106,6 +1219,8 @@ paths:
         '404': { $ref: '#/components/responses/NotFoundResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /consents:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Record consent
       requestBody:
@@ -1124,6 +1239,9 @@ paths:
       responses:
         '201':
           description: Consent recorded
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ConsentEnvelope' }
@@ -1145,6 +1263,9 @@ paths:
       responses:
         '200':
           description: Consent collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ConsentListEnvelope' }
@@ -1161,6 +1282,8 @@ paths:
                         effectiveFrom: 2026-05-31T10:00:00Z
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /consents/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: Retrieve a consent
       parameters:
@@ -1171,6 +1294,9 @@ paths:
       responses:
         '200':
           description: Consent retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ConsentEnvelope' }
@@ -1187,7 +1313,86 @@ paths:
                       effectiveFrom: 2026-05-31T10:00:00Z
         '404': { $ref: '#/components/responses/NotFoundResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /consents/history:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+    get:
+      summary: List consent history by patient and consent type
+      parameters:
+        - in: query
+          name: patientId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: consentType
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Consent history collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConsentListEnvelope' }
+              examples:
+                history:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      - id: con-401
+                        status: RECORDED
+                        patientId: pat-1001
+                        consentType: RESEARCH
+                        granted: "true"
+                        effectiveFrom: 2026-05-01T10:00:00Z
+                      - id: con-402
+                        status: RECORDED
+                        patientId: pat-1001
+                        consentType: RESEARCH
+                        granted: "false"
+                        effectiveFrom: 2026-05-15T10:00:00Z
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /consents/check-access:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+    get:
+      summary: Check whether consent grants access
+      parameters:
+        - in: query
+          name: patientId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: consentType
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Consent access decision
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConsentAccessEnvelope' }
+              examples:
+                accessDecision:
+                  value:
+                    correlationId: corr-123
+                    data:
+                      patientId: pat-1001
+                      consentType: RESEARCH
+                      accessAllowed: true
+                      reason: Active granted consent exists
+                      latestVersion: 3
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /notifications:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Dispatch notification
       requestBody:
@@ -1206,6 +1411,9 @@ paths:
       responses:
         '201':
           description: Notification queued
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/NotificationEnvelope' }
@@ -1230,6 +1438,9 @@ paths:
       responses:
         '200':
           description: Notification collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/NotificationListEnvelope' }
@@ -1248,6 +1459,8 @@ paths:
                         lastError:
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /notifications/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: Retrieve a notification
       parameters:
@@ -1258,6 +1471,9 @@ paths:
       responses:
         '200':
           description: Notification retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/NotificationEnvelope' }
@@ -1277,6 +1493,8 @@ paths:
         '404': { $ref: '#/components/responses/NotFoundResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /servicebus/messages:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Publish standardized message envelope
       requestBody:
@@ -1295,6 +1513,9 @@ paths:
       responses:
         '201':
           description: Message queued
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ServiceBusMessageEnvelope' }
@@ -1320,6 +1541,9 @@ paths:
       responses:
         '200':
           description: Service bus message collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ServiceBusMessageListEnvelope' }
@@ -1339,6 +1563,8 @@ paths:
                         anomalyReason:
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /servicebus/messages/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: Retrieve a service bus message
       parameters:
@@ -1349,6 +1575,9 @@ paths:
       responses:
         '200':
           description: Service bus message retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ServiceBusMessageEnvelope' }
@@ -1369,6 +1598,8 @@ paths:
         '404': { $ref: '#/components/responses/NotFoundResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /alerts:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Trigger a clinical alert
       requestBody:
@@ -1388,6 +1619,9 @@ paths:
       responses:
         '201':
           description: Alert created
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AlertEnvelope' }
@@ -1410,6 +1644,9 @@ paths:
       responses:
         '200':
           description: Alert collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AlertListEnvelope' }
@@ -1427,6 +1664,8 @@ paths:
                         summary: Heart rate exceeded configured threshold.
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /alerts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: Retrieve an alert
       parameters:
@@ -1437,6 +1676,9 @@ paths:
       responses:
         '200':
           description: Alert retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AlertEnvelope' }
@@ -1455,6 +1697,8 @@ paths:
         '404': { $ref: '#/components/responses/NotFoundResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /telemetry/by-patient/{patientId}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: List telemetry readings for a patient
       parameters:
@@ -1477,11 +1721,16 @@ paths:
       responses:
         '200':
           description: Patient telemetry collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TelemetryListEnvelope' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /telemetry/metric-types:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: List available telemetry metric types
       parameters:
@@ -1492,11 +1741,16 @@ paths:
       responses:
         '200':
           description: Telemetry metric type collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TelemetryMetricTypeListEnvelope' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /telemetry:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Record telemetry reading
       requestBody:
@@ -1515,6 +1769,9 @@ paths:
       responses:
         '201':
           description: Telemetry recorded
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TelemetryEnvelope' }
@@ -1536,6 +1793,9 @@ paths:
       responses:
         '200':
           description: Telemetry collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TelemetryListEnvelope' }
@@ -1552,6 +1812,8 @@ paths:
                         recordedAt: 2026-05-31T10:05:00Z
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /telemetry/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: Retrieve telemetry reading
       parameters:
@@ -1562,6 +1824,9 @@ paths:
       responses:
         '200':
           description: Telemetry retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TelemetryEnvelope' }
@@ -1579,6 +1844,8 @@ paths:
         '404': { $ref: '#/components/responses/NotFoundResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /medical-records:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Synchronize medical record snapshot
       requestBody:
@@ -1597,6 +1864,9 @@ paths:
       responses:
         '201':
           description: Medical record synchronized
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/MedicalRecordEnvelope' }
@@ -1619,6 +1889,9 @@ paths:
       responses:
         '200':
           description: Medical record collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/MedicalRecordListEnvelope' }
@@ -1636,6 +1909,8 @@ paths:
                         version: 1
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /medical-records/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: Retrieve medical record snapshot
       parameters:
@@ -1646,6 +1921,9 @@ paths:
       responses:
         '200':
           description: Medical record retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/MedicalRecordEnvelope' }
@@ -1686,6 +1964,9 @@ paths:
       responses:
         '200':
           description: Medical record updated
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/MedicalRecordEnvelope' }
@@ -1706,6 +1987,8 @@ paths:
         '409': { $ref: '#/components/responses/ConflictResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /devices/events:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Ingest device signal
       requestBody:
@@ -1724,6 +2007,9 @@ paths:
       responses:
         '201':
           description: Device signal ingested
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/DeviceIngestionEnvelope' }
@@ -1745,6 +2031,9 @@ paths:
       responses:
         '200':
           description: Device event collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/DeviceIngestionListEnvelope' }
@@ -1761,6 +2050,8 @@ paths:
                         receivedAt: 2026-05-31T10:07:00Z
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /devices/events/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: Retrieve ingested device event
       parameters:
@@ -1771,6 +2062,9 @@ paths:
       responses:
         '200':
           description: Device event retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/DeviceIngestionEnvelope' }
@@ -1788,6 +2082,8 @@ paths:
         '404': { $ref: '#/components/responses/NotFoundResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /identity/assertions:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     post:
       summary: Validate and store identity assertion
       requestBody:
@@ -1806,6 +2102,9 @@ paths:
       responses:
         '201':
           description: Identity assertion validated
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/IdentityAssertionEnvelope' }
@@ -1827,6 +2126,9 @@ paths:
       responses:
         '200':
           description: Identity assertion collection
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/IdentityAssertionListEnvelope' }
@@ -1843,6 +2145,8 @@ paths:
                         tokenId: tok-93ab
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /identity/assertions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
     get:
       summary: Retrieve identity assertion
       parameters:
@@ -1853,6 +2157,9 @@ paths:
       responses:
         '200':
           description: Identity assertion retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/IdentityAssertionEnvelope' }

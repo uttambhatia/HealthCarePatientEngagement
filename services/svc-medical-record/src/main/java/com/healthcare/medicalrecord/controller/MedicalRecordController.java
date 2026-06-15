@@ -10,6 +10,9 @@ package com.healthcare.medicalrecord.controller;
         import io.swagger.v3.oas.annotations.tags.Tag;
         import jakarta.validation.Valid;
         import org.springframework.http.HttpStatus;
+        import org.springframework.security.core.Authentication;
+        import org.springframework.security.core.context.SecurityContextHolder;
+        import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
         import org.springframework.web.bind.annotation.GetMapping;
         import org.springframework.web.bind.annotation.PathVariable;
         import org.springframework.web.bind.annotation.PostMapping;
@@ -18,8 +21,10 @@ package com.healthcare.medicalrecord.controller;
         import org.springframework.web.bind.annotation.RequestMapping;
         import org.springframework.web.bind.annotation.ResponseStatus;
         import org.springframework.web.bind.annotation.RestController;
+        import org.springframework.web.server.ResponseStatusException;
 
         import java.util.List;
+        import java.util.Optional;
 
         @RestController
         @RequestMapping("/medical-records")
@@ -35,6 +40,7 @@ package com.healthcare.medicalrecord.controller;
             @PostMapping
             @ResponseStatus(HttpStatus.CREATED)
             public StandardResponse<MedicalRecordResponse> create(@Valid @RequestBody CreateMedicalRecordRequest request) {
+                enforcePatientScope(request.patientId());
                 String correlationId = CorrelationIdHolder.get().orElse("n/a");
                 return new StandardResponse<>(correlationId, service.syncMedicalRecord(request, correlationId));
             }
@@ -42,7 +48,9 @@ package com.healthcare.medicalrecord.controller;
             @Operation(summary = "Get MedicalRecord resource")
             @GetMapping("/{id}")
             public StandardResponse<MedicalRecordResponse> get(@PathVariable("id") String id) {
-                return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), service.getMedicalRecord(id));
+                MedicalRecordResponse response = service.getMedicalRecord(id);
+                enforcePatientScope(response.patientId());
+                return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), response);
             }
 
             @Operation(summary = "Update MedicalRecord resource")
@@ -50,6 +58,8 @@ package com.healthcare.medicalrecord.controller;
             public StandardResponse<MedicalRecordResponse> update(
                     @PathVariable("id") String id,
                     @Valid @RequestBody UpdateMedicalRecordRequest request) {
+                MedicalRecordResponse existing = service.getMedicalRecord(id);
+                enforcePatientScope(existing.patientId());
                 String correlationId = CorrelationIdHolder.get().orElse("n/a");
                 return new StandardResponse<>(correlationId, service.updateMedicalRecord(id, request, correlationId));
             }
@@ -58,6 +68,50 @@ package com.healthcare.medicalrecord.controller;
 @Operation(summary = "List MedicalRecord resources")
 @GetMapping
 public StandardResponse<List<MedicalRecordResponse>> list() {
-    return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), service.listMedicalRecords());
+    List<MedicalRecordResponse> responses = service.listMedicalRecords();
+    if (isPatientPrincipal()) {
+        String patientScope = patientScopeClaim().orElseThrow(this::forbidden);
+        responses = responses.stream()
+                .filter(item -> item.patientId() != null && item.patientId().equalsIgnoreCase(patientScope))
+                .toList();
+    }
+    return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), responses);
 }
+
+        private boolean isPatientPrincipal() {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            return authentication != null
+                    && authentication.isAuthenticated()
+                    && authentication.getAuthorities().stream().anyMatch(authority -> "ROLE_PATIENT".equals(authority.getAuthority()));
+        }
+
+        private Optional<String> patientScopeClaim() {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (!(authentication instanceof JwtAuthenticationToken jwtAuthenticationToken)) {
+                return Optional.empty();
+            }
+
+            String[] candidateClaims = {"patientId", "patient_id", "externalReference", "external_reference", "sub"};
+            for (String candidate : candidateClaims) {
+                String claimValue = jwtAuthenticationToken.getToken().getClaimAsString(candidate);
+                if (claimValue != null && !claimValue.isBlank()) {
+                    return Optional.of(claimValue);
+                }
+            }
+            return Optional.empty();
+        }
+
+        private void enforcePatientScope(String requestedPatientId) {
+            if (!isPatientPrincipal()) {
+                return;
+            }
+            String patientScope = patientScopeClaim().orElseThrow(this::forbidden);
+            if (requestedPatientId == null || !requestedPatientId.equalsIgnoreCase(patientScope)) {
+                throw forbidden();
+            }
+        }
+
+        private ResponseStatusException forbidden() {
+            return new ResponseStatusException(HttpStatus.FORBIDDEN, "Patient scope violation");
+        }
         }

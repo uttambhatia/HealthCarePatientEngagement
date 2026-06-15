@@ -402,13 +402,27 @@ function createBypassPayload(url: string, method: string) {
 export async function apiClient<T>(input: string, options: ApiOptions = {}): Promise<T> {
   const requestUrl = buildUrl(input)
   const method = (options.method ?? 'GET').toUpperCase()
+  const path = getPathname(requestUrl)
   const token = options.token ?? authTokenGetter?.() ?? undefined
+  const isMockToken = typeof token === 'string' && token.startsWith('mock-jwt-')
+  const effectiveToken = isMockToken ? undefined : token
+
+  if (!BYPASS_AUTH && isMockToken && path.startsWith('/api/')) {
+    const apiError = new ApiError(
+      'Role preview is UI-only. Use "Sign in securely" to call protected backend APIs.',
+      401,
+      null,
+    )
+    errorInterceptor?.(apiError)
+    throw apiError
+  }
+
   const response = await fetch(requestUrl, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
       'X-Correlation-Id': createCorrelationId(),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(effectiveToken ? { Authorization: `Bearer ${effectiveToken}` } : {}),
       ...(options.headers ?? {}),
     },
   })
@@ -416,7 +430,7 @@ export async function apiClient<T>(input: string, options: ApiOptions = {}): Pro
   const parsedBody = await parseResponseBody(response)
 
   if (!response.ok) {
-    if (BYPASS_AUTH && !token && (response.status === 401 || response.status === 403)) {
+    if ((BYPASS_AUTH || isMockToken) && !effectiveToken && (response.status === 401 || response.status === 403)) {
       const bypassPayload = createBypassPayload(requestUrl, method)
       if (bypassPayload !== null) {
         return bypassPayload as T

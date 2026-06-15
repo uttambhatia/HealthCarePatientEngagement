@@ -29,6 +29,72 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Validate Kubernetes OAuth2 wiring
+        run: bash scripts/validate-k8s-security-env.sh
+
+      - name: Validate Kubernetes deployment baseline
+        run: bash scripts/validate-k8s-deployment-baseline.sh
+
+      - name: Validate Kubernetes routing hygiene
+        run: bash scripts/validate-k8s-routing-hygiene.sh
+
+      - name: Validate Kubernetes NetworkPolicy hygiene
+        run: bash scripts/validate-k8s-networkpolicy-hygiene.sh
+
+      - name: Validate Kubernetes resilience hygiene
+        run: bash scripts/validate-k8s-resilience-hygiene.sh
+
+      - name: Validate Kubernetes scheduling hygiene
+        run: bash scripts/validate-k8s-scheduling-hygiene.sh
+
+      - name: Validate Kubernetes observability env wiring
+        run: bash scripts/validate-k8s-observability-env.sh
+
+      - name: Validate Kubernetes runtime security hygiene
+        run: bash scripts/validate-k8s-runtime-security-hygiene.sh
+
+      - name: Validate Kubernetes rollout hygiene
+        run: bash scripts/validate-k8s-rollout-hygiene.sh
+
+      - name: Validate Kubernetes Azure SQL wiring
+        run: bash scripts/validate-k8s-azure-sql-env.sh
+
+      - name: Validate private endpoint dependency wiring
+        run: bash scripts/validate-k8s-private-endpoint-env.sh
+
+      - name: Validate integration adapter readiness
+        run: bash scripts/validate-integration-adapter-readiness.sh
+
+      - name: Validate integration reliability hygiene
+        run: bash scripts/validate-integration-reliability-hygiene.sh
+
+      - name: Validate integration adapter contract tests
+        run: bash scripts/validate-integration-adapter-contract-tests.sh
+
+      - name: Validate integration correlation-id propagation
+        run: bash scripts/validate-integration-correlation-id-propagation.sh
+
+      - name: Validate API gateway route coverage
+        run: bash scripts/validate-api-gateway-route-coverage.sh
+
+      - name: Validate API gateway security policy
+        run: bash scripts/validate-api-gateway-security-policy.sh
+
+      - name: Validate correlation-id contract and propagation
+        run: bash scripts/validate-correlation-id-contract.sh
+
+      - name: Validate OpenAPI controller coverage
+        run: bash scripts/validate-openapi-controller-coverage.sh
+
+      - name: Validate OpenAPI operation parity
+        run: bash scripts/validate-openapi-operation-parity.sh
+
+      - name: Validate DR readiness artifacts
+        run: bash scripts/validate-dr-readiness-artifacts.sh
+
+      - name: Validate DR evidence freshness
+        run: bash scripts/validate-dr-evidence-freshness.sh
+
       - name: Build backend
         run: mvn -B test
 

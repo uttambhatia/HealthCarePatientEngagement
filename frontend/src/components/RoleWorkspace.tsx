@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Card } from './Card'
+import { MetricCardIcon, type MetricVariant } from './MetricCardIcon'
 import { SectionHeader } from './SectionHeader'
 import { AppointmentBooking } from '../modules/appointment/AppointmentBooking'
 import { AdminDashboard } from '../modules/admin/AdminDashboard'
@@ -13,8 +14,6 @@ type WorkspaceModule = {
   key: string
   node: ReactNode
 }
-
-type MetricVariant = 'volume' | 'activity' | 'narrative' | 'status'
 
 type RoleBlueprint = {
   title: string
@@ -140,33 +139,18 @@ export function RoleWorkspace({ role }: RoleWorkspaceProps) {
 
   return (
     <div className="workspace-stack">
-      <section className="role-spotlight card">
-        <div className="role-spotlight-copy">
-          <p className="eyebrow">Role workspace</p>
-          <h2>{blueprint.title}</h2>
-          <p>{blueprint.summary}</p>
-          <div className="pill-row">
-            {blueprint.focus.map((item) => (
-              <span key={item} className="pill">{item}</span>
-            ))}
-          </div>
-        </div>
-        <div className="role-spotlight-side">
-          {blueprint.metrics.map((metric) => (
-            <div key={metric.label} className={`metric-card metric-card--${metric.variant ?? resolveMetricVariant(metric.label)}`}>
-              <span>{metric.label}</span>
-              <strong>{metric.value}</strong>
-            </div>
-          ))}
-        </div>
-      </section>
-
       <section className="role-route-grid">
-        <div className="dashboard-grid dashboard-grid--primary">
+        <Card title="Primary workflow" eyebrow="Start here" centeredHeader>
+          <SectionHeader
+            title={blueprint.title}
+            subtitle={blueprint.summary}
+          />
+          <div className="dashboard-grid dashboard-grid--primary">
             {blueprint.primary.map(({ key, node }) => (
               <div key={key} className="module-slot module-slot--featured">{node}</div>
             ))}
           </div>
+        </Card>
 
         <Card title="Supporting tools" eyebrow="Secondary capabilities">
           <SectionHeader
@@ -179,6 +163,32 @@ export function RoleWorkspace({ role }: RoleWorkspaceProps) {
             ))}
           </div>
         </Card>
+      </section>
+
+      <section className="role-spotlight card">
+        <div className="role-spotlight-copy">
+          <p className="eyebrow">At a glance</p>
+          <h2>{blueprint.title}</h2>
+          <p>{blueprint.summary}</p>
+          <div className="pill-row">
+            {blueprint.focus.map((item) => (
+              <span key={item} className="pill">{item}</span>
+            ))}
+          </div>
+        </div>
+        <div className="role-spotlight-side">
+          {blueprint.metrics.map((metric) => {
+            const variant = metric.variant ?? resolveMetricVariant(metric.label)
+
+            return (
+              <div key={metric.label} className={`metric-card metric-card--${variant}`}>
+                <MetricCardIcon variant={variant} />
+                <span>{metric.label}</span>
+                <strong>{metric.value}</strong>
+              </div>
+            )
+          })}
+        </div>
       </section>
     </div>
   )

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import { Card } from '../../components/Card'
 import { LabelWithIcon } from '../../components/LabelWithIcon'
+import { MetricCardIcon } from '../../components/MetricCardIcon'
 import { SectionHeader } from '../../components/SectionHeader'
 import { createCarePlan, listCarePlans, listPatients, updateCarePlan, type CarePlanResponse } from '../../services/platformApi'
 
@@ -284,14 +285,17 @@ export function CarePlanManagement() {
     <Card title="Care plan management" eyebrow="Coordinator workspace">
       <div className="careplan-summary-row">
         <div className="metric-card metric-card--volume">
+          <MetricCardIcon variant="volume" />
           <span>Total plans</span>
           <strong>{carePlans.length}</strong>
         </div>
         <div className="metric-card metric-card--narrative">
+          <MetricCardIcon variant="narrative" />
           <span>Latest plan</span>
           <strong>{latestPlan ? latestPlan.goal : 'None yet'}</strong>
         </div>
         <div className={`metric-card metric-card--status metric-card--status-${carePlanMetricStatus}`}>
+          <MetricCardIcon variant="status" />
           <span>Status</span>
           <strong>{latestPlan ? latestPlan.planStatus : 'Not available'}</strong>
         </div>
@@ -327,7 +331,7 @@ export function CarePlanManagement() {
           action={
             <button
               type="button"
-              className="secondary-button"
+              className="primary-button"
               onClick={() => {
                 setCreateOpen((o) => !o)
                 setSelectedPlanId('')
@@ -449,7 +453,7 @@ export function CarePlanManagement() {
           <div className="carousel-controls" aria-label="Care plan navigation">
             <button
               type="button"
-              className="secondary-button carousel-button"
+              className={`${carePlanPage >= totalCarePlanPages - 1 ? 'primary-button' : 'secondary-button'} carousel-button`}
               onClick={() => setCarePlanPage((page) => Math.max(0, page - 1))}
               disabled={carePlanPage === 0}
             >
@@ -457,7 +461,7 @@ export function CarePlanManagement() {
             </button>
             <button
               type="button"
-              className="secondary-button carousel-button"
+              className={`${carePlanPage < totalCarePlanPages - 1 ? 'primary-button' : 'secondary-button'} carousel-button`}
               onClick={() => setCarePlanPage((page) => Math.min(totalCarePlanPages - 1, page + 1))}
               disabled={carePlanPage >= totalCarePlanPages - 1}
             >

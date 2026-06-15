@@ -309,7 +309,7 @@ export function PatientConsentManagement({ showConsentForm }: PatientConsentMana
             <div className="carousel-controls" aria-label="Consent records navigation">
                 <button
                   type="button"
-                  className="secondary-button carousel-button"
+                  className={`${consentPage >= totalConsentPages - 1 ? 'primary-button' : 'secondary-button'} carousel-button`}
                   onClick={() => setConsentPage((page) => Math.max(0, page - 1))}
                   disabled={consentPage === 0}
                 >
@@ -317,7 +317,7 @@ export function PatientConsentManagement({ showConsentForm }: PatientConsentMana
               </button>
                 <button
                   type="button"
-                  className="secondary-button carousel-button"
+                  className={`${consentPage < totalConsentPages - 1 ? 'primary-button' : 'secondary-button'} carousel-button`}
                   onClick={() => setConsentPage((page) => Math.min(totalConsentPages - 1, page + 1))}
                   disabled={consentPage >= totalConsentPages - 1}
                 >

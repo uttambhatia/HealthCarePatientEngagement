@@ -169,7 +169,7 @@ export function PatientDashboard() {
           title="Consent management"
           subtitle="Grant or revoke care data permissions and review your consent records."
           action={
-            <button type="button" className="secondary-button" onClick={() => setConsentFormOpen((open) => !open)}>
+            <button type="button" className="primary-button" onClick={() => setConsentFormOpen((open) => !open)}>
               {consentFormOpen ? 'Cancel' : 'Create consent'}
             </button>
           }
@@ -186,7 +186,7 @@ export function PatientDashboard() {
           title="Booked appointments"
           subtitle="Appointments already scheduled through the platform."
           action={
-            <button type="button" className="secondary-button" onClick={() => setBookingOpen((o) => !o)}>
+            <button type="button" className="primary-button" onClick={() => setBookingOpen((o) => !o)}>
               {bookingOpen ? 'Cancel' : 'Book appointment'}
             </button>
           }
@@ -204,7 +204,7 @@ export function PatientDashboard() {
             <div className="carousel-controls" aria-label="Booked appointments navigation">
               <button
                 type="button"
-                className="secondary-button carousel-button"
+                className={`${appointmentPage >= totalAppointmentPages - 1 ? 'primary-button' : 'secondary-button'} carousel-button`}
                 onClick={() => setAppointmentPage((page) => Math.max(0, page - 1))}
                 disabled={appointmentPage === 0}
               >
@@ -212,7 +212,7 @@ export function PatientDashboard() {
               </button>
               <button
                 type="button"
-                className="secondary-button carousel-button"
+                className={`${appointmentPage < totalAppointmentPages - 1 ? 'primary-button' : 'secondary-button'} carousel-button`}
                 onClick={() => setAppointmentPage((page) => Math.min(totalAppointmentPages - 1, page + 1))}
                 disabled={appointmentPage >= totalAppointmentPages - 1}
               >

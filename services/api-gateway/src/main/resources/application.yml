@@ -18,3 +18,4 @@ platform:
     oauth2:
       jwk-set-uri: ${OAUTH2_JWK_SET_URI:https://login.microsoftonline.com/common/discovery/v2.0/keys}
       issuer: ${OAUTH2_ISSUER:}
+      audience: ${OAUTH2_AUDIENCE:}

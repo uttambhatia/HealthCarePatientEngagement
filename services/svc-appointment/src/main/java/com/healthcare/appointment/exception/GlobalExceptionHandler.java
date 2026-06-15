@@ -3,6 +3,7 @@ package com.healthcare.appointment.exception;
 import com.healthcare.platform.common.exception.ApiError;
 import com.healthcare.platform.common.observability.CorrelationIdHolder;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -21,6 +22,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConsentAccessDeniedException.class)
     public ResponseEntity<ApiError> handleConsentDenied(ConsentAccessDeniedException exception) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error("CONSENT_ACCESS_DENIED", exception.getMessage()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error("ACCESS_DENIED", exception.getMessage()));
     }
 
     @ExceptionHandler(AppointmentNotEligibleException.class)

@@ -2,8 +2,10 @@ import './App.css'
 import { useEffect, useState } from 'react'
 import { LoginPanel } from './modules/auth/LoginPanel'
 import { RoleWorkspace } from './components/RoleWorkspace'
+import { AdminLandingPage } from './pages/AdminLandingPage'
 import { CoordinatorLandingPage } from './pages/CoordinatorLandingPage'
 import { DoctorLandingPage } from './pages/DoctorLandingPage'
+import { PatientLandingPage } from './pages/PatientLandingPage'
 import { HomePage } from './pages/HomePage'
 import { useAuth } from './auth/useAuth'
 import { setApiAuthTokenGetter, setApiErrorInterceptor } from './services/apiClient'
@@ -83,7 +85,7 @@ function App() {
           <LoginPanel
             oidcEnabled={isOidcConfigured}
             authError={authError}
-            onOidcLogin={() => void loginWithOidc()}
+            onOidcLogin={(loginHint) => void loginWithOidc(loginHint)}
             onLogin={loginAs}
             onRegisterPatient={() => setShowPatientRegistration(true)}
             showPatientRegistration={showPatientRegistration}
@@ -99,8 +101,12 @@ function App() {
           />
         </>
       ) : (
-        session.role === 'DOCTOR' ? (
+        session.role === 'PATIENT' ? (
+          <PatientLandingPage role={session.role} />
+        ) : session.role === 'DOCTOR' ? (
           <DoctorLandingPage role={session.role} />
+        ) : session.role === 'ADMIN' ? (
+          <AdminLandingPage role={session.role} />
         ) : session.role === 'COORDINATOR' ? (
           <CoordinatorLandingPage role={session.role} />
         ) : (

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1200" role="img" aria-label="Doctor silhouette watermark">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#eaf4fc"/>
+      <stop offset="100%" stop-color="#d8eaf8"/>
+    </linearGradient>
+    <linearGradient id="silhouette" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#97b5cd"/>
+      <stop offset="100%" stop-color="#6f93b3"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4f7396"/>
+      <stop offset="100%" stop-color="#3d6286"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1000" height="1200" fill="url(#base)"/>
+
+  <!-- Professional, non-cartoon doctor silhouette -->
+  <g transform="translate(500 620)">
+    <ellipse cx="0" cy="-320" rx="120" ry="132" fill="url(#silhouette)" opacity="0.88"/>
+    <path d="M-320 280 C-320 90, -190 -40, -20 -40 L20 -40 C190 -40, 320 90, 320 280 L320 390 L-320 390 Z" fill="url(#silhouette)" opacity="0.8"/>
+
+    <!-- coat lapels -->
+    <path d="M-120 -20 L0 180 L-40 390 L-190 390 L-190 120 Z" fill="#dce9f6" opacity="0.75"/>
+    <path d="M120 -20 L0 180 L40 390 L190 390 L190 120 Z" fill="#dce9f6" opacity="0.75"/>
+
+    <!-- neck and tie strip -->
+    <rect x="-22" y="-88" width="44" height="68" rx="14" fill="#86a6c2" opacity="0.85"/>
+    <path d="M-28 12 L0 112 L28 12 Z" fill="#6b8cab" opacity="0.9"/>
+
+    <!-- stethoscope -->
+    <path d="M-188 58 C-252 58, -296 106, -296 170 C-296 232, -252 280, -188 280" fill="none" stroke="url(#line)" stroke-width="16" stroke-linecap="round"/>
+    <path d="M188 58 C252 58, 296 106, 296 170 C296 232, 252 280, 188 280" fill="none" stroke="url(#line)" stroke-width="16" stroke-linecap="round"/>
+    <path d="M-126 246 C-76 184, 76 184, 126 246" fill="none" stroke="url(#line)" stroke-width="16" stroke-linecap="round"/>
+    <circle cx="0" cy="246" r="20" fill="#d7e7f4" stroke="url(#line)" stroke-width="10"/>
+    <circle cx="-188" cy="280" r="24" fill="#d7e7f4" stroke="url(#line)" stroke-width="10"/>
+    <circle cx="188" cy="280" r="24" fill="#d7e7f4" stroke="url(#line)" stroke-width="10"/>
+  </g>
+</svg>
