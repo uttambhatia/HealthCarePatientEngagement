@@ -54,6 +54,10 @@ jobs:
           mvn -N install
           mvn -pl platform-common install -DskipTests -q
 
+      - name: Package service artifacts
+        run: |
+          mvn clean package -DskipTests -q
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
