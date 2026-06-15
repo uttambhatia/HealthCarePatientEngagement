@@ -213,7 +213,17 @@ export function LoginPanel({
                 </label>
                 <small className="login-hint-help">Credentials are entered on Microsoft sign-in page, not in this app.</small>
                 {!oidcEnabled ? (
-                  <p className="login-note">Secure sign-in is not configured yet in this environment. You can still continue with local role access.</p>
+                  <p className="login-note">
+                    Secure sign-in is not configured yet in this environment. Verify
+                    {' '}
+                    <strong>VITE_OIDC_CLIENT_ID</strong>
+                    {' '}
+                    and the other
+                    {' '}
+                    <strong>VITE_OIDC_*</strong>
+                    {' '}
+                    values before retrying, or continue with local role access.
+                  </p>
                 ) : null}
                 {authError ? <p className="login-error">Authentication error: {authError}</p> : null}
                 <div className="button-row login-panel-cta-row">
