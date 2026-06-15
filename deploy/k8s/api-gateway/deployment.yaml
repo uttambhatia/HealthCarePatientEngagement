@@ -3,7 +3,12 @@ kind: Deployment
 metadata:
   name: api-gateway
 spec:
-  replicas: 2
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: api-gateway
@@ -12,19 +17,108 @@ spec:
       labels:
         app: api-gateway
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - api-gateway
+              topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: api-gateway
       containers:
         - name: api-gateway
           image: ghcr.io/uttambhatia/healthcarepatientengagement/api-gateway:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8080
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: aks
+            - name: PLATFORM_SECURITY_ENABLED
+              value: "true"
+            - name: PLATFORM_ROUTES_PATIENTS_URI
+              value: "http://svc-patient:8081"
+            - name: PLATFORM_ROUTES_APPOINTMENTS_URI
+              value: "http://svc-appointment:8082"
+            - name: PLATFORM_ROUTES_CONSENTS_URI
+              value: "http://svc-consent:8084"
+            - name: PLATFORM_ROUTES_CAREPLANS_URI
+              value: "http://svc-careplan:8085"
+            - name: PLATFORM_ROUTES_MEDICAL_RECORDS_URI
+              value: "http://svc-medical-record:8086"
+            - name: PLATFORM_ROUTES_NOTIFICATIONS_URI
+              value: "http://svc-notification:8087"
+            - name: PLATFORM_ROUTES_TELEMETRY_URI
+              value: "http://svc-telemetry:8088"
+            - name: PLATFORM_ROUTES_DEVICE_EVENTS_URI
+              value: "http://svc-device-ingestion:8089"
+            - name: PLATFORM_ROUTES_ALERTS_URI
+              value: "http://svc-alert-management:8090"
+            - name: PLATFORM_ROUTES_IDENTITY_ASSERTIONS_URI
+              value: "http://svc-identity-adapter:8091"
+            - name: PLATFORM_ROUTES_SERVICEBUS_MESSAGES_URI
+              value: "http://svc-event-messaging:8092"
             - name: SERVICEBUS_NAMESPACE
               valueFrom:
                 secretKeyRef:
                   name: platform-secrets
                   key: servicebus-namespace
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: otel-otlp-endpoint
+            - name: OAUTH2_ISSUER
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: oauth2-issuer
+            - name: OAUTH2_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: oauth2-audience
+            - name: PLATFORM_SECURITY_OAUTH2_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: oauth2-audience
+            - name: OAUTH2_JWK_SET_URI
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: oauth2-jwk-set-uri
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /actuator/health
@@ -33,3 +127,4 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8080
+
