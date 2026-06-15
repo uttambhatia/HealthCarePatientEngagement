@@ -121,8 +121,15 @@ export function PatientConsentManagement({ showConsentForm }: PatientConsentMana
       return ''
     }
 
-    const claims = decodeJwtPayload(session.idToken ?? session.accessToken)
-    return inferPatientId(claims)
+    // Consent API enforces patient scope from the access token claims.
+    const accessClaims = decodeJwtPayload(session.accessToken)
+    const accessScopedPatientId = inferPatientId(accessClaims)
+    if (accessScopedPatientId) {
+      return accessScopedPatientId
+    }
+
+    const idClaims = decodeJwtPayload(session.idToken ?? '')
+    return inferPatientId(idClaims)
   }, [session])
 
   const cacheScope = inferredPatientId || 'all'
