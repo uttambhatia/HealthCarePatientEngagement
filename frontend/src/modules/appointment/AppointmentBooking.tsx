@@ -1,7 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import { Card } from '../../components/Card'
 import { createAppointment } from '../../services/platformApi'
+
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const [, payload] = token.split('.')
+  if (!payload) return null
+  try {
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
+function inferPatientId(claims: Record<string, unknown> | null): string {
+  if (!claims) return ''
+  const candidates = [claims.patientId, claims.patient_id, claims['patient-id'], claims.externalReference, claims.external_reference, claims.sub]
+  const match = candidates.find((v) => typeof v === 'string' && v.length > 0)
+  return match ? String(match) : ''
+}
 
 export function AppointmentBooking() {
   const { session } = useAuth()
@@ -11,6 +28,21 @@ export function AppointmentBooking() {
   const [channel, setChannel] = useState('VIDEO')
   const [result, setResult] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const inferredPatientId = useMemo(() => {
+    if (!session) return ''
+    const accessClaims = decodeJwtPayload(session.accessToken)
+    const fromAccess = inferPatientId(accessClaims)
+    if (fromAccess) return fromAccess
+    const idClaims = decodeJwtPayload(session.idToken ?? '')
+    return inferPatientId(idClaims)
+  }, [session])
+
+  useEffect(() => {
+    if (!patientId && inferredPatientId) {
+      setPatientId(inferredPatientId)
+    }
+  }, [inferredPatientId, patientId])
 
   async function handleBookAppointment() {
     if (!session) {
@@ -47,6 +79,7 @@ export function AppointmentBooking() {
     <Card title="Appointment booking" eyebrow="Appointment service">
       <form className="stacked-form">
         <input value={patientId} placeholder="Patient ID" onChange={(event) => setPatientId(event.target.value)} />
+        {inferredPatientId ? <small style={{ fontSize: '0.75rem', color: '#6b7280' }}>Prefilled from your session token.</small> : null}
         <input value={providerId} placeholder="Provider ID" onChange={(event) => setProviderId(event.target.value)} />
         <input value={scheduledAt} placeholder="2026-05-26T09:00:00Z" onChange={(event) => setScheduledAt(event.target.value)} />
         <select value={channel} onChange={(event) => setChannel(event.target.value)}>
