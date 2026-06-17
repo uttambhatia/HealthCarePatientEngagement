@@ -11,6 +11,8 @@ package com.healthcare.patient.service;
     import com.healthcare.patient.integration.PatientNotificationAdapter;
         import com.healthcare.patient.repository.PatientRepository;
         import com.healthcare.platform.common.messaging.MessagingPort;
+        import org.slf4j.Logger;
+        import org.slf4j.LoggerFactory;
         import org.springframework.stereotype.Service;
 
         import java.util.List;
@@ -18,6 +20,8 @@ package com.healthcare.patient.service;
 
         @Service
         public class PatientApplicationServiceImpl implements PatientApplicationService {
+            private static final Logger LOGGER = LoggerFactory.getLogger(PatientApplicationServiceImpl.class);
+
             private final PatientRepository repository;
             private final MessagingPort messagingPort;
             private final PatientFhirAdapter integration;
@@ -53,24 +57,10 @@ package com.healthcare.patient.service;
                         request.phone(),
                         request.demographics()
                 ));
-                try {
-                    integration.synchronizeProfile(aggregate, correlationId);
-                    messagingPort.publish("patient-service", correlationId, new PatientRegisteredEvent(
-                            aggregate.id(),
-                            aggregate.externalReference(),
-                            aggregate.givenName(),
-                            aggregate.familyName(),
-                                    aggregate.birthDate(),
-                                    aggregate.email(),
-                                    aggregate.phone(),
-                                    aggregate.demographics()
-                    ));
-                            notificationAdapter.sendRegistrationConfirmation(aggregate, correlationId);
+                    synchronizeProfileSafely(aggregate, correlationId);
+                    publishRegistrationEventSafely(aggregate, correlationId);
+                    sendRegistrationConfirmationSafely(aggregate, correlationId);
                     return map(aggregate);
-                } catch (RuntimeException exception) {
-                    repository.deleteById(aggregate.id());
-                    throw exception;
-                }
             }
 
                     private void validateDuplicateRegistration(CreatePatientRequest request) {
@@ -97,6 +87,43 @@ package com.healthcare.patient.service;
 public PatientResponse orchestrateOnboarding(CreatePatientRequest request, String correlationId) {
     return registerPatient(request, correlationId);
 }
+
+            private void synchronizeProfileSafely(PatientProfile aggregate, String correlationId) {
+                try {
+                    integration.synchronizeProfile(aggregate, correlationId);
+                } catch (RuntimeException exception) {
+                    LOGGER.warn("Patient FHIR synchronization failed aggregateId={} correlationId={} error={}",
+                            aggregate.id(), correlationId, exception.getMessage());
+                }
+            }
+
+            private void publishRegistrationEventSafely(PatientProfile aggregate, String correlationId) {
+                try {
+                    messagingPort.publish("patient-service", correlationId, new PatientRegisteredEvent(
+                            aggregate.id(),
+                            aggregate.externalReference(),
+                            aggregate.givenName(),
+                            aggregate.familyName(),
+                            aggregate.birthDate(),
+                            aggregate.email(),
+                            aggregate.phone(),
+                            aggregate.demographics()
+                    ));
+                } catch (RuntimeException exception) {
+                    LOGGER.warn("Patient registration event publish failed aggregateId={} correlationId={} error={}",
+                            aggregate.id(), correlationId, exception.getMessage());
+                }
+            }
+
+            private void sendRegistrationConfirmationSafely(PatientProfile aggregate, String correlationId) {
+                try {
+                    notificationAdapter.sendRegistrationConfirmation(aggregate, correlationId);
+                } catch (RuntimeException exception) {
+                    LOGGER.warn("Patient registration notification failed aggregateId={} correlationId={} error={}",
+                            aggregate.id(), correlationId, exception.getMessage());
+                }
+            }
+
             private PatientResponse map(PatientProfile aggregate) {
                 return new PatientResponse(
                         aggregate.id(),
