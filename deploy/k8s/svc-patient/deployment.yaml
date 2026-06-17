@@ -76,6 +76,8 @@ spec:
                 secretKeyRef:
                   name: platform-secrets
                   key: fhir-integration-base-url
+            - name: NOTIFICATION_INTEGRATION_BASE_URL
+              value: http://svc-notification
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               valueFrom:
                 secretKeyRef:

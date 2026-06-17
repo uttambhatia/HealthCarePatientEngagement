@@ -54,6 +54,12 @@ spec:
                 secretKeyRef:
                   name: platform-secrets
                   key: otel-otlp-endpoint
+            - name: ACS_INTEGRATION_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: acs-integration-base-url
+                  optional: true
             - name: NOTIFICATION_DB_URL
               valueFrom:
                 secretKeyRef:
