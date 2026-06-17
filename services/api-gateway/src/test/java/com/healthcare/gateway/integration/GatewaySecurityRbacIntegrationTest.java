@@ -30,7 +30,7 @@ class GatewaySecurityRbacIntegrationTest {
     @Test
     void shouldRejectApiRequestWithoutToken() {
         webTestClient.get()
-                .uri("/api/patients")
+                .uri("/api/appointments")
                 .exchange()
                 .expectStatus().isUnauthorized();
     }
@@ -86,10 +86,10 @@ class GatewaySecurityRbacIntegrationTest {
     }
 
     @Test
-    void shouldForbidSystemIntegrationOnPatientsApi() {
+    void shouldForbidSystemIntegrationOnAppointmentsApi() {
         clientWithRoleAndCsrf("SYSTEM_INTEGRATION")
                 .post()
-                .uri("/api/patients")
+                .uri("/api/appointments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue("{}")
                 .exchange()

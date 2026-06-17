@@ -116,6 +116,15 @@ Frontend deployment (App Service, architecture path Browser -> App Service UI ->
 2. Configure repository or environment `secrets`: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
 3. Run `.github/workflows/frontend-appservice.yml` (or push to `main` with frontend changes).
 
+Backend deployment (GitHub Actions -> GHCR -> AKS):
+
+1. Push backend changes to `main` or run `.github/workflows/build-and-push-images.yml` manually to publish service images to GHCR.
+2. The publish workflow now emits both the requested tag and the commit SHA, so AKS can deploy an exact image version instead of relying on `latest`.
+3. After the image publish workflow succeeds, `.github/workflows/redeploy-aks.yml` runs automatically and pins every service deployment to the triggering commit SHA.
+4. For a manual redeploy, run `.github/workflows/redeploy-aks.yml` and set `imageTag` to the tag you want to pin.
+5. Configure repository or environment secrets for the AKS workflow: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
+6. If you need to target another cluster or namespace, override the workflow inputs `resourceGroup`, `clusterName`, and `namespace`.
+
 ## Core services quick start (gateway + careplan + telemetry)
 
 Use this when validating telemetry-by-patient and careplan responsibility routes through API gateway.

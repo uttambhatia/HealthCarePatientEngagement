@@ -73,7 +73,9 @@ jobs:
         with:
           context: ./services/api-gateway
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/api-gateway:${{ env.TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/api-gateway:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/api-gateway:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -82,7 +84,9 @@ jobs:
         with:
           context: ./services/svc-patient
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-patient:${{ env.TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-patient:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-patient:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -91,7 +95,9 @@ jobs:
         with:
           context: ./services/svc-appointment
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-appointment:${{ env.TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-appointment:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-appointment:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -100,7 +106,9 @@ jobs:
         with:
           context: ./services/svc-careplan
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-careplan:${{ env.TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-careplan:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-careplan:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -109,7 +117,9 @@ jobs:
         with:
           context: ./services/svc-consent
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-consent:${{ env.TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-consent:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-consent:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -118,7 +128,9 @@ jobs:
         with:
           context: ./services/svc-medical-record
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-medical-record:${{ env.TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-medical-record:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-medical-record:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -127,7 +139,9 @@ jobs:
         with:
           context: ./services/svc-notification
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-notification:${{ env.TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-notification:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-notification:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -136,7 +150,9 @@ jobs:
         with:
           context: ./services/svc-telemetry
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-telemetry:${{ env.TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-telemetry:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-telemetry:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -145,7 +161,9 @@ jobs:
         with:
           context: ./services/svc-device-ingestion
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-device-ingestion:${{ env.TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-device-ingestion:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-device-ingestion:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -154,7 +172,9 @@ jobs:
         with:
           context: ./services/svc-alert-management
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-alert-management:${{ env.TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-alert-management:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-alert-management:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -163,7 +183,9 @@ jobs:
         with:
           context: ./services/svc-identity-adapter
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-identity-adapter:${{ env.TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-identity-adapter:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-identity-adapter:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -172,7 +194,9 @@ jobs:
         with:
           context: ./services/svc-event-messaging
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-event-messaging:${{ env.TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-event-messaging:${{ env.TAG }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPOSITORY }}/svc-event-messaging:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -186,6 +210,7 @@ jobs:
           echo "**Owner:** ${{ env.OWNER }}" >> $GITHUB_STEP_SUMMARY
           echo "**Repository:** ${{ env.REPOSITORY }}" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** ${{ env.TAG }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Services:" >> $GITHUB_STEP_SUMMARY
           echo "- api-gateway" >> $GITHUB_STEP_SUMMARY

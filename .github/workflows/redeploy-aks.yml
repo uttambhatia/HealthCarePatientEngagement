@@ -1,4 +1,4 @@
-name: Redeploy Services to AKS
+name: Deploy Services to AKS
 
 on:
   workflow_run:
@@ -10,14 +10,29 @@ on:
         description: 'Kubernetes namespace'
         required: false
         default: 'healthcare-dev'
-      tag:
-        description: 'Image tag to deploy'
+      resourceGroup:
+        description: 'Azure resource group containing the AKS cluster'
         required: false
-        default: 'latest'
+        default: 'rg-azuser7080_mml.local-1nLQA'
+      clusterName:
+        description: 'AKS cluster name'
+        required: false
+        default: 'aks-hpe-devx'
+      services:
+        description: 'Comma-separated list of deployment folders to apply and restart'
+        required: false
+        default: 'api-gateway,svc-patient,svc-appointment,svc-careplan,svc-consent,svc-medical-record,svc-notification,svc-telemetry,svc-device-ingestion,svc-alert-management,svc-identity-adapter,svc-event-messaging'
+      imageTag:
+        description: 'Container image tag to deploy'
+        required: false
+        default: ''
 
 env:
   NAMESPACE: ${{ github.event.inputs.namespace || 'healthcare-dev' }}
-  TAG: ${{ github.event.inputs.tag || 'latest' }}
+  RESOURCE_GROUP: ${{ github.event.inputs.resourceGroup || 'rg-azuser7080_mml.local-1nLQA' }}
+  CLUSTER_NAME: ${{ github.event.inputs.clusterName || 'aks-hpe-devx' }}
+  SERVICES: ${{ github.event.inputs.services || 'api-gateway,svc-patient,svc-appointment,svc-careplan,svc-consent,svc-medical-record,svc-notification,svc-telemetry,svc-device-ingestion,svc-alert-management,svc-identity-adapter,svc-event-messaging' }}
+  IMAGE_TAG: ${{ github.event.inputs.imageTag || github.event.workflow_run.head_sha || github.sha }}
   REGISTRY: ghcr.io
   OWNER: uttambhatia
   REPOSITORY: healthcarepatientengagement
@@ -33,6 +48,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Configure kubectl
         uses: azure/setup-kubectl@v3
@@ -40,62 +57,63 @@ jobs:
           version: 'latest'
 
       - name: Authenticate to Azure
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
-          allow-no-subscriptions: true
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        continue-on-error: true
 
-      - name: Verify AKS cluster access
+      - name: Load AKS credentials
         run: |
-          echo "Verifying access to AKS cluster..."
-          az aks command invoke \
-            --resource-group "rg-azuser7080_mml.local-1nLQA" \
-            --name "aks-hpe-devx" \
-            --command "kubectl cluster-info"
+          az aks get-credentials \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --name "${{ env.CLUSTER_NAME }}" \
+            --admin \
+            --overwrite-existing
 
-      - name: Force image pull and pod restart
+      - name: Apply Kubernetes manifests
+        shell: bash
         run: |
-          echo "Applying api-gateway deployment with new configuration..."
-          az aks command invoke \
-            --resource-group "rg-azuser7080_mml.local-1nLQA" \
-            --name "aks-hpe-devx" \
-            --file deploy/k8s/api-gateway/deployment.yaml \
-            --command "kubectl apply -f /tmp/aks-resource.yaml -n ${{ env.NAMESPACE }}"
-          
-          echo "Triggering pod restart..."
-          az aks command invoke \
-            --resource-group "rg-azuser7080_mml.local-1nLQA" \
-            --name "aks-hpe-devx" \
-            --command "kubectl rollout restart deployment/api-gateway -n ${{ env.NAMESPACE }}"
+          set -euo pipefail
+
+          services=(${SERVICES//,/ })
+          for service in "${services[@]}"; do
+            echo "Applying deploy/k8s/${service}"
+            kubectl apply -n "${NAMESPACE}" -f "deploy/k8s/${service}"
+          done
+
+      - name: Pin deployments to the published image tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          services=(${SERVICES//,/ })
+          for service in "${services[@]}"; do
+            container_name=$(kubectl get "deployment/${service}" -n "${NAMESPACE}" -o jsonpath='{.spec.template.spec.containers[0].name}')
+            echo "Setting deployment/${service} container ${container_name} to ${IMAGE_TAG}"
+            kubectl set image "deployment/${service}" "${container_name}=${REGISTRY}/${OWNER}/${REPOSITORY}/${service}:${IMAGE_TAG}" -n "${NAMESPACE}"
+          done
 
       - name: Wait for rollout
+        shell: bash
         run: |
-          echo "Waiting for api-gateway to be ready..."
-          az aks command invoke \
-            --resource-group "rg-azuser7080_mml.local-1nLQA" \
-            --name "aks-hpe-devx" \
-            --command "kubectl rollout status deployment/api-gateway -n ${{ env.NAMESPACE }} --timeout=5m"
+          set -euo pipefail
+
+          services=(${SERVICES//,/ })
+          for service in "${services[@]}"; do
+            echo "Waiting for deployment/${service} to be ready..."
+            kubectl rollout status "deployment/${service}" -n "${NAMESPACE}" --timeout=5m
+          done
 
       - name: Check deployment status
+        shell: bash
         run: |
-          echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          az aks command invoke \
-            --resource-group "rg-azuser7080_mml.local-1nLQA" \
-            --name "aks-hpe-devx" \
-            --command "kubectl get deployments -n ${{ env.NAMESPACE }} -o wide" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Pod Status" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          az aks command invoke \
-            --resource-group "rg-azuser7080_mml.local-1nLQA" \
-            --name "aks-hpe-devx" \
-            --command "kubectl get pods -n ${{ env.NAMESPACE }} -o wide" >> $GITHUB_STEP_SUMMARY
-
-      - name: Verify connectivity
-        run: |
-          echo "Testing API Gateway..."
-          kubectl run -n ${{ env.NAMESPACE }} test-curl --image=curlimages/curl:latest --rm -it --restart=Never -- curl -s http://api-gateway:8080/actuator/health || echo "Gateway test completed"
+          {
+            echo "## Deployment Status"
+            echo ""
+            kubectl get deployments -n "${NAMESPACE}" -o wide
+            echo ""
+            echo "## Pod Status"
+            echo ""
+            kubectl get pods -n "${NAMESPACE}" -o wide
+          } >> "$GITHUB_STEP_SUMMARY"

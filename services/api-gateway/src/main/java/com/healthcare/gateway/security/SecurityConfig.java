@@ -1,6 +1,7 @@
 package com.healthcare.gateway.security;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,6 +21,8 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
+import org.springframework.security.web.server.util.matcher.NegatedServerWebExchangeMatcher;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
@@ -78,13 +81,17 @@ public class SecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse()))
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse())
+                .requireCsrfProtectionMatcher(new NegatedServerWebExchangeMatcher(
+                    ServerWebExchangeMatchers.pathMatchers(HttpMethod.POST, "/api/patients"))))
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers("/actuator/**", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .pathMatchers("/bff/**").hasAnyRole(HUMAN_ROLES)
 
                         // Human-facing domain APIs.
-                        .pathMatchers("/api/patients", "/api/patients/**").hasAnyRole(HUMAN_ROLES)
+                .pathMatchers(HttpMethod.POST, "/api/patients").permitAll()
+                .pathMatchers("/api/patients/**").hasAnyRole(HUMAN_ROLES)
                         .pathMatchers("/api/consents", "/api/consents/**").hasAnyRole(HUMAN_ROLES)
                         .pathMatchers("/api/appointments", "/api/appointments/**").hasAnyRole(HUMAN_ROLES)
                         .pathMatchers("/api/careplans", "/api/careplans/**").hasAnyRole(HUMAN_ROLES)
