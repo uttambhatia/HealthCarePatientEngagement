@@ -20,9 +20,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
-import org.springframework.security.web.server.util.matcher.NegatedServerWebExchangeMatcher;
-import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
@@ -81,10 +78,7 @@ public class SecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf
-                .csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse())
-                .requireCsrfProtectionMatcher(new NegatedServerWebExchangeMatcher(
-                    ServerWebExchangeMatchers.pathMatchers(HttpMethod.POST, "/api/patients"))))
+            .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers("/actuator/**", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .pathMatchers("/bff/**").hasAnyRole(HUMAN_ROLES)
