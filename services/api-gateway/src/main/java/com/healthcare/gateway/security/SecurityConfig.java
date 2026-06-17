@@ -84,7 +84,7 @@ public class SecurityConfig {
                         .pathMatchers("/bff/**").hasAnyRole(HUMAN_ROLES)
 
                         // Human-facing domain APIs.
-                        .pathMatchers(HttpMethod.POST, "/api/patients", "/patients").permitAll()
+                        .pathMatchers(HttpMethod.POST, "/api/patients", "/patients", "/**/patients", "/**/patients/**").permitAll()
                         .pathMatchers("/api/patients/**", "/patients/**").hasAnyRole(HUMAN_ROLES)
                         .pathMatchers("/api/consents", "/api/consents/**").hasAnyRole(HUMAN_ROLES)
                         .pathMatchers("/api/appointments", "/api/appointments/**").hasAnyRole(HUMAN_ROLES)
