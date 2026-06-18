@@ -153,10 +153,10 @@ public class AcsIntegrationService {
         CommunicationUserIdentifierAndToken userAndToken = communicationIdentityClient
             .createUserAndToken(Collections.singletonList(CommunicationTokenScope.VOIP));
 
-        String accessToken = userAndToken.getToken();
-        String expiresAt = userAndToken.getExpiresAt() == null
+        String accessToken = userAndToken.getUserToken().getToken();
+        String expiresAt = userAndToken.getUserToken().getExpiresAt() == null
             ? OffsetDateTime.now().plusHours(1).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-            : userAndToken.getExpiresAt().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            : userAndToken.getUserToken().getExpiresAt().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
         LOGGER.info("Issued ACS teleconsult token sessionId={} role={} correlationId={}",
             request.sessionId(), normalizedRole, correlationId);
