@@ -46,6 +46,22 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Validate API base URL
+        env:
+          API_BASE_URL: ${{ github.event.inputs.apiBaseUrl || vars.UI_VITE_API_BASE_URL || '' }}
+        run: |
+          if [ -z "$API_BASE_URL" ]; then
+            echo "UI_VITE_API_BASE_URL (or workflow input apiBaseUrl) is required."
+            echo "Set it to your APIM host, for example: https://api-dev.example.com"
+            exit 1
+          fi
+
+          if ! echo "$API_BASE_URL" | grep -Eq '^https?://'; then
+            echo "Invalid API base URL: $API_BASE_URL"
+            echo "Expected format: http(s)://<host>"
+            exit 1
+          fi
+
       - name: Build frontend
         working-directory: frontend
         env:
@@ -94,7 +110,7 @@ jobs:
           AZURE_WEBAPP_PUBLISH_PASSWORD: ${{ secrets.AZURE_WEBAPP_PUBLISH_PASSWORD }}
           KUDU_ZIPDEPLOY_URL: ${{ vars.UI_KUDU_ZIPDEPLOY_URL || format('https://{0}.scm.azurewebsites.net/api/zipdeploy', github.event.inputs.appServiceName || vars.UI_APP_SERVICE_NAME) }}
         run: |
-          HTTP_CODE=$(curl -sS -o /tmp/zipdeploy.out -w "%{http_code}" \
+          HTTP_CODE=$(curl -sS -D /tmp/zipdeploy.headers -o /tmp/zipdeploy.out -w "%{http_code}" \
             -u "$AZURE_WEBAPP_PUBLISH_USERNAME:$AZURE_WEBAPP_PUBLISH_PASSWORD" \
             -X POST "$KUDU_ZIPDEPLOY_URL?isAsync=true" \
             --data-binary "@frontend-dist.zip")
@@ -104,3 +120,33 @@ jobs:
             cat /tmp/zipdeploy.out
             exit 1
           fi
+
+          STATUS_URL=$(awk 'BEGIN { IGNORECASE=1 } /^Location:/ { print $2 }' /tmp/zipdeploy.headers | tr -d '\r')
+          if [ -z "$STATUS_URL" ]; then
+            STATUS_URL=$(echo "$KUDU_ZIPDEPLOY_URL" | sed 's#/api/zipdeploy$#/api/deployments/latest#')
+          fi
+
+          echo "Polling deployment status at: $STATUS_URL"
+          for attempt in $(seq 1 60); do
+            STATUS_JSON=$(curl -sS -u "$AZURE_WEBAPP_PUBLISH_USERNAME:$AZURE_WEBAPP_PUBLISH_PASSWORD" "$STATUS_URL")
+            DEPLOY_STATUS=$(echo "$STATUS_JSON" | jq -r '.status // empty')
+            DEPLOY_PROGRESS=$(echo "$STATUS_JSON" | jq -r '.progress // "(no progress yet)"')
+
+            echo "Attempt $attempt: status=$DEPLOY_STATUS progress=$DEPLOY_PROGRESS"
+
+            if [ "$DEPLOY_STATUS" = "4" ]; then
+              echo "ZipDeploy completed successfully."
+              exit 0
+            fi
+
+            if [ "$DEPLOY_STATUS" = "3" ]; then
+              echo "ZipDeploy failed."
+              echo "$STATUS_JSON"
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "Timed out waiting for ZipDeploy completion."
+          exit 1
