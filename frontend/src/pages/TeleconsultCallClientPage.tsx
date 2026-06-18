@@ -372,7 +372,7 @@ export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
     }
 
     void syncMicState()
-  }, [micEnabled])
+  }, [micEnabled, callReady])
 
   useEffect(() => {
     async function syncCameraState() {
@@ -394,7 +394,7 @@ export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
     }
 
     void syncCameraState()
-  }, [cameraEnabled])
+  }, [cameraEnabled, callReady])
 
   function openInNewTab() {
     if (!validJoinUrl) {
