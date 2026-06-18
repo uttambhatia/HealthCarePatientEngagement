@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../auth/useAuth'
+import { ApiError } from '../../services/apiClient'
 import { Card } from '../../components/Card'
 import { SectionHeader } from '../../components/SectionHeader'
 import {
@@ -9,6 +10,7 @@ import {
   type AppointmentResponse,
   type TeleconsultationResponse,
 } from '../../services/platformApi'
+import { buildTeleconsultCallClientUrl } from '../../utils/teleconsultUrl'
 import { PatientAppointmentBooking } from './PatientAppointmentBooking'
 import { PatientConsentManagement } from './PatientConsentManagement'
 
@@ -44,11 +46,38 @@ function inferPatientId(claims: Record<string, unknown> | null): string {
   return match ? String(match) : ''
 }
 
+function filterBookedAppointments(records: AppointmentResponse[], inferredPatientId: string) {
+  const booked = records.filter((appointment) => appointment.status.toUpperCase() === 'BOOKED')
+  if (!inferredPatientId) {
+    return booked
+  }
+
+  const normalizedPatientId = inferredPatientId.trim().toLowerCase()
+  const scoped = booked.filter((appointment) => appointment.patientId.trim().toLowerCase() === normalizedPatientId)
+
+  // Keep appointments visible when token claim and domain patient identifier do not share the same format.
+  return scoped.length > 0 ? scoped : booked
+}
+
+function isTeleconsultSessionNotStarted(cause: unknown) {
+  if (!(cause instanceof ApiError) || cause.status !== 404) {
+    return false
+  }
+
+  if (cause.body && typeof cause.body === 'object' && 'code' in cause.body && cause.body.code === 'TELECONSULTATION_NOT_FOUND') {
+    return true
+  }
+
+  return cause.message.toUpperCase().includes('TELECONSULTATION_NOT_FOUND')
+    || cause.message.toUpperCase().includes('SESSION NOT FOUND')
+}
+
 export function PatientDashboard() {
   const { session } = useAuth()
   const [, setPatientCount] = useState<number | null>(null)
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([])
   const [teleconsultations, setTeleconsultations] = useState<Record<string, TeleconsultationResponse>>({})
+  const [awaitingProviderStart, setAwaitingProviderStart] = useState<Record<string, boolean>>({})
   const [joiningAppointmentId, setJoiningAppointmentId] = useState<string | null>(null)
   const [teleconsultActionMessage, setTeleconsultActionMessage] = useState<string | null>(null)
   const [teleconsultActionError, setTeleconsultActionError] = useState(false)
@@ -64,10 +93,7 @@ export function PatientDashboard() {
     }
 
     const appointmentRecords = await listAppointments(session.accessToken)
-    setAppointments(
-      appointmentRecords.filter((appointment) => appointment.status === 'BOOKED'
-        && (!inferredPatientId || appointment.patientId === inferredPatientId)),
-    )
+    setAppointments(filterBookedAppointments(appointmentRecords, inferredPatientId))
   }
 
   async function handleJoinTeleconsultation(appointment: AppointmentResponse) {
@@ -81,13 +107,32 @@ export function PatientDashboard() {
 
     try {
       const teleconsultation = await joinTeleconsultation(appointment.id, session.accessToken)
+      const callClientUrl = buildTeleconsultCallClientUrl(teleconsultation.patientJoinUrl, 'PATIENT')
       setTeleconsultations((previous) => ({
         ...previous,
         [appointment.id]: teleconsultation,
       }))
-      setTeleconsultActionError(false)
-      setTeleconsultActionMessage('Teleconsultation is ready. Use the join link to enter the secure session.')
+      setAwaitingProviderStart((previous) => {
+        if (!previous[appointment.id]) {
+          return previous
+        }
+        const next = { ...previous }
+        delete next[appointment.id]
+        return next
+      })
+      // Use same-tab navigation to avoid popup blockers after async join API calls.
+      window.location.assign(callClientUrl)
     } catch (cause) {
+      if (isTeleconsultSessionNotStarted(cause)) {
+        setAwaitingProviderStart((previous) => ({
+          ...previous,
+          [appointment.id]: true,
+        }))
+        setTeleconsultActionError(false)
+        setTeleconsultActionMessage('Teleconsultation has not started yet. Ask your provider to start the session, then click Recheck session.')
+        return
+      }
+
       const message = cause instanceof Error
         ? cause.message
         : 'Teleconsultation is not available for this appointment yet. Please try again in a moment.'
@@ -106,6 +151,8 @@ export function PatientDashboard() {
     const claims = decodeJwtPayload(session.idToken ?? session.accessToken)
     return inferPatientId(claims)
   }, [session])
+
+  const isPatientSession = session?.role === 'PATIENT'
 
   const totalAppointmentPages = Math.max(1, Math.ceil(appointments.length / appointmentsPerPage))
   const visibleAppointments = appointments.slice(
@@ -133,10 +180,7 @@ export function PatientDashboard() {
 
         if (active) {
           setPatientCount(patients.length)
-          setAppointments(
-            appointmentRecords.filter((appointment) => appointment.status === 'BOOKED'
-              && (!inferredPatientId || appointment.patientId === inferredPatientId)),
-          )
+          setAppointments(filterBookedAppointments(appointmentRecords, inferredPatientId))
           setLoadError(null)
         }
       } catch (cause) {
@@ -238,13 +282,25 @@ export function PatientDashboard() {
                     type="button"
                     className="secondary-button"
                     onClick={() => void handleJoinTeleconsultation(appointment)}
-                    disabled={joiningAppointmentId === appointment.id}
+                    disabled={joiningAppointmentId === appointment.id || (isPatientSession && awaitingProviderStart[appointment.id])}
                   >
-                    {joiningAppointmentId === appointment.id ? 'Checking session...' : 'Join teleconsultation'}
+                    {joiningAppointmentId === appointment.id
+                      ? 'Checking session...'
+                      : (isPatientSession && awaitingProviderStart[appointment.id] ? 'Awaiting provider start' : 'Join teleconsultation')}
                   </button>
+                  {isPatientSession && awaitingProviderStart[appointment.id] ? (
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => void handleJoinTeleconsultation(appointment)}
+                      disabled={joiningAppointmentId === appointment.id}
+                    >
+                      Recheck session
+                    </button>
+                  ) : null}
                   {teleconsultations[appointment.id]?.patientJoinUrl ? (
                     <a
-                      href={teleconsultations[appointment.id].patientJoinUrl}
+                      href={buildTeleconsultCallClientUrl(teleconsultations[appointment.id].patientJoinUrl, 'PATIENT')}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="primary-button"
@@ -253,6 +309,9 @@ export function PatientDashboard() {
                     </a>
                   ) : null}
                 </div>
+                {isPatientSession && awaitingProviderStart[appointment.id] ? (
+                  <small>Provider must start teleconsultation before patients can join this appointment.</small>
+                ) : null}
               </article>
             ))}
             </div>
