@@ -67,7 +67,7 @@ jobs:
 
       - name: Authenticate to Azure (credentials fallback)
         id: azure_login_sp
-        if: ${{ steps.azure_login_oidc.outcome == 'failure' && secrets.AZURE_CREDENTIALS != '' }}
+        if: ${{ steps.azure_login_oidc.outcome == 'failure' }}
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
