@@ -12,6 +12,7 @@ import {
 import { AzureCommunicationTokenCredential } from '@azure/communication-common'
 import { useAuth } from '../auth/useAuth'
 import { requestTeleconsultToken, type TeleconsultTokenResponse } from '../services/platformApi'
+import { buildTeleconsultCallClientUrl } from '../utils/teleconsultUrl'
 
 type Props = {
   joinUrl: string
@@ -59,6 +60,19 @@ export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
   const remoteViewsRef = useRef<Map<string, RenderedView>>(new Map())
 
   const validJoinUrl = useMemo(() => isSupportedJoinUrl(joinUrl), [joinUrl])
+  const isPlaceholderJoinHost = useMemo(() => {
+    if (!validJoinUrl) {
+      return false
+    }
+
+    try {
+      const parsed = new URL(joinUrl)
+      return parsed.hostname.toLowerCase() === 'teleconsult.healthcare.local'
+    } catch {
+      return false
+    }
+  }, [joinUrl, validJoinUrl])
+
   const sessionId = useMemo(() => {
     try {
       const parsed = new URL(joinUrl)
@@ -73,6 +87,12 @@ export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
     () => isUuid(sessionId) && role.toUpperCase() !== 'UNKNOWN',
     [role, sessionId],
   )
+
+  useEffect(() => {
+    if (isPlaceholderJoinHost) {
+      setShowEmbedded(false)
+    }
+  }, [isPlaceholderJoinHost])
 
   useEffect(() => {
     let active = true
@@ -375,6 +395,13 @@ export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
     if (!validJoinUrl) {
       return
     }
+
+    if (isPlaceholderJoinHost) {
+      const callClientUrl = buildTeleconsultCallClientUrl(joinUrl, role)
+      window.open(callClientUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+
     window.open(joinUrl, '_blank', 'noopener,noreferrer')
   }
 
@@ -449,7 +476,7 @@ export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
         </article>
       </section>
 
-      {showEmbedded ? (
+      {showEmbedded && !isPlaceholderJoinHost ? (
         <section style={{ marginTop: '1rem' }}>
           <iframe
             src={joinUrl}
@@ -461,7 +488,9 @@ export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
         </section>
       ) : (
         <p style={{ marginTop: '1rem' }}>
-          Embedded view hidden. Use Open direct ACS call to continue in a new tab.
+          {isPlaceholderJoinHost
+            ? 'Embedded provider URL is not publicly reachable in this environment. Continue with the built-in ACS client controls on this page.'
+            : 'Embedded view hidden. Use Open direct ACS call to continue in a new tab.'}
         </p>
       )}
     </main>
