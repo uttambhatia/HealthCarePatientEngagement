@@ -4570,6 +4570,12 @@ small {
   gap: 0.5rem;
 }
 
+.registration-page-indicator {
+  font-size: 0.78rem;
+  color: #2b566c;
+  white-space: nowrap;
+}
+
 .registration-pagination-button {
   padding: 0.28rem 0.5rem;
   font-size: 0.76rem;

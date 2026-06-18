@@ -403,6 +403,9 @@ export function PatientRegistrationReview() {
                 <option value={20}>20</option>
               </select>
             </label>
+            <span className="registration-page-indicator" aria-live="polite">
+              Page {currentPage} of {totalPages}
+            </span>
             <button
               type="button"
               className="secondary-button registration-pagination-button"
