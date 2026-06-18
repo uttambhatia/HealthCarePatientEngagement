@@ -5,6 +5,6 @@ UI_VITE_OIDC_AUTHORIZATION_ENDPOINT=https://login.microsoftonline.com/<dev-tenan
 UI_VITE_OIDC_TOKEN_ENDPOINT=https://login.microsoftonline.com/<dev-tenant-id>/oauth2/v2.0/token
 UI_VITE_OIDC_LOGOUT_ENDPOINT=https://login.microsoftonline.com/<dev-tenant-id>/oauth2/v2.0/logout
 UI_VITE_OIDC_REDIRECT_URI=https://<dev-ui-hostname>
-UI_VITE_OIDC_SCOPE=openid profile email api://<dev-api-app-id-uri>/.default
+UI_VITE_OIDC_SCOPE=openid profile api://<dev-api-app-id-uri>/access_as_user
 UI_VITE_EVENTS_WS_URL=
 UI_VITE_EVENTS_SSE_URL=

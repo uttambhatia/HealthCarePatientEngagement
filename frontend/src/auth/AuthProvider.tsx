@@ -65,30 +65,86 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
+function mergeJwtClaims(...claimsList: Array<Record<string, unknown> | null>): Record<string, unknown> | null {
+  const merged: Record<string, unknown> = {}
+
+  for (const claims of claimsList) {
+    if (!claims) {
+      continue
+    }
+
+    for (const [key, value] of Object.entries(claims)) {
+      if (merged[key] === undefined && value !== undefined) {
+        merged[key] = value
+        continue
+      }
+
+      if (key === 'roles' && Array.isArray(merged[key]) && Array.isArray(value)) {
+        merged[key] = [...new Set([...merged[key] as unknown[], ...value])]
+      }
+    }
+  }
+
+  return Object.keys(merged).length > 0 ? merged : null
+}
+
+function normalizeRoleValue(value: string): Role | null {
+  const normalized = value.trim().toUpperCase().replace(/[_\s]+/g, '-')
+
+  if (normalized === 'ADMIN') {
+    return 'ADMIN'
+  }
+
+  if (normalized === 'COORDINATOR' || normalized === 'CARE-COORDINATOR') {
+    return 'COORDINATOR'
+  }
+
+  if (normalized === 'DOCTOR') {
+    return 'DOCTOR'
+  }
+
+  if (normalized === 'PATIENT') {
+    return 'PATIENT'
+  }
+
+  return null
+}
+
 function mapRoleFromClaims(claims: Record<string, unknown> | null): Role {
   const rolesClaim = claims?.roles
+  const normalizedRoles = new Set<Role>()
+
   if (Array.isArray(rolesClaim)) {
-    const upper = rolesClaim.map((role) => String(role).toUpperCase())
-    if (upper.includes('ADMIN')) {
-      return 'ADMIN'
-    }
-    if (upper.includes('COORDINATOR')) {
-      return 'COORDINATOR'
-    }
-    if (upper.includes('DOCTOR')) {
-      return 'DOCTOR'
-    }
-    if (upper.includes('PATIENT')) {
-      return 'PATIENT'
+    for (const role of rolesClaim) {
+      const normalized = normalizeRoleValue(String(role))
+      if (normalized) {
+        normalizedRoles.add(normalized)
+      }
     }
   }
 
   const singleRole = claims?.role
   if (typeof singleRole === 'string') {
-    const upperRole = singleRole.toUpperCase()
-    if (upperRole === 'ADMIN' || upperRole === 'COORDINATOR' || upperRole === 'DOCTOR' || upperRole === 'PATIENT') {
-      return upperRole
+    const normalizedRole = normalizeRoleValue(singleRole)
+    if (normalizedRole) {
+      normalizedRoles.add(normalizedRole)
     }
+  }
+
+  if (normalizedRoles.has('ADMIN')) {
+    return 'ADMIN'
+  }
+
+  if (normalizedRoles.has('COORDINATOR')) {
+    return 'COORDINATOR'
+  }
+
+  if (normalizedRoles.has('DOCTOR')) {
+    return 'DOCTOR'
+  }
+
+  if (normalizedRoles.has('PATIENT')) {
+    return 'PATIENT'
   }
 
   return 'PATIENT'
@@ -189,7 +245,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
         }
 
         // Access token carries API app-role claims; ID token carries profile/display claims.
-        const roleClaims = decodeJwtPayload(payload.access_token)
+        const roleClaims = mergeJwtClaims(
+          decodeJwtPayload(payload.access_token),
+          decodeJwtPayload(payload.id_token ?? payload.access_token),
+        )
         const identityClaims = decodeJwtPayload(payload.id_token ?? payload.access_token)
         const nextSession: AuthSession = {
           accessToken: payload.access_token,
