@@ -35,6 +35,38 @@ export type AppointmentResponse = {
   channel: string
 }
 
+function readStringField(source: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = source[key]
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value.trim()
+    }
+  }
+  return ''
+}
+
+function normalizeAppointmentRecord(record: Record<string, unknown>): AppointmentResponse | null {
+  const id = readStringField(record, ['id'])
+  const status = readStringField(record, ['status'])
+  const patientId = readStringField(record, ['patientId', 'patient_id', 'patient-id'])
+  const providerId = readStringField(record, ['providerId', 'provider_id', 'provider-id'])
+  const scheduledAt = readStringField(record, ['scheduledAt', 'scheduled_at', 'scheduled-at'])
+  const channel = readStringField(record, ['channel'])
+
+  if (!id || !status || !patientId || !providerId || !scheduledAt || !channel) {
+    return null
+  }
+
+  return {
+    id,
+    status,
+    patientId,
+    providerId,
+    scheduledAt,
+    channel,
+  }
+}
+
 export type AvailableSlotsResponse = {
   providerId: string
   date: string
@@ -76,6 +108,21 @@ export type TeleconsultationCompleteRequest = {
   consultationNotes: string
   followUpRequired: boolean
   nextFollowUpDate?: string
+}
+
+export type TeleconsultTokenRequest = {
+  sessionId: string
+  role: 'DOCTOR' | 'PATIENT'
+}
+
+export type TeleconsultTokenResponse = {
+  sessionId: string
+  role: string
+  accessToken: string
+  tokenType: string
+  expiresAt: string
+  joinUrl: string
+  tokenProvider: string
 }
 
 export type CarePlanResponse = {
@@ -135,7 +182,10 @@ export type CreatePatientRequest = {
 export type PatientResponse = CreatePatientRequest & {
   id: string
   status: string
+  decisionAudit?: string
 }
+
+export type PatientRegistrationResponse = PatientResponse
 
 function extractData<T>(payload: Envelope<T> | T): T {
   if (payload && typeof payload === 'object' && 'data' in payload) {
@@ -159,7 +209,9 @@ export async function listPatients(token?: string) {
 
 export async function listAppointments(token?: string) {
   const payload = await apiClient<Envelope<AppointmentResponse[]> | AppointmentResponse[]>(platformRoutes.appointments, { token })
-  return normalizeArray(payload) as AppointmentResponse[]
+  return normalizeArray(payload)
+    .map(normalizeAppointmentRecord)
+    .filter((item): item is AppointmentResponse => Boolean(item))
 }
 
 export async function listAvailableSlots(providerId: string, date: string, token?: string) {
@@ -291,6 +343,39 @@ export async function createPatient(request: CreatePatientRequest, token?: strin
   return extractData(payload)
 }
 
+export async function approvePatientRegistration(id: string, token?: string) {
+  const payload = await apiClient<Envelope<PatientRegistrationResponse> | PatientRegistrationResponse>(
+    `${platformRoutes.patients}/${encodeURIComponent(id)}/approval/approve`,
+    {
+      method: 'PATCH',
+      token,
+    },
+  )
+  return extractData(payload)
+}
+
+export async function rejectPatientRegistration(id: string, token?: string) {
+  const payload = await apiClient<Envelope<PatientRegistrationResponse> | PatientRegistrationResponse>(
+    `${platformRoutes.patients}/${encodeURIComponent(id)}/approval/reject`,
+    {
+      method: 'PATCH',
+      token,
+    },
+  )
+  return extractData(payload)
+}
+
+export async function resendPatientRegistrationNotification(id: string, token?: string) {
+  const payload = await apiClient<Envelope<PatientRegistrationResponse> | PatientRegistrationResponse>(
+    `${platformRoutes.patients}/${encodeURIComponent(id)}/notifications/resend`,
+    {
+      method: 'POST',
+      token,
+    },
+  )
+  return extractData(payload)
+}
+
 export async function startTeleconsultation(appointmentId: string, token?: string) {
   const payload = await apiClient<Envelope<TeleconsultationResponse> | TeleconsultationResponse>(
     `/api/appointments/${encodeURIComponent(appointmentId)}/teleconsult/start`,
@@ -313,4 +398,12 @@ export async function completeTeleconsultation(appointmentId: string, request: T
     { method: 'POST', body: JSON.stringify(request), token },
   )
   return extractData(payload) as TeleconsultationResponse
+}
+
+export async function requestTeleconsultToken(request: TeleconsultTokenRequest, token?: string) {
+  const payload = await apiClient<Envelope<TeleconsultTokenResponse> | TeleconsultTokenResponse>(
+    '/api/acs/teleconsult/token',
+    { method: 'POST', body: JSON.stringify(request), token },
+  )
+  return extractData(payload) as TeleconsultTokenResponse
 }
