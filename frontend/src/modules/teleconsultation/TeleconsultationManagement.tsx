@@ -1,9 +1,48 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../auth/useAuth'
+import { ApiError } from '../../services/apiClient'
 import { Card } from '../../components/Card'
 import { LabelWithIcon } from '../../components/LabelWithIcon'
 import { MetricCardIcon } from '../../components/MetricCardIcon'
 import { completeTeleconsultation, joinTeleconsultation, listAppointments, startTeleconsultation, type AppointmentResponse, type TeleconsultationResponse } from '../../services/platformApi'
+
+function buildTeleconsultCallClientUrl(joinUrl: string, role: string) {
+  const encodedJoinUrl = encodeURIComponent(joinUrl)
+  const encodedRole = encodeURIComponent(role || 'UNKNOWN')
+  return `/teleconsult/call?role=${encodedRole}&joinUrl=${encodedJoinUrl}`
+}
+
+function resolveDoctorJoinUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return {
+        resolvedUrl: '',
+        error: 'Teleconsultation session URL is invalid. Contact support to update teleconsultation configuration.',
+      }
+    }
+
+    return { resolvedUrl: parsed.toString(), error: null }
+  } catch {
+    return {
+      resolvedUrl: '',
+      error: 'Teleconsultation session URL is invalid. Contact support to update teleconsultation configuration.',
+    }
+  }
+}
+
+function isTeleconsultSessionNotStarted(cause: unknown) {
+  if (!(cause instanceof ApiError) || cause.status !== 404) {
+    return false
+  }
+
+  if (cause.body && typeof cause.body === 'object' && 'code' in cause.body && cause.body.code === 'TELECONSULTATION_NOT_FOUND') {
+    return true
+  }
+
+  return cause.message.toUpperCase().includes('TELECONSULTATION_NOT_FOUND')
+    || cause.message.toUpperCase().includes('SESSION NOT FOUND')
+}
 
 export function TeleconsultationManagement() {
   const { session } = useAuth()
@@ -18,10 +57,14 @@ export function TeleconsultationManagement() {
   const [isError, setIsError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [historyPage, setHistoryPage] = useState(0)
+  const [awaitingProviderStart, setAwaitingProviderStart] = useState<Record<string, boolean>>({})
 
   const historyPerPage = 4
 
   const videoCallActive = useMemo(() => activeSessions.find((session) => session.status === 'INITIATED' || session.status === 'IN_PROGRESS'), [activeSessions])
+  const isPatientSession = session?.role === 'PATIENT'
+  const activeAppointmentId = videoCallActive?.appointmentId || selectedAppointmentId
+  const waitingForProviderToStart = Boolean(activeAppointmentId && awaitingProviderStart[activeAppointmentId])
   const teleconsultMetricStatus = (videoCallActive?.status ?? 'NONE').toLowerCase()
   const totalHistoryPages = Math.max(1, Math.ceil(appointments.length / historyPerPage))
   const visibleHistory = appointments.slice(historyPage * historyPerPage, (historyPage + 1) * historyPerPage)
@@ -86,6 +129,14 @@ export function TeleconsultationManagement() {
       const response = await startTeleconsultation(selectedAppointmentId, session.accessToken)
       if (active) {
         setActiveSessions([response])
+        setAwaitingProviderStart((previous) => {
+          if (!previous[selectedAppointmentId]) {
+            return previous
+          }
+          const next = { ...previous }
+          delete next[selectedAppointmentId]
+          return next
+        })
         setActionMessage('Teleconsultation session started successfully.')
       }
     } catch (cause) {
@@ -112,9 +163,27 @@ export function TeleconsultationManagement() {
       const response = await joinTeleconsultation(videoCallActive.appointmentId, session.accessToken)
       if (active) {
         setActiveSessions([response])
+        setAwaitingProviderStart((previous) => {
+          if (!previous[videoCallActive.appointmentId]) {
+            return previous
+          }
+          const next = { ...previous }
+          delete next[videoCallActive.appointmentId]
+          return next
+        })
         setActionMessage('Joined teleconsultation session.')
       }
     } catch (cause) {
+      if (isTeleconsultSessionNotStarted(cause)) {
+        setAwaitingProviderStart((previous) => ({
+          ...previous,
+          [videoCallActive.appointmentId]: true,
+        }))
+        setIsError(false)
+        setActionMessage('Teleconsultation has not started yet. Ask your provider to start the session, then click Recheck session.')
+        return
+      }
+
       const message = cause instanceof Error ? cause.message : 'We could not join the tele-consultation session right now. Please retry.'
       setIsError(true)
       setActionMessage(message)
@@ -136,13 +205,40 @@ export function TeleconsultationManagement() {
 
     try {
       const response = await joinTeleconsultation(videoCallActive.appointmentId, session.accessToken)
+      const { resolvedUrl, error } = resolveDoctorJoinUrl(response.doctorJoinUrl)
+      if (error) {
+        setIsError(true)
+        setActionMessage(error)
+        return
+      }
+
       if (active) {
         setActiveSessions([response])
+        setAwaitingProviderStart((previous) => {
+          if (!previous[videoCallActive.appointmentId]) {
+            return previous
+          }
+          const next = { ...previous }
+          delete next[videoCallActive.appointmentId]
+          return next
+        })
         setActionMessage('Joined teleconsultation session.')
       }
 
-      window.open(response.doctorJoinUrl, '_blank', 'noopener,noreferrer')
+      const callClientUrl = buildTeleconsultCallClientUrl(resolvedUrl, 'DOCTOR')
+      // Use same-tab navigation to avoid popup blockers after async join API calls.
+      window.location.assign(callClientUrl)
     } catch (cause) {
+      if (isTeleconsultSessionNotStarted(cause)) {
+        setAwaitingProviderStart((previous) => ({
+          ...previous,
+          [videoCallActive.appointmentId]: true,
+        }))
+        setIsError(false)
+        setActionMessage('Teleconsultation has not started yet. Ask your provider to start the session, then click Recheck session.')
+        return
+      }
+
       const message = cause instanceof Error ? cause.message : 'We could not join the tele-consultation session right now. Please retry.'
       setIsError(true)
       setActionMessage(message)
@@ -269,13 +365,24 @@ export function TeleconsultationManagement() {
           </div>
 
           <div className="form-actions teleconsult-quick-actions">
-            <button type="button" className="primary-button" onClick={() => void handleJoinAndOpenSession()} disabled={submitting}>
-              {submitting ? 'Joining...' : 'Join session'}
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => void handleJoinAndOpenSession()}
+              disabled={submitting || (isPatientSession && waitingForProviderToStart)}
+            >
+              {submitting
+                ? 'Joining...'
+                : (isPatientSession && waitingForProviderToStart ? 'Awaiting provider start' : 'Join session')}
             </button>
             <button type="button" className="secondary-button" onClick={() => void handleJoinTeleconsultation()} disabled={submitting}>
-              {submitting ? 'Updating...' : 'Refresh session'}
+              {submitting ? 'Updating...' : (isPatientSession && waitingForProviderToStart ? 'Recheck session' : 'Refresh session')}
             </button>
           </div>
+
+          {isPatientSession && waitingForProviderToStart ? (
+            <small>Provider must start teleconsultation before patients can join this appointment.</small>
+          ) : null}
 
           {videoCallActive.status === 'IN_PROGRESS' ? (
             <section className="teleconsult-completion-panel">
