@@ -179,9 +179,6 @@ export function PatientRegistrationReview() {
     return sortedRows.slice(start, start + pageSize)
   }, [currentPage, pageSize, sortedRows])
 
-  const pageStart = sortedRows.length === 0 ? 0 : (currentPage - 1) * pageSize + 1
-  const pageEnd = Math.min(currentPage * pageSize, sortedRows.length)
-
   function applySort(column: SortColumn) {
     if (sortColumn === column) {
       setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
@@ -384,23 +381,6 @@ export function PatientRegistrationReview() {
         </table>
 
         <div className="registration-table-pagination">
-          <span className="registration-table-page-status registration-table-page-status--centered">
-            Showing {pageStart}-{pageEnd} of {sortedRows.length}
-          </span>
-          <label className="registration-page-size-control">
-            Rows per page
-            <select
-              value={pageSize}
-              onChange={(event) => {
-                setPageSize(Number(event.target.value))
-                setCurrentPage(1)
-              }}
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-            </select>
-          </label>
           <div className="registration-page-controls">
             <button
               type="button"
@@ -410,7 +390,19 @@ export function PatientRegistrationReview() {
             >
               Previous
             </button>
-            <span>Page {currentPage} of {totalPages}</span>
+            <label className="registration-page-size-control" aria-label="Page size selector">
+              <select
+                value={pageSize}
+                onChange={(event) => {
+                  setPageSize(Number(event.target.value))
+                  setCurrentPage(1)
+                }}
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+              </select>
+            </label>
             <button
               type="button"
               className="secondary-button registration-pagination-button"

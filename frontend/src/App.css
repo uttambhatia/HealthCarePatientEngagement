@@ -4551,15 +4551,6 @@ small {
   flex-wrap: nowrap;
 }
 
-.registration-table-page-status {
-  font-size: 0.85rem;
-  color: color-mix(in srgb, #065f5c 70%, #ffffff 30%);
-}
-
-.registration-table-page-status--centered {
-  text-align: center;
-}
-
 .registration-page-size-control {
   display: inline-flex;
   align-items: center;
