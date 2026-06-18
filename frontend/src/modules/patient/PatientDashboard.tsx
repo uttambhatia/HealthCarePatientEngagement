@@ -10,9 +10,14 @@ import {
   type AppointmentResponse,
   type TeleconsultationResponse,
 } from '../../services/platformApi'
-import { buildTeleconsultCallClientUrl } from '../../utils/teleconsultUrl'
 import { PatientAppointmentBooking } from './PatientAppointmentBooking'
 import { PatientConsentManagement } from './PatientConsentManagement'
+
+function buildTeleconsultCallClientUrl(joinUrl: string, role: string) {
+  const encodedJoinUrl = encodeURIComponent(joinUrl)
+  const encodedRole = encodeURIComponent(role || 'UNKNOWN')
+  return `/teleconsult/call?role=${encodedRole}&joinUrl=${encodedJoinUrl}`
+}
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   const [, payload] = token.split('.')
