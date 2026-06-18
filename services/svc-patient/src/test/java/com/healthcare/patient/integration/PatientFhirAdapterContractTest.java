@@ -38,6 +38,7 @@ class PatientFhirAdapterContractTest {
         PatientProfile profile = new PatientProfile(
                 "pat-1",
                 "ACTIVE",
+                null,
                 "EXT-1",
                 "Ava",
                 "Jones",
