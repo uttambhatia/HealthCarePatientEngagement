@@ -40,6 +40,21 @@ platform:
     azure-ad:
       base-url: ${AZURE_AD_INTEGRATION_BASE_URL:}
       path: ${AZURE_AD_INTEGRATION_PATH:/identity/assertions}
+    acs:
+      identity:
+        connection-string: ${ACS_IDENTITY_CONNECTION_STRING:}
+      email:
+        endpoint: ${ACS_EMAIL_ENDPOINT:}
+        access-key: ${ACS_EMAIL_ACCESS_KEY:}
+        from-address: ${ACS_EMAIL_FROM_ADDRESS:}
+      sms:
+        endpoint: ${ACS_SMS_ENDPOINT:}
+        access-key: ${ACS_SMS_ACCESS_KEY:}
+        from-number: ${ACS_SMS_FROM_NUMBER:}
+      teleconsult:
+        join-base-url: ${ACS_TELECONSULT_JOIN_BASE_URL:https://teleconsult.healthcare.local/session}
+        doctor-role-query: ${ACS_TELECONSULT_DOCTOR_ROLE_QUERY:role=DOCTOR}
+        patient-role-query: ${ACS_TELECONSULT_PATIENT_ROLE_QUERY:role=PATIENT}
   messaging:
     channel: ${IDENTITY_MESSAGING_CHANNEL:identity-adapter-service}
     processorEnabled: ${IDENTITY_PROCESSOR_ENABLED:true}

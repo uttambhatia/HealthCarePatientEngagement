@@ -28,6 +28,19 @@ $required = @(
     "AZURE_MANAGED_IDENTITY_CLIENT_ID"
 )
 
+$optional = @(
+    "ACS_INTEGRATION_BASE_URL",
+    "TELECONSULT_ACS_INTEGRATION_BASE_URL",
+    "TELECONSULT_JOIN_BASE_URL",
+    "ACS_EMAIL_ENDPOINT",
+    "ACS_EMAIL_ACCESS_KEY",
+    "ACS_EMAIL_FROM_ADDRESS",
+    "ACS_SMS_ENDPOINT",
+    "ACS_SMS_ACCESS_KEY",
+    "ACS_SMS_FROM_NUMBER",
+    "ACS_IDENTITY_CONNECTION_STRING"
+)
+
 $values = @{}
 Get-Content $EnvFile | ForEach-Object {
     $line = $_.Trim()
@@ -81,6 +94,47 @@ stringData:
   azure-sql-password: "$($values['AZURE_SQL_PASSWORD'])"
   azure-managed-identity-client-id: "$($values['AZURE_MANAGED_IDENTITY_CLIENT_ID'])"
 "@
+
+foreach ($key in $optional) {
+    if ($values.ContainsKey($key) -and -not [string]::IsNullOrWhiteSpace($values[$key])) {
+        if ($values[$key] -match "<[^>]+>") {
+            throw "Unresolved placeholder for key $key in env file."
+        }
+
+        switch ($key) {
+            "ACS_INTEGRATION_BASE_URL" {
+                $content += "`n  acs-integration-base-url: `"$($values[$key])`""
+            }
+            "TELECONSULT_ACS_INTEGRATION_BASE_URL" {
+                $content += "`n  teleconsult-acs-integration-base-url: `"$($values[$key])`""
+            }
+            "TELECONSULT_JOIN_BASE_URL" {
+                $content += "`n  teleconsult-join-base-url: `"$($values[$key])`""
+            }
+            "ACS_EMAIL_ENDPOINT" {
+                $content += "`n  acs-email-endpoint: `"$($values[$key])`""
+            }
+            "ACS_EMAIL_ACCESS_KEY" {
+                $content += "`n  acs-email-access-key: `"$($values[$key])`""
+            }
+            "ACS_EMAIL_FROM_ADDRESS" {
+                $content += "`n  acs-email-from-address: `"$($values[$key])`""
+            }
+            "ACS_SMS_ENDPOINT" {
+                $content += "`n  acs-sms-endpoint: `"$($values[$key])`""
+            }
+            "ACS_SMS_ACCESS_KEY" {
+                $content += "`n  acs-sms-access-key: `"$($values[$key])`""
+            }
+            "ACS_SMS_FROM_NUMBER" {
+                $content += "`n  acs-sms-from-number: `"$($values[$key])`""
+            }
+            "ACS_IDENTITY_CONNECTION_STRING" {
+                $content += "`n  acs-identity-connection-string: `"$($values[$key])`""
+            }
+        }
+    }
+}
 
 Set-Content -Path $OutputFile -Value $content -NoNewline
 Write-Host "Rendered secret manifest: $OutputFile"

@@ -49,6 +49,54 @@ spec:
                 secretKeyRef:
                   name: platform-secrets
                   key: key-vault-url
+            - name: ACS_EMAIL_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: acs-email-endpoint
+                  optional: true
+            - name: ACS_EMAIL_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: acs-email-access-key
+                  optional: true
+            - name: ACS_EMAIL_FROM_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: acs-email-from-address
+                  optional: true
+            - name: ACS_SMS_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: acs-sms-endpoint
+                  optional: true
+            - name: ACS_SMS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: acs-sms-access-key
+                  optional: true
+            - name: ACS_SMS_FROM_NUMBER
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: acs-sms-from-number
+                  optional: true
+            - name: ACS_IDENTITY_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: acs-identity-connection-string
+                  optional: true
+            - name: ACS_TELECONSULT_JOIN_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: teleconsult-join-base-url
+                  optional: true
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               valueFrom:
                 secretKeyRef:

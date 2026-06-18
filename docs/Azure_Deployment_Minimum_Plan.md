@@ -23,6 +23,7 @@ This plan does not assert production readiness by itself. Production go-live sti
 - Secrets/config: Key Vault + Kubernetes secret sync path already assumed by manifests
 - Messaging: Service Bus / Event Hubs endpoints configured via environment variables
 - Identity: Entra issuer/audience/JWK values provided via runtime config
+- Teleconsult calling: Azure Communication Services resource + identity connection string for token issuance
 - Observability endpoint: OTLP endpoint configured via secret
 
 ## 3) Environment model (minimum)

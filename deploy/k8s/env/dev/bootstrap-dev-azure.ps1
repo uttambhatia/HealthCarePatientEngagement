@@ -10,6 +10,10 @@ Param(
     [string]$SqlAdminUsername = "hpesqladmin",
     [string]$SqlAdminPassword = "",
     [string]$EventHubName = "healthcare-events",
+    [string]$AcsResourceName = "",
+    [string]$AcsDataLocation = "",
+    [string]$AcsIdentityConnectionString = "",
+    [string]$TeleconsultJoinBaseUrl = "https://<dev-teleconsult-public-host>/session",
     [string]$FhirIntegrationBaseUrl = "",
     [string]$ServiceBusIntegrationBaseUrl = "",
     [string]$OtelOtlpEndpoint = "http://otel-collector.monitoring.svc.cluster.local:4317",
@@ -17,6 +21,7 @@ Param(
     [string]$OutputEnvFile = "",
     [string]$RenderedSecretFile = "",
     [switch]$SkipNamespaceSetup,
+    [switch]$SkipAcsInfrastructure,
     [switch]$EnableEntraAppRegistration
 )
 
@@ -275,6 +280,77 @@ function Ensure-EventHub {
     )
 }
 
+function Get-AcsDataLocationForRegion {
+    Param(
+        [Parameter(Mandatory = $true)][string]$Region
+    )
+
+    $normalized = $Region.ToLowerInvariant()
+    switch ($normalized) {
+        "centralindia" { return "India" }
+        "southindia" { return "India" }
+        "westindia" { return "India" }
+        "eastus" { return "United States" }
+        "eastus2" { return "United States" }
+        "westus" { return "United States" }
+        "westus2" { return "United States" }
+        "centralus" { return "United States" }
+        "northeurope" { return "Europe" }
+        "westeurope" { return "Europe" }
+        "uksouth" { return "United Kingdom" }
+        "ukwest" { return "United Kingdom" }
+        "japaneast" { return "Japan" }
+        "japanwest" { return "Japan" }
+        "australiaeast" { return "Australia" }
+        default { return "India" }
+    }
+}
+
+function Ensure-CommunicationService {
+    Param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$DataLocation
+    )
+
+    $existing = Invoke-AzJson -Arguments @("communication", "show", "--resource-group", $ResourceGroupName, "--name", $Name) -AllowFailure
+    if ($null -ne $existing) {
+        return $existing
+    }
+
+    Write-Host "Creating Azure Communication Services resource $Name (data location: $DataLocation)"
+    return Invoke-AzJson -Arguments @(
+        "communication", "create",
+        "--resource-group", $ResourceGroupName,
+        "--name", $Name,
+        "--data-location", $DataLocation,
+        "--location", "global"
+    )
+}
+
+function Resolve-AcsIdentityConnectionString {
+    Param(
+        [Parameter(Mandatory = $true)][string]$ResourceName
+    )
+
+    $keys = Invoke-AzJson -Arguments @("communication", "list-key", "--resource-group", $ResourceGroupName, "--name", $ResourceName) -AllowFailure
+    if ($null -eq $keys) {
+        return ""
+    }
+
+    if ($keys.primaryConnectionString) {
+        return $keys.primaryConnectionString
+    }
+
+    if ($keys.primaryKey) {
+        $resource = Invoke-AzJson -Arguments @("communication", "show", "--resource-group", $ResourceGroupName, "--name", $ResourceName) -AllowFailure
+        if ($null -ne $resource -and $resource.hostName) {
+            return "endpoint=https://$($resource.hostName)/;accesskey=$($keys.primaryKey)"
+        }
+    }
+
+    return ""
+}
+
 function Ensure-SqlServer {
     Param(
         [Parameter(Mandatory = $true)][string]$Name,
@@ -444,6 +520,14 @@ $eventHubNamespaceName = Get-TrimmedName -Base "eh-$baseHyphen-$suffix" -MaxLeng
 $sqlServerName = Get-TrimmedName -Base "sql$baseAlphaNum$suffix" -MaxLength 63
 $keyVaultName = Get-TrimmedName -Base "kv-$baseHyphen-$suffix" -MaxLength 24
 
+if ($AcsResourceName -eq "") {
+    $AcsResourceName = Get-TrimmedName -Base "acs$baseAlphaNum$suffix" -MaxLength 63
+}
+
+if ($AcsDataLocation -eq "") {
+    $AcsDataLocation = Get-AcsDataLocationForRegion -Region $Location
+}
+
 if ($SqlAdminPassword -eq "") {
     $SqlAdminPassword = New-Password
 }
@@ -467,12 +551,29 @@ $null = Ensure-EventHubNamespace -Name $eventHubNamespaceName
 $null = Ensure-EventHub -NamespaceName $eventHubNamespaceName -Name $EventHubName
 $sqlServer = Ensure-SqlServer -Name $sqlServerName -AdminUser $SqlAdminUsername -AdminPassword $SqlAdminPassword
 $null = Ensure-SqlDatabase -ServerName $sqlServerName -DatabaseName $SqlDatabaseName
+
+if ($AcsIdentityConnectionString -eq "" -and -not $SkipAcsInfrastructure) {
+    try {
+        $null = Ensure-CommunicationService -Name $AcsResourceName -DataLocation $AcsDataLocation
+        $AcsIdentityConnectionString = Resolve-AcsIdentityConnectionString -ResourceName $AcsResourceName
+        if ($AcsIdentityConnectionString -eq "") {
+            Write-Warning "ACS resource exists but connection string lookup failed. Set ACS_IDENTITY_CONNECTION_STRING manually in dev.env."
+        }
+    }
+    catch {
+        Write-Warning "Unable to ensure ACS resource automatically. Set ACS_IDENTITY_CONNECTION_STRING manually in dev.env. Error: $($_.Exception.Message)"
+    }
+}
+
 $null = Ensure-AksCluster -Name $AksClusterName
 
 Write-Host "Storing bootstrap secrets in Key Vault $keyVaultName"
 try {
     Invoke-AzCli -Arguments @("keyvault", "secret", "set", "--vault-name", $keyVaultName, "--name", "sql-admin-password", "--value", $SqlAdminPassword) | Out-Null
     Invoke-AzCli -Arguments @("keyvault", "secret", "set", "--vault-name", $keyVaultName, "--name", "oauth2-audience", "--value", $oauthAudienceValue) | Out-Null
+    if ($AcsIdentityConnectionString -ne "") {
+        Invoke-AzCli -Arguments @("keyvault", "secret", "set", "--vault-name", $keyVaultName, "--name", "acs-identity-connection-string", "--value", $AcsIdentityConnectionString) | Out-Null
+    }
 }
 catch {
     Write-Warning "Unable to store secrets in Key Vault with current permissions. Continuing bootstrap."
@@ -503,6 +604,10 @@ $envContent = @(
     "KEY_VAULT_URL=https://$keyVaultName.vault.azure.net/",
     "FHIR_INTEGRATION_BASE_URL=$FhirIntegrationBaseUrl",
     "SERVICE_BUS_INTEGRATION_BASE_URL=$ServiceBusIntegrationBaseUrl",
+    "ACS_INTEGRATION_BASE_URL=http://svc-identity-adapter",
+    "TELECONSULT_ACS_INTEGRATION_BASE_URL=http://svc-identity-adapter",
+    "TELECONSULT_JOIN_BASE_URL=$TeleconsultJoinBaseUrl",
+    "ACS_IDENTITY_CONNECTION_STRING=$AcsIdentityConnectionString",
     "OTEL_OTLP_ENDPOINT=$OtelOtlpEndpoint",
     "OAUTH2_ISSUER=$oauthIssuer",
     "OAUTH2_AUDIENCE=$oauthAudienceValue",

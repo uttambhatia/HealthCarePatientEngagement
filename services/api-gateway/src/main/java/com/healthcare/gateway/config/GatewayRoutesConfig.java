@@ -54,6 +54,7 @@ public class GatewayRoutesConfig {
                 .route("device-events", route -> route.path("/api/devices/events", "/api/devices/events/**").filters(filter -> filter.stripPrefix(1)).uri(deviceEventsUri))
                 .route("alerts", route -> route.path("/api/alerts", "/api/alerts/**").filters(filter -> filter.stripPrefix(1)).uri(alertsUri))
                 .route("identity-assertions", route -> route.path("/api/identity/assertions", "/api/identity/assertions/**").filters(filter -> filter.stripPrefix(1)).uri(identityAssertionsUri))
+                .route("identity-acs", route -> route.path("/api/acs", "/api/acs/**").filters(filter -> filter.stripPrefix(1)).uri(identityAssertionsUri))
                 .route("servicebus-messages", route -> route.path("/api/servicebus/messages", "/api/servicebus/messages/**").filters(filter -> filter.stripPrefix(1)).uri(servicebusMessagesUri))
                 .build();
     }

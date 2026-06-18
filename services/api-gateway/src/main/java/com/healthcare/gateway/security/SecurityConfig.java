@@ -97,6 +97,7 @@ public class SecurityConfig {
                         // Machine or operations APIs.
                         .pathMatchers("/api/devices/events", "/api/devices/events/**").hasAnyRole("SYSTEM_INTEGRATION", "DEVICE_IDENTITY", "ADMIN")
                         .pathMatchers("/api/identity/assertions", "/api/identity/assertions/**").hasAnyRole("SYSTEM_INTEGRATION", "ADMIN")
+                        .pathMatchers("/api/acs", "/api/acs/**").hasAnyRole(HUMAN_ROLES)
                         .pathMatchers("/api/servicebus/messages", "/api/servicebus/messages/**").hasAnyRole("SYSTEM_INTEGRATION", "COORDINATOR", "ADMIN")
 
                         // Fallback: authenticated + clinical/ops visibility only.

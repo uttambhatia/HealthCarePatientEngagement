@@ -35,6 +35,11 @@ Required value groups:
 - Integration: fhir-integration-base-url, service-bus-integration-base-url
 - Platform: key-vault-url, otel-otlp-endpoint, azure-managed-identity-client-id
 
+Teleconsult real ACS token mode additionally needs:
+- `ACS_IDENTITY_CONNECTION_STRING` in env files (renders to secret key `acs-identity-connection-string`)
+- `TELECONSULT_JOIN_BASE_URL` set to a reachable public teleconsult host
+- An Azure Communication Services resource in the same environment/subscription
+
 Frontend App Service build-time settings (GitHub repository variables):
 - `UI_APP_SERVICE_NAME`
 - `UI_VITE_API_BASE_URL` (must point to APIM host)
@@ -63,6 +68,9 @@ Frontend deployment workflow credentials (GitHub secrets):
 This provisions the minimum Azure dependencies for the repo's AKS manifests,
 creates or reuses the `healthcare-dev` namespace, writes `deploy/k8s/env/dev/dev.env`,
 and renders `deploy/k8s/env/dev/platform-secrets.dev.generated.yaml`.
+
+When ACS infra is not skipped, the bootstrap script also creates/reuses an Azure Communication Services resource,
+retrieves its connection string, and writes `ACS_IDENTITY_CONNECTION_STRING` into `dev.env`.
 
 1. Fill secret template values for dev.
 	 - or copy `deploy/k8s/env/dev/dev.env.template` to `deploy/k8s/env/dev/dev.env` and fill values.
