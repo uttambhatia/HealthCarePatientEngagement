@@ -3,7 +3,7 @@
 :root {
   --ink-strong: #0d243a;
   --ink-soft: #34516a;
-  --surface-page: #eaf3fb;
+  --surface-page: #ffffff;
   --surface-card: rgba(255, 255, 255, 0.78);
   --surface-accent: #eef4fb;
   --line-soft: rgba(170, 202, 223, 0.8);
@@ -59,15 +59,11 @@
   --label-version-soft: #edf2f7;
   --font-body: 'Manrope', 'Segoe UI', sans-serif;
   --font-display: 'Sora', 'Manrope', 'Segoe UI', sans-serif;
-  --page-background:
-    radial-gradient(circle at 12% 8%, rgba(56, 171, 194, 0.2), transparent 35%),
-    radial-gradient(circle at 82% 12%, rgba(58, 117, 196, 0.2), transparent 34%),
-    radial-gradient(circle at 48% 78%, rgba(67, 193, 165, 0.13), transparent 40%),
-    linear-gradient(180deg, #f7fbff 0%, #edf4fb 48%, #e6f0f8 100%);
-  --site-header-background: linear-gradient(130deg, rgba(255, 255, 255, 0.85) 0%, rgba(238, 250, 255, 0.7) 62%, rgba(232, 246, 255, 0.74) 100%);
-  --site-header-border-color: rgba(176, 216, 236, 0.86);
-  --site-header-shadow: var(--elevation-soft);
-  --site-header-backdrop-filter: var(--glass-blur);
+  --page-background: #ffffff;
+  --site-header-background: #ffffff;
+  --site-header-border-color: rgb(15, 140, 167);
+  --site-header-shadow: 0 10px 22px rgba(7, 36, 59, 0.08);
+  --site-header-backdrop-filter: none;
   color: var(--ink-strong);
   background: var(--surface-page);
   font-family: var(--font-body);
@@ -149,9 +145,7 @@ small {
   inset: 0;
   pointer-events: none;
   z-index: -1;
-  background:
-    linear-gradient(120deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0.08) 38%, rgba(255, 255, 255, 0.24) 100%),
-    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.22), transparent 44%);
+  background: #ffffff;
 }
 
 .site-top-header {
@@ -160,7 +154,8 @@ small {
   justify-content: space-between;
   gap: 1rem;
   background: var(--site-header-background);
-  border: var(--glass-border);
+  border: 0;
+  border-bottom: 6px solid var(--site-header-border-color);
   border-radius: 14px;
   padding: 0.85rem 1rem;
   box-shadow: var(--site-header-shadow);
@@ -4385,4 +4380,137 @@ small {
   .card {
     border-radius: 16px;
   }
+}
+
+.registration-review-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.registration-review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.registration-review-header h3 {
+  margin: 0;
+}
+
+.registration-review-header p {
+  margin: 0.2rem 0 0;
+}
+
+.registration-pending-chip {
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #065f5c 25%, #ffffff 75%);
+  background: color-mix(in srgb, #065f5c 10%, #ffffff 90%);
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.registration-table-wrap {
+  overflow-x: auto;
+}
+
+.registration-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.registration-table th,
+.registration-table td {
+  text-align: left;
+  padding: 0.65rem 0.6rem;
+  border-bottom: 1px solid color-mix(in srgb, #065f5c 12%, #ffffff 88%);
+  vertical-align: middle;
+}
+
+.registration-table th {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: color-mix(in srgb, #065f5c 72%, #ffffff 28%);
+}
+
+.registration-sort-button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.registration-sort-button:hover {
+  text-decoration: underline;
+}
+
+.registration-status {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.registration-status--pending {
+  background: #fff3cd;
+  color: #8b5c00;
+}
+
+.registration-status--approved {
+  background: #d1f7e1;
+  color: #0b7a3a;
+}
+
+.registration-status--rejected {
+  background: #f9d8dd;
+  color: #9b1c31;
+}
+
+.registration-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.registration-table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.registration-table-page-status {
+  font-size: 0.85rem;
+  color: color-mix(in srgb, #065f5c 70%, #ffffff 30%);
+}
+
+.registration-page-size-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+}
+
+.registration-page-size-control select {
+  border: 1px solid color-mix(in srgb, #065f5c 20%, #ffffff 80%);
+  border-radius: 8px;
+  padding: 0.2rem 0.45rem;
+  background: #ffffff;
+}
+
+.registration-page-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }

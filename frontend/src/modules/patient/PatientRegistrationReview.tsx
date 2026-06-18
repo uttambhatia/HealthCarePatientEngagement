@@ -16,6 +16,9 @@ type RegistrationRow = {
   decisionAudit: string
 }
 
+type SortColumn = 'fullName' | 'email' | 'phone' | 'status' | 'decisionAudit'
+type SortDirection = 'asc' | 'desc'
+
 function readField(record: Record<string, unknown>, key: string) {
   const value = record[key]
   return typeof value === 'string' ? value.trim() : ''
@@ -65,6 +68,10 @@ export function PatientRegistrationReview() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [sortColumn, setSortColumn] = useState<SortColumn>('status')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   const token = session?.accessToken
 
@@ -99,6 +106,70 @@ export function PatientRegistrationReview() {
     () => rows.filter((row) => row.status.toUpperCase() === 'PENDING_VERIFICATION').length,
     [rows],
   )
+
+  const sortedRows = useMemo(() => {
+    const rankByStatus = (status: string) => {
+      const normalized = status.toUpperCase()
+      if (normalized === 'PENDING_VERIFICATION') {
+        return 0
+      }
+      if (normalized === 'COMPLETED') {
+        return 1
+      }
+      if (normalized === 'REJECTED') {
+        return 2
+      }
+      return 3
+    }
+
+    return [...rows].sort((left, right) => {
+      let result = 0
+
+      if (sortColumn === 'status') {
+        result = rankByStatus(left.status) - rankByStatus(right.status)
+      } else {
+        const leftValue = (left[sortColumn] || '').toLowerCase()
+        const rightValue = (right[sortColumn] || '').toLowerCase()
+        result = leftValue.localeCompare(rightValue)
+      }
+
+      return sortDirection === 'asc' ? result : -result
+    })
+  }, [rows, sortColumn, sortDirection])
+
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize))
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
+
+  const pagedRows = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return sortedRows.slice(start, start + pageSize)
+  }, [currentPage, pageSize, sortedRows])
+
+  const pageStart = sortedRows.length === 0 ? 0 : (currentPage - 1) * pageSize + 1
+  const pageEnd = Math.min(currentPage * pageSize, sortedRows.length)
+
+  function applySort(column: SortColumn) {
+    if (sortColumn === column) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+
+    setSortColumn(column)
+    setSortDirection('asc')
+    setCurrentPage(1)
+  }
+
+  function renderSortLabel(label: string, column: SortColumn) {
+    if (sortColumn !== column) {
+      return `${label} ↕`
+    }
+    return sortDirection === 'asc' ? `${label} ↑` : `${label} ↓`
+  }
 
   async function runAction(id: string, action: 'approve' | 'reject' | 'resend') {
     if (!token) {
@@ -146,11 +217,31 @@ export function PatientRegistrationReview() {
         <table className="registration-table">
           <thead>
             <tr>
-              <th>Patient full name</th>
-              <th>Email</th>
-              <th>Phone number</th>
-              <th>Status</th>
-              <th>Decision audit</th>
+              <th>
+                <button type="button" className="registration-sort-button" onClick={() => applySort('fullName')}>
+                  {renderSortLabel('Patient full name', 'fullName')}
+                </button>
+              </th>
+              <th>
+                <button type="button" className="registration-sort-button" onClick={() => applySort('email')}>
+                  {renderSortLabel('Email', 'email')}
+                </button>
+              </th>
+              <th>
+                <button type="button" className="registration-sort-button" onClick={() => applySort('phone')}>
+                  {renderSortLabel('Phone number', 'phone')}
+                </button>
+              </th>
+              <th>
+                <button type="button" className="registration-sort-button" onClick={() => applySort('status')}>
+                  {renderSortLabel('Status', 'status')}
+                </button>
+              </th>
+              <th>
+                <button type="button" className="registration-sort-button" onClick={() => applySort('decisionAudit')}>
+                  {renderSortLabel('Decision audit', 'decisionAudit')}
+                </button>
+              </th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -159,12 +250,12 @@ export function PatientRegistrationReview() {
               <tr>
                 <td colSpan={6}>Loading registrations...</td>
               </tr>
-            ) : rows.length === 0 ? (
+            ) : sortedRows.length === 0 ? (
               <tr>
                 <td colSpan={6}>No patient registrations found.</td>
               </tr>
             ) : (
-              rows.map((row) => {
+              pagedRows.map((row) => {
                 const pending = row.status.toUpperCase() === 'PENDING_VERIFICATION'
                 const busy = activeId === row.id
                 return (
@@ -178,22 +269,26 @@ export function PatientRegistrationReview() {
                     <td>{row.decisionAudit || 'n/a'}</td>
                     <td>
                       <div className="registration-action-group">
-                        <button
-                          type="button"
-                          className="primary-button"
-                          disabled={!pending || busy}
-                          onClick={() => void runAction(row.id, 'approve')}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          className="secondary-button"
-                          disabled={!pending || busy}
-                          onClick={() => void runAction(row.id, 'reject')}
-                        >
-                          Reject
-                        </button>
+                        {pending ? (
+                          <>
+                            <button
+                              type="button"
+                              className="primary-button"
+                              disabled={busy}
+                              onClick={() => void runAction(row.id, 'approve')}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              className="secondary-button"
+                              disabled={busy}
+                              onClick={() => void runAction(row.id, 'reject')}
+                            >
+                              Reject
+                            </button>
+                          </>
+                        ) : null}
                         <button
                           type="button"
                           className="secondary-button"
@@ -210,6 +305,45 @@ export function PatientRegistrationReview() {
             )}
           </tbody>
         </table>
+
+        <div className="registration-table-pagination">
+          <span className="registration-table-page-status">
+            Showing {pageStart}-{pageEnd} of {sortedRows.length}
+          </span>
+          <label className="registration-page-size-control">
+            Rows per page
+            <select
+              value={pageSize}
+              onChange={(event) => {
+                setPageSize(Number(event.target.value))
+                setCurrentPage(1)
+              }}
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+          </label>
+          <div className="registration-page-controls">
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            >
+              Previous
+            </button>
+            <span>Page {currentPage} of {totalPages}</span>
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   )
