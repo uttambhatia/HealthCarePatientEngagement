@@ -51,6 +51,7 @@ public class PatientJpaRepositoryAdapter implements PatientRepository {
         return new PatientProfileEntity(
                 aggregate.id(),
                 aggregate.status(),
+            aggregate.decisionAudit(),
                 aggregate.externalReference(),
                 aggregate.givenName(),
                 aggregate.familyName(),
@@ -65,6 +66,7 @@ public class PatientJpaRepositoryAdapter implements PatientRepository {
         return new PatientProfile(
                 entity.getId(),
                 entity.getStatus(),
+            entity.getDecisionAudit(),
                 entity.getExternalReference(),
                 entity.getGivenName(),
                 entity.getFamilyName(),

@@ -1,5 +1,6 @@
 package com.healthcare.patient.integration;
 
+import com.healthcare.patient.domain.PatientProfile;
 import com.healthcare.patient.dto.CreatePatientRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,13 +28,21 @@ public class PatientIdentityAdapter {
     }
 
     public void provisionIdentity(CreatePatientRequest request, String correlationId) {
+        dispatch(request.externalReference(), correlationId);
+    }
+
+    public void provisionIdentity(PatientProfile profile, String correlationId) {
+        dispatch(profile.externalReference(), correlationId);
+    }
+
+    private void dispatch(String subject, String correlationId) {
         if (restClient == null) {
-            LOGGER.warn("Skipping identity provisioning for externalReference={} because base URL is not configured", request.externalReference());
+            LOGGER.warn("Skipping identity provisioning for subject={} because base URL is not configured", subject);
             return;
         }
 
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("subject", request.externalReference());
+        payload.put("subject", subject);
         payload.put("tenantId", "healthcare-tenant");
         payload.put("role", "PATIENT");
         payload.put("tokenId", correlationId);

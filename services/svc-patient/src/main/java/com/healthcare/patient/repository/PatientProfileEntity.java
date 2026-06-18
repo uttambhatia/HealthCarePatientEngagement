@@ -15,6 +15,9 @@ public class PatientProfileEntity {
     @Column(nullable = false)
     private String status;
 
+    @Column(length = 512)
+    private String decisionAudit;
+
     @Column(nullable = false, unique = true)
     private String externalReference;
 
@@ -39,10 +42,11 @@ public class PatientProfileEntity {
     protected PatientProfileEntity() {
     }
 
-    public PatientProfileEntity(String id, String status, String externalReference, String givenName, String familyName,
+    public PatientProfileEntity(String id, String status, String decisionAudit, String externalReference, String givenName, String familyName,
                                 String birthDate, String email, String phone, String demographics) {
         this.id = id;
         this.status = status;
+        this.decisionAudit = decisionAudit;
         this.externalReference = externalReference;
         this.givenName = givenName;
         this.familyName = familyName;
@@ -58,6 +62,10 @@ public class PatientProfileEntity {
 
     public String getStatus() {
         return status;
+    }
+
+    public String getDecisionAudit() {
+        return decisionAudit;
     }
 
     public String getExternalReference() {

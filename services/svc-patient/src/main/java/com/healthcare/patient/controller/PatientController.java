@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -71,6 +72,27 @@ public class PatientController {
         return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), responses);
     }
 
+    @Operation(summary = "Approve pending patient registration")
+    @PatchMapping("/{id}/approval/approve")
+    public StandardResponse<PatientResponse> approve(@PathVariable("id") String id, Authentication authentication) {
+        String correlationId = CorrelationIdHolder.get().orElse("n/a");
+        return new StandardResponse<>(correlationId, service.approveRegistration(id, resolveActor(authentication), correlationId));
+    }
+
+    @Operation(summary = "Reject pending patient registration")
+    @PatchMapping("/{id}/approval/reject")
+    public StandardResponse<PatientResponse> reject(@PathVariable("id") String id, Authentication authentication) {
+        String correlationId = CorrelationIdHolder.get().orElse("n/a");
+        return new StandardResponse<>(correlationId, service.rejectRegistration(id, resolveActor(authentication), correlationId));
+    }
+
+    @Operation(summary = "Resend patient registration notification")
+    @PostMapping("/{id}/notifications/resend")
+    public StandardResponse<PatientResponse> resend(@PathVariable("id") String id) {
+        String correlationId = CorrelationIdHolder.get().orElse("n/a");
+        return new StandardResponse<>(correlationId, service.resendRegistrationNotification(id, correlationId));
+    }
+
     private boolean isPatientPrincipal() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null
@@ -111,5 +133,22 @@ public class PatientController {
 
     private ResponseStatusException forbidden() {
         return new ResponseStatusException(HttpStatus.FORBIDDEN, "Patient scope violation");
+    }
+
+    private String resolveActor(Authentication authentication) {
+        if (authentication == null) {
+            return "unknown";
+        }
+        if (authentication instanceof JwtAuthenticationToken jwtAuthenticationToken) {
+            String[] claimCandidates = {"preferred_username", "upn", "email", "name", "sub"};
+            for (String claim : claimCandidates) {
+                String value = jwtAuthenticationToken.getToken().getClaimAsString(claim);
+                if (value != null && !value.isBlank()) {
+                    return value;
+                }
+            }
+        }
+        String name = authentication.getName();
+        return (name == null || name.isBlank()) ? "unknown" : name;
     }
 }
