@@ -181,6 +181,11 @@ export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
         const deviceManager = await callClient.getDeviceManager()
         await deviceManager.askDevicePermission({ audio: true, video: true })
 
+        const microphones = await deviceManager.getMicrophones()
+        if (microphones.length > 0) {
+          await deviceManager.selectMicrophone(microphones[0])
+        }
+
         const cameras = await deviceManager.getCameras()
         if (cameras.length > 0) {
           localVideoStreamRef.current = new LocalVideoStream(cameras[0])
@@ -191,11 +196,18 @@ export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
           displayName: session?.displayName || role,
         })
 
-        const joinOptions = localVideoStreamRef.current && cameraEnabled
-          ? { videoOptions: { localVideoStreams: [localVideoStreamRef.current] } }
-          : undefined
+        const joinOptions = {
+          audioOptions: { muted: !micEnabled },
+          ...(localVideoStreamRef.current && cameraEnabled
+            ? { videoOptions: { localVideoStreams: [localVideoStreamRef.current] } }
+            : {}),
+        }
 
         const call = callAgent.join({ groupId: sessionId }, joinOptions)
+
+        if (micEnabled && call.isMuted) {
+          await call.unmute()
+        }
 
         callClientRef.current = callClient
         deviceManagerRef.current = deviceManager
