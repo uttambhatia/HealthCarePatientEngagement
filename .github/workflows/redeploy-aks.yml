@@ -56,6 +56,17 @@ jobs:
         with:
           version: 'latest'
 
+      - name: Detect Azure credentials fallback availability
+        id: fallback_creds
+        env:
+          AZURE_CREDENTIALS_JSON: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          if [ -n "$AZURE_CREDENTIALS_JSON" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Authenticate to Azure (OIDC)
         id: azure_login_oidc
         continue-on-error: true
@@ -67,7 +78,7 @@ jobs:
 
       - name: Authenticate to Azure (credentials fallback)
         id: azure_login_sp
-        if: ${{ steps.azure_login_oidc.outcome == 'failure' }}
+        if: ${{ steps.azure_login_oidc.outcome == 'failure' && steps.fallback_creds.outputs.available == 'true' }}
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
