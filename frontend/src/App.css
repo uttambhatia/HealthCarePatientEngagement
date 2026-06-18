@@ -2527,6 +2527,14 @@ small {
   min-height: 0;
 }
 
+.admin-registration-module {
+  min-height: 100%;
+}
+
+.admin-workbench .dashboard-grid--primary {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 @media (min-width: 1040px) {
   .doctor-workbench {
     grid-template-columns: minmax(280px, 0.88fr) minmax(0, 1.42fr);
@@ -4437,6 +4445,27 @@ small {
   color: color-mix(in srgb, #065f5c 72%, #ffffff 28%);
 }
 
+.registration-filter-row th {
+  padding-top: 0.35rem;
+  padding-bottom: 0.5rem;
+}
+
+.registration-filter-input {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, #065f5c 18%, #ffffff 82%);
+  border-radius: 8px;
+  padding: 0.28rem 0.45rem;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  background: #ffffff;
+  color: #0f3448;
+}
+
+.registration-filter-input:focus {
+  outline: 2px solid rgba(11, 122, 143, 0.25);
+  outline-offset: 1px;
+}
+
 .registration-sort-button {
   border: none;
   background: transparent;
@@ -4489,17 +4518,20 @@ small {
 }
 
 .registration-table-pagination {
-  display: flex;
+  display: grid;
+  justify-items: center;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem;
   margin-top: 0.85rem;
-  flex-wrap: wrap;
 }
 
 .registration-table-page-status {
   font-size: 0.85rem;
   color: color-mix(in srgb, #065f5c 70%, #ffffff 30%);
+}
+
+.registration-table-page-status--centered {
+  text-align: center;
 }
 
 .registration-page-size-control {
@@ -4520,4 +4552,11 @@ small {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.registration-pagination-button {
+  padding: 0.28rem 0.5rem;
+  font-size: 0.76rem;
+  min-height: 1.75rem;
+  line-height: 1.1;
 }

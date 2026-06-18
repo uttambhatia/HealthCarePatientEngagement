@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Card } from '../components/Card'
 import { MetricCardIcon, type MetricVariant } from '../components/MetricCardIcon'
-import { AdminDashboard } from '../modules/admin/AdminDashboard'
 import { IotMonitoringDashboard } from '../modules/iot/IotMonitoringDashboard'
 import { NotificationsPanel } from '../modules/notification/NotificationsPanel'
 import { PatientRegistrationReview } from '../modules/patient/PatientRegistrationReview'
@@ -118,10 +117,7 @@ export function AdminLandingPage({ role }: AdminLandingPageProps) {
             </div>
           ) : (
             <AdminModuleGrid>
-              <div className="module-slot">
-                <AdminDashboard />
-              </div>
-              <div className="module-slot">
+              <div className="module-slot module-slot--datatable admin-registration-module">
                 <PatientRegistrationReview />
               </div>
             </AdminModuleGrid>

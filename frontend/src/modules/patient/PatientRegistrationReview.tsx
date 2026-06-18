@@ -16,6 +16,13 @@ type RegistrationRow = {
   decisionAudit: string
 }
 
+type RegistrationFilters = {
+  fullName: string
+  email: string
+  phone: string
+  status: string
+}
+
 type SortColumn = 'fullName' | 'email' | 'phone' | 'status' | 'decisionAudit'
 type SortDirection = 'asc' | 'desc'
 
@@ -72,6 +79,12 @@ export function PatientRegistrationReview() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(5)
+  const [filters, setFilters] = useState<RegistrationFilters>({
+    fullName: '',
+    email: '',
+    phone: '',
+    status: 'ALL',
+  })
 
   const token = session?.accessToken
 
@@ -107,6 +120,22 @@ export function PatientRegistrationReview() {
     [rows],
   )
 
+  const filteredRows = useMemo(() => {
+    const nameFilter = filters.fullName.trim().toLowerCase()
+    const emailFilter = filters.email.trim().toLowerCase()
+    const phoneFilter = filters.phone.trim().toLowerCase()
+    const statusFilter = filters.status.toUpperCase()
+
+    return rows.filter((row) => {
+      const matchesName = !nameFilter || row.fullName.toLowerCase().includes(nameFilter)
+      const matchesEmail = !emailFilter || row.email.toLowerCase().includes(emailFilter)
+      const matchesPhone = !phoneFilter || row.phone.toLowerCase().includes(phoneFilter)
+      const matchesStatus = statusFilter === 'ALL' || row.status.toUpperCase() === statusFilter
+
+      return matchesName && matchesEmail && matchesPhone && matchesStatus
+    })
+  }, [filters, rows])
+
   const sortedRows = useMemo(() => {
     const rankByStatus = (status: string) => {
       const normalized = status.toUpperCase()
@@ -122,7 +151,7 @@ export function PatientRegistrationReview() {
       return 3
     }
 
-    return [...rows].sort((left, right) => {
+    return [...filteredRows].sort((left, right) => {
       let result = 0
 
       if (sortColumn === 'status') {
@@ -135,7 +164,7 @@ export function PatientRegistrationReview() {
 
       return sortDirection === 'asc' ? result : -result
     })
-  }, [rows, sortColumn, sortDirection])
+  }, [filteredRows, sortColumn, sortDirection])
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize))
 
@@ -169,6 +198,11 @@ export function PatientRegistrationReview() {
       return `${label} ↕`
     }
     return sortDirection === 'asc' ? `${label} ↑` : `${label} ↓`
+  }
+
+  function setFilter<K extends keyof RegistrationFilters>(key: K, value: RegistrationFilters[K]) {
+    setFilters((current) => ({ ...current, [key]: value }))
+    setCurrentPage(1)
   }
 
   async function runAction(id: string, action: 'approve' | 'reject' | 'resend') {
@@ -244,6 +278,49 @@ export function PatientRegistrationReview() {
               </th>
               <th>Actions</th>
             </tr>
+            <tr className="registration-filter-row">
+              <th>
+                <input
+                  type="search"
+                  className="registration-filter-input"
+                  placeholder="Search name"
+                  value={filters.fullName}
+                  onChange={(event) => setFilter('fullName', event.target.value)}
+                />
+              </th>
+              <th>
+                <input
+                  type="search"
+                  className="registration-filter-input"
+                  placeholder="Search email"
+                  value={filters.email}
+                  onChange={(event) => setFilter('email', event.target.value)}
+                />
+              </th>
+              <th>
+                <input
+                  type="search"
+                  className="registration-filter-input"
+                  placeholder="Search phone"
+                  value={filters.phone}
+                  onChange={(event) => setFilter('phone', event.target.value)}
+                />
+              </th>
+              <th>
+                <select
+                  className="registration-filter-input"
+                  value={filters.status}
+                  onChange={(event) => setFilter('status', event.target.value)}
+                >
+                  <option value="ALL">All statuses</option>
+                  <option value="PENDING_VERIFICATION">Pending verification</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="REJECTED">Rejected</option>
+                </select>
+              </th>
+              <th />
+              <th />
+            </tr>
           </thead>
           <tbody>
             {isLoading ? (
@@ -307,7 +384,7 @@ export function PatientRegistrationReview() {
         </table>
 
         <div className="registration-table-pagination">
-          <span className="registration-table-page-status">
+          <span className="registration-table-page-status registration-table-page-status--centered">
             Showing {pageStart}-{pageEnd} of {sortedRows.length}
           </span>
           <label className="registration-page-size-control">
@@ -327,7 +404,7 @@ export function PatientRegistrationReview() {
           <div className="registration-page-controls">
             <button
               type="button"
-              className="secondary-button"
+              className="secondary-button registration-pagination-button"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
             >
@@ -336,7 +413,7 @@ export function PatientRegistrationReview() {
             <span>Page {currentPage} of {totalPages}</span>
             <button
               type="button"
-              className="secondary-button"
+              className="secondary-button registration-pagination-button"
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
             >
