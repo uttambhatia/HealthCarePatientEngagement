@@ -75,6 +75,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
                 .requestMatchers(HttpMethod.GET, "/patients", "/patients/**").hasAnyRole("PATIENT", "DOCTOR", "COORDINATOR", "ADMIN")
+                    .requestMatchers(HttpMethod.PATCH, "/patients/*/approval/**").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.POST, "/patients/*/notifications/resend").hasRole("ADMIN")
                 .requestMatchers("/patients/**").hasAnyRole("COORDINATOR", "ADMIN")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))

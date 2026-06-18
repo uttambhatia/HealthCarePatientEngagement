@@ -4,6 +4,7 @@ import { MetricCardIcon, type MetricVariant } from '../components/MetricCardIcon
 import { AdminDashboard } from '../modules/admin/AdminDashboard'
 import { IotMonitoringDashboard } from '../modules/iot/IotMonitoringDashboard'
 import { NotificationsPanel } from '../modules/notification/NotificationsPanel'
+import { PatientRegistrationReview } from '../modules/patient/PatientRegistrationReview'
 import type { Role } from '../utils/roleUtils'
 
 type AdminLandingPageProps = {
@@ -119,6 +120,9 @@ export function AdminLandingPage({ role }: AdminLandingPageProps) {
             <AdminModuleGrid>
               <div className="module-slot module-slot--featured admin-right-panel-grid">
                 <AdminDashboard />
+              </div>
+              <div className="module-slot">
+                <PatientRegistrationReview />
               </div>
             </AdminModuleGrid>
           )}
