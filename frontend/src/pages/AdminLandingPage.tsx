@@ -118,7 +118,7 @@ export function AdminLandingPage({ role }: AdminLandingPageProps) {
             </div>
           ) : (
             <AdminModuleGrid>
-              <div className="module-slot module-slot--featured admin-right-panel-grid">
+              <div className="module-slot">
                 <AdminDashboard />
               </div>
               <div className="module-slot">

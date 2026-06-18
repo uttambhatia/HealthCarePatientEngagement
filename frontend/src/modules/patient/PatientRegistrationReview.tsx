@@ -71,7 +71,7 @@ export function PatientRegistrationReview() {
   const [sortColumn, setSortColumn] = useState<SortColumn>('status')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(5)
 
   const token = session?.accessToken
 
@@ -273,7 +273,7 @@ export function PatientRegistrationReview() {
                           <>
                             <button
                               type="button"
-                              className="primary-button"
+                              className="primary-button registration-action-button"
                               disabled={busy}
                               onClick={() => void runAction(row.id, 'approve')}
                             >
@@ -281,7 +281,7 @@ export function PatientRegistrationReview() {
                             </button>
                             <button
                               type="button"
-                              className="secondary-button"
+                              className="secondary-button registration-action-button"
                               disabled={busy}
                               onClick={() => void runAction(row.id, 'reject')}
                             >
@@ -291,11 +291,11 @@ export function PatientRegistrationReview() {
                         ) : null}
                         <button
                           type="button"
-                          className="secondary-button"
+                          className="secondary-button registration-action-button"
                           disabled={busy}
                           onClick={() => void runAction(row.id, 'resend')}
                         >
-                          Resend notifications
+                          Notify
                         </button>
                       </div>
                     </td>

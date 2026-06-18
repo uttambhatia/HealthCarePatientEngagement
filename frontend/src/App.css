@@ -4481,6 +4481,13 @@ small {
   gap: 0.4rem;
 }
 
+.registration-action-button {
+  padding: 0.3rem 0.55rem;
+  font-size: 0.78rem;
+  line-height: 1.1;
+  min-height: 1.8rem;
+}
+
 .registration-table-pagination {
   display: flex;
   align-items: center;
