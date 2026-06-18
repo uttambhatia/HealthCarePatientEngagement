@@ -7,6 +7,7 @@ import { CoordinatorLandingPage } from './pages/CoordinatorLandingPage'
 import { DoctorLandingPage } from './pages/DoctorLandingPage'
 import { PatientLandingPage } from './pages/PatientLandingPage'
 import { HomePage } from './pages/HomePage'
+import { TeleconsultCallClientPage } from './pages/TeleconsultCallClientPage'
 import { useAuth } from './auth/useAuth'
 import { setApiAuthTokenGetter, setApiErrorInterceptor } from './services/apiClient'
 import { PatientRegistrationForm } from './modules/patient/PatientRegistrationForm'
@@ -15,6 +16,8 @@ type BackendStatus = 'checking' | 'up' | 'auth-required' | 'down'
 
 function App() {
   const { session, authReady, authError, isOidcConfigured, loginWithOidc, loginAs, logout } = useAuth()
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
+
   const [showPatientRegistration, setShowPatientRegistration] = useState(false)
   const [registrationNotice, setRegistrationNotice] = useState<string | null>(null)
   const [backendStatus, setBackendStatus] = useState<BackendStatus>('checking')
@@ -70,6 +73,13 @@ function App() {
       window.removeEventListener('app:api-auth-failure', onAuthFailure)
     }
   }, [])
+
+  if (currentPath === '/teleconsult/call') {
+    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+    const joinUrl = params.get('joinUrl') ?? ''
+    const role = params.get('role') ?? ''
+    return <TeleconsultCallClientPage joinUrl={joinUrl} role={role} />
+  }
 
   return (
     <HomePage
