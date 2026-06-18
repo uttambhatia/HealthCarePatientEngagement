@@ -12,7 +12,6 @@ import {
 import { AzureCommunicationTokenCredential } from '@azure/communication-common'
 import { useAuth } from '../auth/useAuth'
 import { requestTeleconsultToken, type TeleconsultTokenResponse } from '../services/platformApi'
-import { buildTeleconsultCallClientUrl } from '../utils/teleconsultUrl'
 
 type Props = {
   joinUrl: string
@@ -30,6 +29,12 @@ function isSupportedJoinUrl(value: string) {
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+function buildTeleconsultCallClientUrl(joinUrl: string, role: string) {
+  const encodedJoinUrl = encodeURIComponent(joinUrl)
+  const encodedRole = encodeURIComponent(role || 'UNKNOWN')
+  return `/teleconsult/call?role=${encodedRole}&joinUrl=${encodedJoinUrl}`
 }
 
 type RenderedView = {
