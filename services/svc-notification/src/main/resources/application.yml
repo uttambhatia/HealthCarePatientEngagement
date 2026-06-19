@@ -42,10 +42,14 @@ platform:
       path: ${ACS_INTEGRATION_PATH:/acs/notifications}
     appointment:
       base-url: ${FOLLOWUP_APPOINTMENT_BASE_URL:}
-      path: ${FOLLOWUP_APPOINTMENT_PATH:/appointments}
+      path: ${FOLLOWUP_APPOINTMENT_PATH:/appointments/internal/follow-up}
   messaging:
     channel: ${NOTIFICATION_MESSAGING_CHANNEL:notification-service}
     inboundChannel: ${NOTIFICATION_INBOUND_CHANNEL:appointment-service}
+    teleconsultation:
+      processorEnabled: ${TELECONSULT_TOPIC_PROCESSOR_ENABLED:true}
+      completedTopic: ${TELECONSULT_COMPLETED_TOPIC:teleconsultation-completed}
+      completedSubscription: ${TELECONSULT_COMPLETED_SUBSCRIPTION:notification-service}
     processorEnabled: ${NOTIFICATION_PROCESSOR_ENABLED:true}
     retryAttempts: 3
     deadLetterQueue: notification-service-dlq

@@ -102,6 +102,15 @@ public class AppointmentController {
         );
     }
 
+    @Operation(summary = "Create follow-up appointment (internal service-to-service endpoint)")
+    @PostMapping("/internal/follow-up")
+    @ResponseStatus(HttpStatus.CREATED)
+    public StandardResponse<AppointmentResponse> createFollowUpAppointment(
+            @Valid @RequestBody CreateAppointmentRequest request) {
+        String correlationId = CorrelationIdHolder.get().orElse("n/a");
+        return new StandardResponse<>(correlationId, service.bookAppointment(request, correlationId));
+    }
+
     @Operation(summary = "Start teleconsultation session")
     @PostMapping("/{id}/teleconsult/start")
     public StandardResponse<TeleconsultationResponse> startTeleconsultation(@PathVariable("id") String id) {

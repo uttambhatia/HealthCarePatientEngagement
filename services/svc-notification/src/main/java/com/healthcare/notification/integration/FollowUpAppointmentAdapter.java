@@ -23,7 +23,7 @@ public class FollowUpAppointmentAdapter implements AppointmentBookingPort {
     public FollowUpAppointmentAdapter(
             RestClient.Builder restClientBuilder,
             @Value("${platform.integration.appointment.base-url:}") String baseUrl,
-            @Value("${platform.integration.appointment.path:/appointments}") String path,
+            @Value("${platform.integration.appointment.path:/appointments/internal/follow-up}") String path,
             @Value("${platform.messaging.retryAttempts:3}") int maxAttempts,
             @Value("${platform.teleconsult.followup.appointment.channel:VIDEO}") String defaultChannel) {
         this.restClient = baseUrl.isBlank() ? null : restClientBuilder.baseUrl(baseUrl).build();
@@ -54,7 +54,9 @@ public class FollowUpAppointmentAdapter implements AppointmentBookingPort {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("patientId", patientId);
         payload.put("providerId", providerId);
-        payload.put("scheduledAt", scheduledAt);
+        // Ensure full ISO-8601 datetime — date-only values get a default 09:00 UTC time
+        String isoScheduledAt = scheduledAt.contains("T") ? scheduledAt : scheduledAt + "T09:00:00Z";
+        payload.put("scheduledAt", isoScheduledAt);
         payload.put("channel", defaultChannel);
 
         RuntimeException lastError = null;
