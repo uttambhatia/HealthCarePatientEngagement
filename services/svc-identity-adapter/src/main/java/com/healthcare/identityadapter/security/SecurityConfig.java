@@ -59,6 +59,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/acs/**", "/error").permitAll()
+                .requestMatchers("/identity/assertions/profile-photo", "/identity/assertions/profile-photo/**").hasAnyRole("PATIENT", "DOCTOR", "COORDINATOR", "ADMIN")
                 .requestMatchers("/identity/assertions/**").hasAnyRole("ADMIN", "DOCTOR", "COORDINATOR")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))

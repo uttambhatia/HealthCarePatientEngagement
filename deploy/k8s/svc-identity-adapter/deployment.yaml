@@ -91,6 +91,17 @@ spec:
                   name: platform-secrets
                   key: acs-identity-connection-string
                   optional: true
+            - name: PLATFORM_INTEGRATION_BLOB_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: azure-blob-connection-string
+            - name: PLATFORM_INTEGRATION_BLOB_PROFILE_PHOTO_CONTAINER
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: profile-photo-container
+                  optional: true
             - name: ACS_TELECONSULT_JOIN_BASE_URL
               valueFrom:
                 secretKeyRef:

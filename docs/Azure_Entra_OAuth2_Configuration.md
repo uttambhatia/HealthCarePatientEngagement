@@ -124,6 +124,58 @@ foreach ($r in $roles) {
 }
 ```
 
+### B2B Guest Onboarding Automation
+
+Use the scripted batch workflow to onboard guests into existing role groups without changing role claim values.
+
+Input template:
+
+- `scripts/b2b-guests.template.csv`
+
+Automation script:
+
+- `scripts/onboard-b2b-guests.ps1`
+
+Safe validation-only check (no Azure calls):
+
+```powershell
+.\scripts\onboard-b2b-guests.ps1 -CsvPath .\scripts\b2b-guests.template.csv -ValidateOnly
+```
+
+Dry-run check (Azure read-only flow, no invitations or assignments):
+
+```powershell
+.\scripts\onboard-b2b-guests.ps1 -CsvPath .\scripts\b2b-guests.template.csv
+```
+
+Live execution (invites guest users and assigns to `HCPE-*` groups):
+
+```powershell
+.\scripts\onboard-b2b-guests.ps1 -CsvPath .\scripts\b2b-guests.csv -Execute
+```
+
+Notes:
+
+- Supported roles in CSV are `patient`, `doctor`, `care-coordinator` (maps to `COORDINATOR`), and `admin`.
+- `admin` and `care-coordinator` require approver metadata unless `-AllowPrivilegedWithoutApprover` is set.
+- The script writes a timestamped report CSV to the workspace root unless `-ReportPath` is provided.
+
+### Approved Patient Automation
+
+Approved patient onboarding now follows the same role-group model, but it is triggered automatically when a patient record is approved.
+
+Required deployment values for the patient provisioning worker:
+
+- `ENTRA_API_APP_ID`
+- `ENTRA_GRAPH_BASE_URL`
+- `ENTRA_PATIENT_GROUP_NAME`
+- `ENTRA_PATIENT_ROLE_VALUE`
+- `ENTRA_INVITE_REDIRECT_URL`
+
+For dev bootstrap, `deploy/k8s/env/dev/bootstrap-dev-azure.ps1` writes these values into `dev.env` and the rendered platform secret. When Entra app registration is enabled, the script derives `ENTRA_API_APP_ID` from the created API app registration.
+
+The approved-patient worker resolves or invites the user, adds them to `HCPE-PATIENT`, and ensures the matching API app role is assigned so the access token includes `PATIENT` in the `roles` claim.
+
 ### Admin Consent
 
 After wiring API delegated permission into the SPA app registration, grant tenant admin consent for the SPA app permissions before validating secure sign-in flows.

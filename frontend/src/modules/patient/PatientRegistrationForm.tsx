@@ -1,5 +1,10 @@
 import { useState } from 'react'
-import { createPatient, type CreatePatientRequest, type PatientResponse } from '../../services/platformApi'
+import {
+  createPatient,
+  uploadPatientIdProof,
+  type CreatePatientRequest,
+  type PatientResponse,
+} from '../../services/platformApi'
 
 type PatientRegistrationFormProps = {
   onBack: () => void
@@ -87,6 +92,7 @@ export function PatientRegistrationForm({ onBack, onSaved }: PatientRegistration
   const [isError, setIsError] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({})
   const [touchedFields, setTouchedFields] = useState<Partial<Record<FormField, boolean>>>({})
+  const [idProofFile, setIdProofFile] = useState<File | null>(null)
 
   async function handleSave() {
     const errors = validateForm(form)
@@ -112,6 +118,9 @@ export function PatientRegistrationForm({ onBack, onSaved }: PatientRegistration
 
     try {
       const patient = await createPatient(form)
+      if (idProofFile) {
+        await uploadPatientIdProof(patient.id, idProofFile)
+      }
       onSaved(patient)
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'We could not complete patient registration right now. Please check the details and try again.'
@@ -307,6 +316,16 @@ export function PatientRegistrationForm({ onBack, onSaved }: PatientRegistration
               {fieldState('demographics').errorText}
             </small>
           ) : null}
+        </label>
+
+        <label className="field-block">
+          <span>ID proof with photo (optional)</span>
+          <input
+            type="file"
+            accept="image/*,.pdf"
+            onChange={(event) => setIdProofFile(event.target.files?.[0] ?? null)}
+          />
+          <small>Allowed: image/PDF up to 10MB. This is stored in secure Azure Blob Storage.</small>
         </label>
 
         <div className="form-actions">

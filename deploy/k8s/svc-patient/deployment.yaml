@@ -78,6 +78,17 @@ spec:
                   key: fhir-integration-base-url
             - name: NOTIFICATION_INTEGRATION_BASE_URL
               value: http://svc-notification
+            - name: PLATFORM_INTEGRATION_BLOB_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: azure-blob-connection-string
+            - name: PLATFORM_INTEGRATION_BLOB_PATIENT_IDPROOF_CONTAINER
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: patient-idproof-container
+                  optional: true
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               valueFrom:
                 secretKeyRef:

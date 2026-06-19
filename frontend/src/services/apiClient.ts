@@ -39,7 +39,14 @@ function buildUrl(input: string) {
     return input
   }
 
-  return `${API_BASE_URL}${input.startsWith('/') ? input : `/${input}`}`
+  const normalizedInput = input.startsWith('/') ? input : `/${input}`
+
+  // Avoid duplicate /api/api/* when both base URL and route already include /api.
+  if ((normalizedInput === '/api' || normalizedInput.startsWith('/api/')) && /\/api$/i.test(API_BASE_URL)) {
+    return `${API_BASE_URL}${normalizedInput.slice('/api'.length)}`
+  }
+
+  return `${API_BASE_URL}${normalizedInput}`
 }
 
 function createCorrelationId() {
@@ -417,12 +424,20 @@ export async function apiClient<T>(input: string, options: ApiOptions = {}): Pro
     throw apiError
   }
 
+  const isFormDataBody = typeof FormData !== 'undefined' && options.body instanceof FormData
+  const defaultHeaders: Record<string, string> = {
+    'X-Correlation-Id': createCorrelationId(),
+    ...(effectiveToken ? { Authorization: `Bearer ${effectiveToken}` } : {}),
+  }
+
+  if (!isFormDataBody) {
+    defaultHeaders['Content-Type'] = 'application/json'
+  }
+
   const response = await fetch(requestUrl, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
-      'X-Correlation-Id': createCorrelationId(),
-      ...(effectiveToken ? { Authorization: `Bearer ${effectiveToken}` } : {}),
+      ...defaultHeaders,
       ...(options.headers ?? {}),
     },
   })

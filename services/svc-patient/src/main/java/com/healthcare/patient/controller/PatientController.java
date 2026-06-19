@@ -1,6 +1,7 @@
 package com.healthcare.patient.controller;
 
 import com.healthcare.patient.dto.CreatePatientRequest;
+import com.healthcare.patient.dto.PatientDocumentDownload;
 import com.healthcare.patient.dto.PatientResponse;
 import com.healthcare.patient.service.PatientApplicationService;
 import com.healthcare.platform.common.api.StandardResponse;
@@ -9,6 +10,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -91,6 +96,38 @@ public class PatientController {
     public StandardResponse<PatientResponse> resend(@PathVariable("id") String id) {
         String correlationId = CorrelationIdHolder.get().orElse("n/a");
         return new StandardResponse<>(correlationId, service.resendRegistrationNotification(id, correlationId));
+    }
+
+    @Operation(summary = "Upload patient ID proof")
+    @PostMapping(path = "/{id}/id-proof", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public StandardResponse<PatientResponse> uploadIdProof(@PathVariable("id") String id,
+                                                           @RequestParam("file") MultipartFile file) {
+        String correlationId = CorrelationIdHolder.get().orElse("n/a");
+        return new StandardResponse<>(correlationId, service.uploadIdProof(id, file, correlationId));
+    }
+
+    @Operation(summary = "Download patient ID proof")
+    @GetMapping("/{id}/id-proof")
+    public ResponseEntity<byte[]> downloadIdProof(@PathVariable("id") String id) {
+        if (isPatientPrincipal()) {
+            String patientScope = patientScopeClaim().orElseThrow(this::forbidden);
+            if (!id.equalsIgnoreCase(patientScope)) {
+                throw forbidden();
+            }
+        }
+
+        String correlationId = CorrelationIdHolder.get().orElse("n/a");
+        PatientDocumentDownload document = service.downloadIdProof(id, correlationId);
+        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        if (document.contentType() != null && !document.contentType().isBlank()) {
+            mediaType = MediaType.parseMediaType(document.contentType());
+        }
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .header("Content-Disposition", "inline; filename=\"" + document.fileName() + "\"")
+                .header("X-Correlation-Id", correlationId)
+                .body(document.content());
     }
 
     private boolean isPatientPrincipal() {

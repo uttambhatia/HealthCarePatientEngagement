@@ -85,6 +85,7 @@ public class SecurityConfig {
 
                         // Human-facing domain APIs.
                         .pathMatchers(HttpMethod.POST, "/api/patients", "/api/patients/", "/patients", "/patients/").permitAll()
+                        .pathMatchers(HttpMethod.POST, "/api/patients/*/id-proof", "/patients/*/id-proof").permitAll()
                         .pathMatchers("/api/patients/**", "/patients/**").hasAnyRole(HUMAN_ROLES)
                         .pathMatchers("/api/consents", "/api/consents/**").hasAnyRole(HUMAN_ROLES)
                         .pathMatchers("/api/appointments", "/api/appointments/**").hasAnyRole(HUMAN_ROLES)
@@ -96,7 +97,10 @@ public class SecurityConfig {
 
                         // Machine or operations APIs.
                         .pathMatchers("/api/devices/events", "/api/devices/events/**").hasAnyRole("SYSTEM_INTEGRATION", "DEVICE_IDENTITY", "ADMIN")
-                        .pathMatchers("/api/identity/assertions", "/api/identity/assertions/**").hasAnyRole("SYSTEM_INTEGRATION", "ADMIN")
+                        .pathMatchers("/api/identity/assertions/profile-photo", "/api/identity/assertions/profile-photo/**")
+                            .hasAnyRole(HUMAN_ROLES)
+                        .pathMatchers("/api/identity/assertions", "/api/identity/assertions/**")
+                            .hasAnyRole("SYSTEM_INTEGRATION", "ADMIN")
                         .pathMatchers("/api/acs", "/api/acs/**").hasAnyRole(HUMAN_ROLES)
                         .pathMatchers("/api/servicebus/messages", "/api/servicebus/messages/**").hasAnyRole("SYSTEM_INTEGRATION", "COORDINATOR", "ADMIN")
 

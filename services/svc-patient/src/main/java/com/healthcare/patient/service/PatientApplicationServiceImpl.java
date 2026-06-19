@@ -2,11 +2,14 @@ package com.healthcare.patient.service;
 
         import com.healthcare.patient.domain.PatientProfile;
         import com.healthcare.patient.dto.CreatePatientRequest;
+        import com.healthcare.patient.dto.PatientDocumentDownload;
         import com.healthcare.patient.dto.PatientResponse;
         import com.healthcare.patient.event.PatientRegisteredEvent;
+        import com.healthcare.patient.event.PatientOnboardingRequestedEvent;
     import com.healthcare.patient.exception.DuplicateRegistrationException;
         import com.healthcare.patient.exception.ResourceNotFoundException;
     import com.healthcare.patient.integration.PatientIdentityAdapter;
+        import com.healthcare.patient.integration.PatientDocumentStorageAdapter;
         import com.healthcare.patient.integration.PatientFhirAdapter;
     import com.healthcare.patient.integration.PatientNotificationAdapter;
         import com.healthcare.patient.repository.PatientRepository;
@@ -14,6 +17,7 @@ package com.healthcare.patient.service;
         import org.slf4j.Logger;
         import org.slf4j.LoggerFactory;
         import org.springframework.stereotype.Service;
+        import org.springframework.web.multipart.MultipartFile;
 
         import java.time.Instant;
         import java.util.List;
@@ -31,18 +35,21 @@ package com.healthcare.patient.service;
             private final PatientFhirAdapter integration;
                     private final PatientIdentityAdapter identityAdapter;
                     private final PatientNotificationAdapter notificationAdapter;
+                    private final PatientDocumentStorageAdapter documentStorageAdapter;
 
                     public PatientApplicationServiceImpl(
                             PatientRepository repository,
                             MessagingPort messagingPort,
                             PatientFhirAdapter integration,
                             PatientIdentityAdapter identityAdapter,
-                            PatientNotificationAdapter notificationAdapter) {
+                                PatientNotificationAdapter notificationAdapter,
+                                PatientDocumentStorageAdapter documentStorageAdapter) {
                 this.repository = repository;
                 this.messagingPort = messagingPort;
                 this.integration = integration;
                         this.identityAdapter = identityAdapter;
                         this.notificationAdapter = notificationAdapter;
+                        this.documentStorageAdapter = documentStorageAdapter;
             }
 
             @Override
@@ -59,7 +66,9 @@ package com.healthcare.patient.service;
                         request.birthDate(),
                         request.email(),
                         request.phone(),
-                        request.demographics()
+                        request.demographics(),
+                        null,
+                        null
                 ));
                         sendPendingVerificationNotificationSafely(aggregate, correlationId);
                     publishRegistrationEventSafely(aggregate, correlationId);
@@ -85,12 +94,15 @@ package com.healthcare.patient.service;
                         current.birthDate(),
                         current.email(),
                         current.phone(),
-                        current.demographics()
+                        current.demographics(),
+                        current.idProofBlobName(),
+                        current.idProofFileName()
                     );
 
                     synchronizeProfileSafely(completed, correlationId);
                     identityAdapter.provisionIdentity(completed, correlationId);
                     PatientProfile saved = repository.save(completed);
+                    publishApprovalEventSafely(saved, correlationId);
                     sendApprovalNotificationSafely(saved, correlationId);
                     return map(saved);
                     }
@@ -114,7 +126,9 @@ package com.healthcare.patient.service;
                         current.birthDate(),
                         current.email(),
                         current.phone(),
-                        current.demographics()
+                        current.demographics(),
+                        current.idProofBlobName(),
+                        current.idProofFileName()
                     );
 
                     PatientProfile saved = repository.save(rejected);
@@ -130,6 +144,44 @@ package com.healthcare.patient.service;
 
                     resendRegistrationNotificationSafely(aggregate, correlationId);
                     return map(aggregate);
+                    }
+
+                    @Override
+                    public PatientResponse uploadIdProof(String id, MultipartFile file, String correlationId) {
+                    PatientProfile current = repository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Patient record not found: " + id));
+
+                    PatientDocumentStorageAdapter.StoredDocument storedDocument =
+                        documentStorageAdapter.uploadIdProof(id, file, correlationId);
+
+                    PatientProfile updated = new PatientProfile(
+                        current.id(),
+                        current.status(),
+                        current.decisionAudit(),
+                        current.externalReference(),
+                        current.givenName(),
+                        current.familyName(),
+                        current.birthDate(),
+                        current.email(),
+                        current.phone(),
+                        current.demographics(),
+                        storedDocument.blobName(),
+                        storedDocument.originalFileName()
+                    );
+                    return map(repository.save(updated));
+                    }
+
+                    @Override
+                    public PatientDocumentDownload downloadIdProof(String id, String correlationId) {
+                    PatientProfile current = repository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Patient record not found: " + id));
+                    if (current.idProofBlobName() == null || current.idProofBlobName().isBlank()) {
+                        throw new ResourceNotFoundException("ID proof not uploaded for patient: " + id);
+                    }
+
+                    PatientDocumentStorageAdapter.DownloadedDocument downloaded =
+                        documentStorageAdapter.download(current.idProofBlobName(), correlationId);
+                    return new PatientDocumentDownload(downloaded.content(), downloaded.contentType(), downloaded.fileName());
                     }
 
                     private void validateDuplicateRegistration(CreatePatientRequest request) {
@@ -184,6 +236,22 @@ public PatientResponse orchestrateOnboarding(CreatePatientRequest request, Strin
                 }
             }
 
+            private void publishApprovalEventSafely(PatientProfile aggregate, String correlationId) {
+                try {
+                    messagingPort.publish("identity-adapter-service", correlationId, new PatientOnboardingRequestedEvent(
+                            aggregate.id(),
+                            aggregate.externalReference(),
+                            aggregate.givenName(),
+                            aggregate.familyName(),
+                            aggregate.email(),
+                            "PATIENT"
+                    ));
+                } catch (RuntimeException exception) {
+                    LOGGER.warn("Patient approval event publish failed aggregateId={} correlationId={} error={}",
+                            aggregate.id(), correlationId, exception.getMessage());
+                }
+            }
+
             private void sendPendingVerificationNotificationSafely(PatientProfile aggregate, String correlationId) {
                 try {
                     notificationAdapter.sendPendingVerification(aggregate, correlationId);
@@ -231,7 +299,9 @@ public PatientResponse orchestrateOnboarding(CreatePatientRequest request, Strin
                 aggregate.birthDate(),
                 aggregate.email(),
                 aggregate.phone(),
-                aggregate.demographics()
+                aggregate.demographics(),
+                aggregate.idProofBlobName() != null && !aggregate.idProofBlobName().isBlank(),
+                aggregate.idProofFileName()
                 );
             }
 

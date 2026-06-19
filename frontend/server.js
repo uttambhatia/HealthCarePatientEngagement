@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const port = Number(process.env.PORT || 8080)
-const backendBaseUrl = (process.env.BACKEND_BASE_URL || 'http://13.71.61.158').replace(/\/$/, '')
+const backendBaseUrl = (process.env.BACKEND_BASE_URL || 'http://api-gateway').replace(/\/$/, '')
 const distDir = path.join(__dirname, 'dist')
 
 const mimeTypes = {

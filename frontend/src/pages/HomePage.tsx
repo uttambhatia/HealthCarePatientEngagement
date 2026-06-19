@@ -3,6 +3,7 @@ import type { PropsWithChildren, ReactNode } from 'react'
 type HomePageProps = PropsWithChildren<{
   isAuthenticated?: boolean
   username?: string
+  profilePhotoUrl?: string
   connectionStatus?: 'checking' | 'up' | 'auth-required' | 'down'
   headerActions?: ReactNode
 }>
@@ -11,6 +12,7 @@ export function HomePage({
   children,
   isAuthenticated = false,
   username,
+  profilePhotoUrl,
   connectionStatus = 'checking',
   headerActions,
 }: HomePageProps) {
@@ -122,10 +124,14 @@ export function HomePage({
             />
             <span className="site-user-welcome" title={`Welcome ${welcomeName}`}>
               <span className="site-user-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false">
-                  <circle cx="12" cy="8.2" r="3.2" />
-                  <path d="M5.5 18.2a6.5 6.5 0 0 1 13 0" />
-                </svg>
+                {profilePhotoUrl ? (
+                  <img src={profilePhotoUrl} alt="Profile" className="site-user-photo" />
+                ) : (
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <circle cx="12" cy="8.2" r="3.2" />
+                    <path d="M5.5 18.2a6.5 6.5 0 0 1 13 0" />
+                  </svg>
+                )}
               </span>
               <span>Welcome {welcomeName}</span>
             </span>

@@ -47,6 +47,8 @@ platform:
       enforcementEnabled: ${CONSENT_ENFORCEMENT_ENABLED:false}
     teleconsult:
       secure-base-url: ${TELECONSULT_SECURE_BASE_URL:https://teleconsult.healthcare.local}
+      acs-base-url: ${TELECONSULT_ACS_INTEGRATION_BASE_URL:}
+      acs-path: ${TELECONSULT_ACS_INTEGRATION_PATH:/acs/teleconsult/sessions}
     medicalRecord:
       base-url: ${MEDICAL_RECORD_INTEGRATION_BASE_URL:}
       path: ${MEDICAL_RECORD_INTEGRATION_PATH:/medical-records}

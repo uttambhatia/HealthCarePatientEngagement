@@ -542,6 +542,14 @@ if ($ServiceBusIntegrationBaseUrl -eq "") {
 }
 
 $oauthAudienceValue = Ensure-EntraAudience -BaseName $baseHyphen -Suffix $suffix -TenantId $tenantId
+$entraApiAppId = ""
+if ($oauthAudienceValue -match '^api://(?<appId>.+)$') {
+    $entraApiAppId = $Matches.appId
+}
+
+if ($entraApiAppId -eq "") {
+    Write-Warning "Unable to derive ENTRA_API_APP_ID from the OAuth2 audience. Set it manually if approved-patient automation is required."
+}
 
 Ensure-ResourceGroup -Name $ResourceGroupName -Region $Location
 $managedIdentity = Ensure-UserAssignedIdentity -Name $managedIdentityName
@@ -612,6 +620,11 @@ $envContent = @(
     "OAUTH2_ISSUER=$oauthIssuer",
     "OAUTH2_AUDIENCE=$oauthAudienceValue",
     "OAUTH2_JWK_SET_URI=$oauthJwkSetUri",
+    "ENTRA_API_APP_ID=$entraApiAppId",
+    "ENTRA_GRAPH_BASE_URL=https://graph.microsoft.com/v1.0",
+    "ENTRA_PATIENT_GROUP_NAME=HCPE-PATIENT",
+    "ENTRA_PATIENT_ROLE_VALUE=PATIENT",
+    "ENTRA_INVITE_REDIRECT_URL=https://myapplications.microsoft.com",
     "AZURE_SQL_JDBC_URL=$jdbcUrl",
     "AZURE_SQL_USERNAME=$SqlAdminUsername",
     "AZURE_SQL_PASSWORD=$SqlAdminPassword",

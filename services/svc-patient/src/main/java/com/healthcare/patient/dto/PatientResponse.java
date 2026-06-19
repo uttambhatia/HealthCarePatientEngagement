@@ -10,6 +10,8 @@ String familyName,
 String birthDate,
 String email,
 String phone,
-String demographics
+String demographics,
+boolean idProofUploaded,
+String idProofFileName
 ) {
 }

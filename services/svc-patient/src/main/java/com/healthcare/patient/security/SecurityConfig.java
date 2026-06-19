@@ -22,6 +22,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.http.HttpMethod;
 
 @Configuration
@@ -60,7 +61,10 @@ public class SecurityConfig {
     @ConditionalOnProperty(prefix = "platform.security", name = "enabled", havingValue = "true")
     public SecurityFilterChain publicPatientRegistrationChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher(AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/patients"))
+            .securityMatcher(new OrRequestMatcher(
+                    AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/patients"),
+                    AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/patients/*/id-proof")
+            ))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         return http.build();

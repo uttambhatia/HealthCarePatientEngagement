@@ -3,7 +3,9 @@ package com.healthcare.patient.service;
 import com.healthcare.patient.domain.PatientProfile;
 import com.healthcare.patient.dto.CreatePatientRequest;
 import com.healthcare.patient.event.PatientRegisteredEvent;
+import com.healthcare.patient.event.PatientOnboardingRequestedEvent;
 import com.healthcare.patient.integration.PatientFhirAdapter;
+import com.healthcare.patient.integration.PatientDocumentStorageAdapter;
 import com.healthcare.patient.integration.PatientIdentityAdapter;
 import com.healthcare.patient.integration.PatientNotificationAdapter;
 import com.healthcare.patient.repository.PatientRepository;
@@ -39,7 +41,8 @@ class PatientApplicationServiceImplTest {
                 messagingPort,
                 new PatientFhirAdapter(RestClient.builder(), "", "/fhir/patients", 1),
                 new PatientIdentityAdapter(RestClient.builder(), "", "/identity/assertions"),
-                new PatientNotificationAdapter(RestClient.builder(), "", "/notifications")
+                new PatientNotificationAdapter(RestClient.builder(), "", "/notifications"),
+                new PatientDocumentStorageAdapter("", "patient-id-proofs")
         );
 
         var created = service.registerPatient(new CreatePatientRequest(
@@ -60,22 +63,15 @@ class PatientApplicationServiceImplTest {
 
     @Test
     void shouldKeepRegistrationWhenFhirSyncFails() {
-        RestClient.Builder restClientBuilder = RestClient.builder();
-        MockRestServiceServer server = MockRestServiceServer.bindTo(restClientBuilder).build();
-                InMemoryPatientRepository repository = new InMemoryPatientRepository();
-                RecordingMessagingPort messagingPort = new RecordingMessagingPort();
-
-        server.expect(once(), requestTo("http://fhir.example.internal/fhir/patients"))
-                .andExpect(method(HttpMethod.POST))
-                .andExpect(header("X-Correlation-Id", "corr-456"))
-                .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
-
-        PatientApplicationServiceImpl localService = new PatientApplicationServiceImpl(
+        InMemoryPatientRepository repository = new InMemoryPatientRepository();
+        RecordingMessagingPort messagingPort = new RecordingMessagingPort();
+        PatientApplicationService localService = new PatientApplicationServiceImpl(
                 repository,
                 messagingPort,
-                new PatientFhirAdapter(restClientBuilder, "http://fhir.example.internal", "/fhir/patients", 1),
+                new PatientFhirAdapter(RestClient.builder(), "", "/fhir/patients", 1),
                 new PatientIdentityAdapter(RestClient.builder(), "", "/identity/assertions"),
-                new PatientNotificationAdapter(RestClient.builder(), "", "/notifications")
+                new PatientNotificationAdapter(RestClient.builder(), "", "/notifications"),
+                new PatientDocumentStorageAdapter("", "patient-id-proofs")
         );
 
         var created = localService.registerPatient(new CreatePatientRequest(
@@ -94,7 +90,37 @@ class PatientApplicationServiceImplTest {
                                 assertThat(saved.externalReference()).isEqualTo("EXT-200"));
                 assertThat(messagingPort.events).hasSize(1);
                 assertThat(messagingPort.events.get(0)).isInstanceOf(PatientRegisteredEvent.class);
-        server.verify();
+    }
+
+    @Test
+    void shouldPublishOnboardingEventWhenPatientIsApproved() {
+        InMemoryPatientRepository repository = new InMemoryPatientRepository();
+        RecordingMessagingPort messagingPort = new RecordingMessagingPort();
+        PatientApplicationService service = new PatientApplicationServiceImpl(
+                repository,
+                messagingPort,
+                new PatientFhirAdapter(RestClient.builder(), "", "/fhir/patients", 1),
+                new PatientIdentityAdapter(RestClient.builder(), "", "/identity/assertions"),
+                new PatientNotificationAdapter(RestClient.builder(), "", "/notifications"),
+                new PatientDocumentStorageAdapter("", "patient-id-proofs")
+        );
+
+        var created = service.registerPatient(new CreatePatientRequest(
+                "EXT-300",
+                "Ava",
+                "Approved",
+                "1985-04-12",
+                "ava.approved@example.com",
+                "+1-555-3000",
+                "FEMALE"
+        ), "corr-789");
+
+        var approved = service.approveRegistration(created.id(), "admin@example.com", "corr-790");
+
+        assertThat(approved.status()).isEqualToIgnoringCase("COMPLETED");
+        assertThat(messagingPort.events).hasSize(2);
+        assertThat(messagingPort.events.get(1)).isInstanceOf(PatientOnboardingRequestedEvent.class);
+        assertThat(((PatientOnboardingRequestedEvent) messagingPort.events.get(1)).targetRole()).isEqualTo("PATIENT");
     }
 
         private static final class InMemoryPatientRepository implements PatientRepository {

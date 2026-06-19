@@ -110,22 +110,44 @@ function normalizeRoleValue(value: string): Role | null {
   return null
 }
 
-function mapRoleFromClaims(claims: Record<string, unknown> | null): Role {
-  const rolesClaim = claims?.roles
-  const normalizedRoles = new Set<Role>()
+function collectRoleValues(claims: Record<string, unknown> | null): string[] {
+  if (!claims) {
+    return []
+  }
 
-  if (Array.isArray(rolesClaim)) {
-    for (const role of rolesClaim) {
-      const normalized = normalizeRoleValue(String(role))
-      if (normalized) {
-        normalizedRoles.add(normalized)
+  const roleClaimKeys = [
+    'roles',
+    'role',
+    'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+    'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role',
+  ]
+
+  const values: string[] = []
+
+  for (const key of roleClaimKeys) {
+    const claim = claims[key]
+    if (typeof claim === 'string') {
+      values.push(claim)
+      continue
+    }
+
+    if (Array.isArray(claim)) {
+      for (const item of claim) {
+        if (typeof item === 'string') {
+          values.push(item)
+        }
       }
     }
   }
 
-  const singleRole = claims?.role
-  if (typeof singleRole === 'string') {
-    const normalizedRole = normalizeRoleValue(singleRole)
+  return values
+}
+
+function mapRoleFromClaims(claims: Record<string, unknown> | null): Role {
+  const normalizedRoles = new Set<Role>()
+
+  for (const roleValue of collectRoleValues(claims)) {
+    const normalizedRole = normalizeRoleValue(roleValue)
     if (normalizedRole) {
       normalizedRoles.add(normalizedRole)
     }

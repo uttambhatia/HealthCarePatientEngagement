@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.healthcare.identityadapter.event.IdentityEventConsumer;
 import com.healthcare.identityadapter.event.IdentityValidatedEvent;
+import com.healthcare.identityadapter.event.PatientOnboardingEventConsumer;
+import com.healthcare.identityadapter.event.PatientOnboardingRequestedEvent;
 import com.healthcare.platform.common.event.MessageEnvelope;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -27,6 +29,7 @@ public class IdentityQueueProcessor {
 
     private final ServiceBusClientBuilder serviceBusClientBuilder;
     private final IdentityEventConsumer identityEventConsumer;
+    private final PatientOnboardingEventConsumer patientOnboardingEventConsumer;
     private final ObjectMapper objectMapper;
     private final String queueName;
     private final String deadLetterQueue;
@@ -39,6 +42,7 @@ public class IdentityQueueProcessor {
     public IdentityQueueProcessor(
             ObjectProvider<ServiceBusClientBuilder> serviceBusClientBuilderProvider,
             IdentityEventConsumer identityEventConsumer,
+            PatientOnboardingEventConsumer patientOnboardingEventConsumer,
             ObjectMapper objectMapper,
             @Value("${platform.messaging.channel:identity-adapter-service}") String queueName,
             @Value("${platform.messaging.deadLetterQueue:identity-adapter-service-dlq}") String deadLetterQueue,
@@ -46,6 +50,7 @@ public class IdentityQueueProcessor {
             @Value("${platform.azure.servicebus.fqdn:}") String serviceBusFqdn) {
         this.serviceBusClientBuilder = serviceBusClientBuilderProvider.getIfAvailable();
         this.identityEventConsumer = identityEventConsumer;
+        this.patientOnboardingEventConsumer = patientOnboardingEventConsumer;
         this.objectMapper = objectMapper;
         this.queueName = queueName;
         this.deadLetterQueue = deadLetterQueue;
@@ -93,6 +98,24 @@ public class IdentityQueueProcessor {
             JsonNode body = objectMapper.readTree(rawBody);
             String eventName = text(body, "eventType", "IdentityValidatedEvent");
             String correlationId = text(body, "correlationId", "n/a");
+
+            if ("PatientOnboardingRequestedEvent".equals(eventName)) {
+            PatientOnboardingRequestedEvent payload = new PatientOnboardingRequestedEvent(
+                text(body, "aggregateId", ""),
+                text(body, "externalReference", ""),
+                text(body, "givenName", ""),
+                text(body, "familyName", ""),
+                text(body, "email", ""),
+                text(body, "targetRole", "PATIENT")
+            );
+
+            MessageEnvelope<PatientOnboardingRequestedEvent> envelope =
+                new MessageEnvelope<>(correlationId, eventName, OffsetDateTime.now(), payload);
+
+            patientOnboardingEventConsumer.handle(envelope);
+            context.complete();
+            return;
+            }
 
             IdentityValidatedEvent payload = new IdentityValidatedEvent(
                     text(body, "aggregateId", ""),

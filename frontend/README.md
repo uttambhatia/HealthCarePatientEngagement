@@ -21,7 +21,7 @@ cp .env.example .env.local
 
 Set these values in `.env.local`:
 
-- `VITE_API_BASE_URL` (typically gateway URL, for example `http://localhost:8080`)
+- `VITE_API_BASE_URL` (local example: `http://localhost:8080`; Azure/AKS should use APIM host URL)
 - `VITE_OIDC_CLIENT_ID`
 - `VITE_OIDC_AUTHORIZATION_ENDPOINT`
 - `VITE_OIDC_TOKEN_ENDPOINT`

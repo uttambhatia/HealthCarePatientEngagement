@@ -45,7 +45,9 @@ class PatientFhirAdapterContractTest {
                 "1985-04-12",
                 "ava.jones@example.com",
                 "+1-555-1000",
-                "FEMALE"
+                "FEMALE",
+                null,
+                null
         );
 
         server.expect(ExpectedCount.times(2), requestTo("http://fhir.example.internal/fhir/patients"))

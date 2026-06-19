@@ -12,6 +12,7 @@ export const platformRoutes = {
   notifications: '/api/notifications',
   serviceBusMessages: '/api/servicebus/messages',
   telemetry: '/api/telemetry',
+  profilePhoto: '/api/identity/assertions/profile-photo',
 }
 
 type Envelope<T> = {
@@ -183,6 +184,8 @@ export type PatientResponse = CreatePatientRequest & {
   id: string
   status: string
   decisionAudit?: string
+  idProofUploaded?: boolean
+  idProofFileName?: string
 }
 
 export type PatientRegistrationResponse = PatientResponse
@@ -341,6 +344,69 @@ export async function createPatient(request: CreatePatientRequest, token?: strin
     token,
   })
   return extractData(payload)
+}
+
+export async function uploadPatientIdProof(id: string, file: File, token?: string) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const payload = await apiClient<Envelope<PatientResponse> | PatientResponse>(
+    `${platformRoutes.patients}/${encodeURIComponent(id)}/id-proof`,
+    {
+      method: 'POST',
+      body: formData,
+      token,
+    },
+  )
+  return extractData(payload)
+}
+
+export async function downloadPatientIdProof(id: string, token?: string) {
+  const response = await fetch(`${platformRoutes.patients}/${encodeURIComponent(id)}/id-proof`, {
+    method: 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(body || `Unable to download ID proof. Status ${response.status}`)
+  }
+
+  return response.blob()
+}
+
+export async function uploadProfilePhoto(file: File, token?: string) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  await apiClient<void>(platformRoutes.profilePhoto, {
+    method: 'POST',
+    body: formData,
+    token,
+  })
+}
+
+export async function getProfilePhotoUrl(token?: string) {
+  const response = await fetch(platformRoutes.profilePhoto, {
+    method: 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+
+  if (response.status === 404) {
+    return null
+  }
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(body || `Unable to load profile photo. Status ${response.status}`)
+  }
+
+  const blob = await response.blob()
+  return URL.createObjectURL(blob)
 }
 
 export async function approvePatientRegistration(id: string, token?: string) {

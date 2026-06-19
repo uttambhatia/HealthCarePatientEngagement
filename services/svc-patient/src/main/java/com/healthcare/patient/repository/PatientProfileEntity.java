@@ -39,11 +39,18 @@ public class PatientProfileEntity {
     @Column(nullable = false)
     private String demographics;
 
+    @Column(length = 512)
+    private String idProofBlobName;
+
+    @Column(length = 256)
+    private String idProofFileName;
+
     protected PatientProfileEntity() {
     }
 
     public PatientProfileEntity(String id, String status, String decisionAudit, String externalReference, String givenName, String familyName,
-                                String birthDate, String email, String phone, String demographics) {
+                                String birthDate, String email, String phone, String demographics,
+                                String idProofBlobName, String idProofFileName) {
         this.id = id;
         this.status = status;
         this.decisionAudit = decisionAudit;
@@ -54,6 +61,8 @@ public class PatientProfileEntity {
         this.email = email;
         this.phone = phone;
         this.demographics = demographics;
+        this.idProofBlobName = idProofBlobName;
+        this.idProofFileName = idProofFileName;
     }
 
     public String getId() {
@@ -94,5 +103,13 @@ public class PatientProfileEntity {
 
     public String getDemographics() {
         return demographics;
+    }
+
+    public String getIdProofBlobName() {
+        return idProofBlobName;
+    }
+
+    public String getIdProofFileName() {
+        return idProofFileName;
     }
 }

@@ -56,9 +56,7 @@ public class SecurityConfig {
         @ConditionalOnProperty(prefix = "platform.security", name = "enabled", havingValue = "true")
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf
-                    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                    .ignoringRequestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**"))
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/careplans", "/careplans/**").hasAnyRole("PATIENT", "DOCTOR", "COORDINATOR", "ADMIN")

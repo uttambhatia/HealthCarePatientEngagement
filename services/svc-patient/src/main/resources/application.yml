@@ -37,6 +37,9 @@ platform:
       issuer: ${OAUTH2_ISSUER:}
       audience: ${OAUTH2_AUDIENCE:}
   integration:
+    blob:
+      connection-string: ${PLATFORM_INTEGRATION_BLOB_CONNECTION_STRING:}
+      patient-idproof-container: ${PLATFORM_INTEGRATION_BLOB_PATIENT_IDPROOF_CONTAINER:patient-id-proofs}
     fhir:
       base-url: ${FHIR_INTEGRATION_BASE_URL:}
       path: ${FHIR_INTEGRATION_PATH:/fhir/patients}

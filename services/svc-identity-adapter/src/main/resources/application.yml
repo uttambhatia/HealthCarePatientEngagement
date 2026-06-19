@@ -37,9 +37,18 @@ platform:
       issuer: ${OAUTH2_ISSUER:}
       audience: ${OAUTH2_AUDIENCE:}
   integration:
+    blob:
+      connection-string: ${PLATFORM_INTEGRATION_BLOB_CONNECTION_STRING:}
+      profile-photo-container: ${PLATFORM_INTEGRATION_BLOB_PROFILE_PHOTO_CONTAINER:user-profile-photos}
     azure-ad:
       base-url: ${AZURE_AD_INTEGRATION_BASE_URL:}
       path: ${AZURE_AD_INTEGRATION_PATH:/identity/assertions}
+    entra:
+      graph-base-url: ${ENTRA_GRAPH_BASE_URL:https://graph.microsoft.com/v1.0}
+      api-app-id: ${ENTRA_API_APP_ID:}
+      group-name: ${ENTRA_PATIENT_GROUP_NAME:HCPE-PATIENT}
+      role-value: ${ENTRA_PATIENT_ROLE_VALUE:PATIENT}
+      invite-redirect-url: ${ENTRA_INVITE_REDIRECT_URL:https://myapplications.microsoft.com}
     acs:
       identity:
         connection-string: ${ACS_IDENTITY_CONNECTION_STRING:}

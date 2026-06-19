@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import {
   approvePatientRegistration,
+  downloadPatientIdProof,
   listPatients,
   rejectPatientRegistration,
   resendPatientRegistrationNotification,
@@ -14,6 +15,7 @@ type RegistrationRow = {
   phone: string
   status: string
   decisionAudit: string
+  idProofUploaded: boolean
 }
 
 type RegistrationFilters = {
@@ -39,6 +41,7 @@ function normalizeRow(record: Record<string, unknown>): RegistrationRow | null {
   const phone = readField(record, 'phone')
   const status = readField(record, 'status')
   const decisionAudit = readField(record, 'decisionAudit')
+  const idProofUploaded = Boolean(record.idProofUploaded)
 
   if (!id || !email || !status) {
     return null
@@ -51,6 +54,7 @@ function normalizeRow(record: Record<string, unknown>): RegistrationRow | null {
     phone,
     status,
     decisionAudit,
+    idProofUploaded,
   }
 }
 
@@ -231,6 +235,23 @@ export function PatientRegistrationReview() {
     }
   }
 
+  async function handleViewIdProof(id: string) {
+    if (!token) {
+      return
+    }
+
+    setErrorMessage(null)
+    try {
+      const blob = await downloadPatientIdProof(id, token)
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank', 'noopener,noreferrer')
+      setTimeout(() => URL.revokeObjectURL(url), 30000)
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Unable to load ID proof.'
+      setErrorMessage(message)
+    }
+  }
+
   return (
     <section className="registration-review-panel" aria-label="Patient registrations review">
       <header className="registration-review-header">
@@ -343,6 +364,16 @@ export function PatientRegistrationReview() {
                     <td>{row.decisionAudit || 'n/a'}</td>
                     <td>
                       <div className="registration-action-group">
+                        {row.idProofUploaded ? (
+                          <button
+                            type="button"
+                            className="secondary-button registration-action-button"
+                            disabled={busy}
+                            onClick={() => void handleViewIdProof(row.id)}
+                          >
+                            View ID
+                          </button>
+                        ) : null}
                         {pending ? (
                           <>
                             <button

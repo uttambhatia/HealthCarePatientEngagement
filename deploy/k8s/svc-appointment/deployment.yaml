@@ -71,6 +71,12 @@ spec:
                 secretKeyRef:
                   name: platform-secrets
                   key: key-vault-url
+            - name: TELECONSULT_ACS_INTEGRATION_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: teleconsult-acs-integration-base-url
+                  optional: true
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               valueFrom:
                 secretKeyRef:

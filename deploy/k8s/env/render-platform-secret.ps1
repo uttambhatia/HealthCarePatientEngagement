@@ -22,6 +22,12 @@ $required = @(
     "OAUTH2_ISSUER",
     "OAUTH2_AUDIENCE",
     "OAUTH2_JWK_SET_URI",
+    "AZURE_BLOB_CONNECTION_STRING",
+    "ENTRA_API_APP_ID",
+    "ENTRA_GRAPH_BASE_URL",
+    "ENTRA_PATIENT_GROUP_NAME",
+    "ENTRA_PATIENT_ROLE_VALUE",
+    "ENTRA_INVITE_REDIRECT_URL",
     "AZURE_SQL_JDBC_URL",
     "AZURE_SQL_USERNAME",
     "AZURE_SQL_PASSWORD",
@@ -95,6 +101,13 @@ stringData:
   azure-managed-identity-client-id: "$($values['AZURE_MANAGED_IDENTITY_CLIENT_ID'])"
 "@
 
+$content += "`n  azure-blob-connection-string: `"$($values['AZURE_BLOB_CONNECTION_STRING'])`""
+$content += "`n  entra-api-app-id: `"$($values['ENTRA_API_APP_ID'])`""
+$content += "`n  entra-graph-base-url: `"$($values['ENTRA_GRAPH_BASE_URL'])`""
+$content += "`n  entra-patient-group-name: `"$($values['ENTRA_PATIENT_GROUP_NAME'])`""
+$content += "`n  entra-patient-role-value: `"$($values['ENTRA_PATIENT_ROLE_VALUE'])`""
+$content += "`n  entra-invite-redirect-url: `"$($values['ENTRA_INVITE_REDIRECT_URL'])`""
+
 foreach ($key in $optional) {
     if ($values.ContainsKey($key) -and -not [string]::IsNullOrWhiteSpace($values[$key])) {
         if ($values[$key] -match "<[^>]+>") {
@@ -134,6 +147,20 @@ foreach ($key in $optional) {
             }
         }
     }
+}
+
+if ($values.ContainsKey("PATIENT_IDPROOF_CONTAINER") -and -not [string]::IsNullOrWhiteSpace($values["PATIENT_IDPROOF_CONTAINER"])) {
+    if ($values["PATIENT_IDPROOF_CONTAINER"] -match "<[^>]+>") {
+        throw "Unresolved placeholder for key PATIENT_IDPROOF_CONTAINER in env file."
+    }
+    $content += "`n  patient-idproof-container: `"$($values['PATIENT_IDPROOF_CONTAINER'])`""
+}
+
+if ($values.ContainsKey("PROFILE_PHOTO_CONTAINER") -and -not [string]::IsNullOrWhiteSpace($values["PROFILE_PHOTO_CONTAINER"])) {
+    if ($values["PROFILE_PHOTO_CONTAINER"] -match "<[^>]+>") {
+        throw "Unresolved placeholder for key PROFILE_PHOTO_CONTAINER in env file."
+    }
+    $content += "`n  profile-photo-container: `"$($values['PROFILE_PHOTO_CONTAINER'])`""
 }
 
 Set-Content -Path $OutputFile -Value $content -NoNewline

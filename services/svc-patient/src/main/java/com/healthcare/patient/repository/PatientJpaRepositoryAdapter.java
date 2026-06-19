@@ -58,7 +58,9 @@ public class PatientJpaRepositoryAdapter implements PatientRepository {
                 aggregate.birthDate(),
                 aggregate.email(),
                 aggregate.phone(),
-                aggregate.demographics()
+                aggregate.demographics(),
+                aggregate.idProofBlobName(),
+                aggregate.idProofFileName()
         );
     }
 
@@ -73,7 +75,9 @@ public class PatientJpaRepositoryAdapter implements PatientRepository {
                 entity.getBirthDate(),
                 entity.getEmail(),
                 entity.getPhone(),
-                entity.getDemographics()
+                entity.getDemographics(),
+                entity.getIdProofBlobName(),
+                entity.getIdProofFileName()
         );
     }
 }

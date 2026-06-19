@@ -11,6 +11,8 @@ import com.healthcare.platform.common.observability.CorrelationIdHolder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,13 +27,17 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/appointments")
 @Tag(name = "Appointment")
 public class AppointmentController {
+    private static final Logger logger = LoggerFactory.getLogger(AppointmentController.class);
     private final AppointmentApplicationService service;
 
     public AppointmentController(AppointmentApplicationService service) {
@@ -44,7 +50,7 @@ public class AppointmentController {
     public StandardResponse<AppointmentResponse> create(@Valid @RequestBody CreateAppointmentRequest request) {
         CreateAppointmentRequest effective = request;
         if (isPatientPrincipal()) {
-            String scopedPatientId = patientScopeClaim().orElseThrow(this::forbidden);
+            String scopedPatientId = primaryPatientScopeClaim().orElseThrow(this::forbidden);
             if (!scopedPatientId.equalsIgnoreCase(request.patientId())) {
                 effective = new CreateAppointmentRequest(scopedPatientId, request.providerId(), request.scheduledAt(), request.channel());
             }
@@ -66,9 +72,20 @@ public class AppointmentController {
     public StandardResponse<List<AppointmentResponse>> list() {
         List<AppointmentResponse> responses = service.listAppointments();
         if (isPatientPrincipal()) {
-            String patientScope = patientScopeClaim().orElseThrow(this::forbidden);
+            Set<String> patientScopes = patientMatchClaims();
+            if (patientScopes.isEmpty()) {
+                throw forbidden();
+            }
+            // Debug: Log extracted scopes and available patient IDs
+            String existingPatientIds = responses.stream()
+                    .map(AppointmentResponse::patientId)
+                    .filter(id -> id != null)
+                    .distinct()
+                    .collect(Collectors.joining(", "));
+            logger.info("Patient list request: scopes={}, existingPatientIds={}", patientScopes, existingPatientIds);
+            
             responses = responses.stream()
-                    .filter(item -> item.patientId() != null && item.patientId().equalsIgnoreCase(patientScope))
+                    .filter(item -> item.patientId() != null && matchesAnyScope(item.patientId(), patientScopes))
                     .toList();
         }
         return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), responses);
@@ -115,30 +132,81 @@ public class AppointmentController {
                 && authentication.getAuthorities().stream().anyMatch(authority -> "ROLE_PATIENT".equals(authority.getAuthority()));
     }
 
-    private Optional<String> patientScopeClaim() {
+    private Set<String> patientScopeClaims() {
+        return canonicalPatientClaims();
+    }
+
+    private Set<String> canonicalPatientClaims() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!(authentication instanceof JwtAuthenticationToken jwtAuthenticationToken)) {
-            return Optional.empty();
+            return Set.of();
         }
 
+        Set<String> values = new LinkedHashSet<>();
         String[] candidateClaims = {"patientId", "patient_id", "externalReference", "external_reference", "sub"};
         for (String candidate : candidateClaims) {
             String claimValue = jwtAuthenticationToken.getToken().getClaimAsString(candidate);
             if (claimValue != null && !claimValue.isBlank()) {
-                return Optional.of(claimValue);
+                values.add(claimValue);
             }
         }
-        return Optional.empty();
+        return values;
+    }
+
+    private Set<String> patientMatchClaims() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof JwtAuthenticationToken jwtAuthenticationToken)) {
+            return Set.of();
+        }
+
+        Set<String> values = new LinkedHashSet<>(canonicalPatientClaims());
+        String[] identityClaims = {"preferred_username", "upn", "email", "unique_name", "sub"};
+        for (String candidate : identityClaims) {
+            String claimValue = jwtAuthenticationToken.getToken().getClaimAsString(candidate);
+            addMatchVariants(values, claimValue);
+        }
+        return values;
+    }
+
+    private void addMatchVariants(Set<String> values, String claimValue) {
+        if (claimValue == null) {
+            return;
+        }
+        String trimmed = claimValue.trim();
+        if (trimmed.isBlank()) {
+            return;
+        }
+
+        values.add(trimmed);
+        int atIndex = trimmed.indexOf('@');
+        if (atIndex > 0) {
+            String localPart = trimmed.substring(0, atIndex);
+            if (!localPart.isBlank()) {
+                values.add(localPart);
+            }
+        }
+    }
+
+    private Optional<String> primaryPatientScopeClaim() {
+        Set<String> scopes = patientScopeClaims();
+        if (scopes.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(scopes.iterator().next());
     }
 
     private void enforcePatientScope(String requestedPatientId) {
         if (!isPatientPrincipal()) {
             return;
         }
-        String patientScope = patientScopeClaim().orElseThrow(this::forbidden);
-        if (requestedPatientId == null || !requestedPatientId.equalsIgnoreCase(patientScope)) {
+        Set<String> patientScopes = patientMatchClaims();
+        if (requestedPatientId == null || patientScopes.isEmpty() || !matchesAnyScope(requestedPatientId, patientScopes)) {
             throw forbidden();
         }
+    }
+
+    private boolean matchesAnyScope(String patientId, Set<String> scopes) {
+        return scopes.stream().anyMatch(scope -> scope.equalsIgnoreCase(patientId));
     }
 
     private ResponseStatusException forbidden() {

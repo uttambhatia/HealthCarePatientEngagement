@@ -17,6 +17,7 @@ import com.healthcare.appointment.exception.SlotAlreadyBookedException;
 import com.healthcare.appointment.exception.TeleconsultationSessionNotFoundException;
 import com.healthcare.appointment.integration.AppointmentNotificationAdapter;
 import com.healthcare.appointment.integration.ConsentAccessAdapter;
+import com.healthcare.appointment.integration.TeleconsultationAcsAdapter;
 import com.healthcare.appointment.integration.TeleconsultationMedicalRecordAdapter;
 import com.healthcare.appointment.repository.AppointmentRepository;
 import com.healthcare.appointment.repository.TeleconsultationSessionRepository;
@@ -55,6 +56,7 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
     private final ConsentAccessAdapter consentAccessAdapter;
     private final TeleconsultationSessionRepository teleconsultationRepository;
     private final TeleconsultationMedicalRecordAdapter teleconsultationMedicalRecordAdapter;
+    private final TeleconsultationAcsAdapter teleconsultationAcsAdapter;
     private final String secureTeleconsultBaseUrl;
 
     public AppointmentApplicationServiceImpl(
@@ -64,6 +66,7 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
             ConsentAccessAdapter consentAccessAdapter,
             TeleconsultationSessionRepository teleconsultationRepository,
             TeleconsultationMedicalRecordAdapter teleconsultationMedicalRecordAdapter,
+            TeleconsultationAcsAdapter teleconsultationAcsAdapter,
             @Value("${platform.integration.teleconsult.secure-base-url:https://teleconsult.healthcare.local}") String secureTeleconsultBaseUrl) {
         this.repository = repository;
         this.messagingPort = messagingPort;
@@ -71,6 +74,7 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
         this.consentAccessAdapter = consentAccessAdapter;
         this.teleconsultationRepository = teleconsultationRepository;
         this.teleconsultationMedicalRecordAdapter = teleconsultationMedicalRecordAdapter;
+        this.teleconsultationAcsAdapter = teleconsultationAcsAdapter;
         this.secureTeleconsultBaseUrl = secureTeleconsultBaseUrl;
     }
 
@@ -154,8 +158,11 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
 
         String sessionId = UUID.randomUUID().toString();
         String startedAt = now();
-        String doctorJoinUrl = secureTeleconsultBaseUrl + "/session/" + sessionId + "?role=DOCTOR";
-        String patientJoinUrl = secureTeleconsultBaseUrl + "/session/" + sessionId + "?role=PATIENT";
+        TeleconsultationAcsAdapter.TeleconsultJoinUrls joinUrls = teleconsultationAcsAdapter
+            .createSession(appointment.id(), appointment.patientId(), appointment.providerId(), correlationId)
+            .orElseGet(() -> new TeleconsultationAcsAdapter.TeleconsultJoinUrls(
+                secureTeleconsultBaseUrl + "/session/" + sessionId + "?role=DOCTOR",
+                secureTeleconsultBaseUrl + "/session/" + sessionId + "?role=PATIENT"));
 
         TeleconsultationSession session = teleconsultationRepository.save(new TeleconsultationSession(
                 sessionId,
@@ -163,8 +170,8 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
                 appointment.patientId(),
                 appointment.providerId(),
                 TELECONSULT_INITIATED,
-                doctorJoinUrl,
-                patientJoinUrl,
+                joinUrls.doctorJoinUrl(),
+                joinUrls.patientJoinUrl(),
                 startedAt,
                 null,
                 null,
