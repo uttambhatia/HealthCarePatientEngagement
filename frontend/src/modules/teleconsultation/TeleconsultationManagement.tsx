@@ -61,11 +61,19 @@ export function TeleconsultationManagement() {
 
   const historyPerPage = 4
 
-  const videoCallActive = useMemo(() => activeSessions.find((session) => session.status === 'INITIATED' || session.status === 'IN_PROGRESS'), [activeSessions])
+  const currentSession = useMemo(() => activeSessions[0] ?? null, [activeSessions])
+  const activeSession = useMemo(
+    () => (currentSession && (currentSession.status === 'INITIATED' || currentSession.status === 'IN_PROGRESS') ? currentSession : null),
+    [currentSession],
+  )
+  const completedSession = useMemo(
+    () => (currentSession && currentSession.status === 'COMPLETED' ? currentSession : null),
+    [currentSession],
+  )
   const isPatientSession = session?.role === 'PATIENT'
-  const activeAppointmentId = videoCallActive?.appointmentId || selectedAppointmentId
+  const activeAppointmentId = activeSession?.appointmentId || completedSession?.appointmentId || selectedAppointmentId
   const waitingForProviderToStart = Boolean(activeAppointmentId && awaitingProviderStart[activeAppointmentId])
-  const teleconsultMetricStatus = (videoCallActive?.status ?? 'NONE').toLowerCase()
+  const teleconsultMetricStatus = (currentSession?.status ?? 'NONE').toLowerCase()
   const totalHistoryPages = Math.max(1, Math.ceil(appointments.length / historyPerPage))
   const visibleHistory = appointments.slice(historyPage * historyPerPage, (historyPage + 1) * historyPerPage)
 
@@ -149,7 +157,7 @@ export function TeleconsultationManagement() {
   }
 
   async function handleJoinTeleconsultation() {
-    if (!session || !videoCallActive) {
+    if (!session || !activeSession) {
       setIsError(true)
       setActionMessage('No active session to join.')
       return
@@ -160,15 +168,15 @@ export function TeleconsultationManagement() {
     setActionMessage(null)
 
     try {
-      const response = await joinTeleconsultation(videoCallActive.appointmentId, session.accessToken)
+      const response = await joinTeleconsultation(activeSession.appointmentId, session.accessToken)
       if (active) {
         setActiveSessions([response])
         setAwaitingProviderStart((previous) => {
-          if (!previous[videoCallActive.appointmentId]) {
+          if (!previous[activeSession.appointmentId]) {
             return previous
           }
           const next = { ...previous }
-          delete next[videoCallActive.appointmentId]
+          delete next[activeSession.appointmentId]
           return next
         })
         setActionMessage('Joined teleconsultation session.')
@@ -177,7 +185,7 @@ export function TeleconsultationManagement() {
       if (isTeleconsultSessionNotStarted(cause)) {
         setAwaitingProviderStart((previous) => ({
           ...previous,
-          [videoCallActive.appointmentId]: true,
+          [activeSession.appointmentId]: true,
         }))
         setIsError(false)
         setActionMessage('Teleconsultation has not started yet. Ask your provider to start the session, then click Recheck session.')
@@ -193,7 +201,7 @@ export function TeleconsultationManagement() {
   }
 
   async function handleJoinAndOpenSession() {
-    if (!session || !videoCallActive) {
+    if (!session || !activeSession) {
       setIsError(true)
       setActionMessage('No active session to join.')
       return
@@ -204,7 +212,7 @@ export function TeleconsultationManagement() {
     setActionMessage(null)
 
     try {
-      const response = await joinTeleconsultation(videoCallActive.appointmentId, session.accessToken)
+      const response = await joinTeleconsultation(activeSession.appointmentId, session.accessToken)
       const { resolvedUrl, error } = resolveDoctorJoinUrl(response.doctorJoinUrl)
       if (error) {
         setIsError(true)
@@ -215,11 +223,11 @@ export function TeleconsultationManagement() {
       if (active) {
         setActiveSessions([response])
         setAwaitingProviderStart((previous) => {
-          if (!previous[videoCallActive.appointmentId]) {
+          if (!previous[activeSession.appointmentId]) {
             return previous
           }
           const next = { ...previous }
-          delete next[videoCallActive.appointmentId]
+          delete next[activeSession.appointmentId]
           return next
         })
         setActionMessage('Joined teleconsultation session.')
@@ -232,7 +240,7 @@ export function TeleconsultationManagement() {
       if (isTeleconsultSessionNotStarted(cause)) {
         setAwaitingProviderStart((previous) => ({
           ...previous,
-          [videoCallActive.appointmentId]: true,
+          [activeSession.appointmentId]: true,
         }))
         setIsError(false)
         setActionMessage('Teleconsultation has not started yet. Ask your provider to start the session, then click Recheck session.')
@@ -248,7 +256,7 @@ export function TeleconsultationManagement() {
   }
 
   async function handleCompleteTeleconsultation() {
-    if (!session || !videoCallActive) {
+    if (!session || !activeSession) {
       setIsError(true)
       setActionMessage('No active session to complete.')
       return
@@ -272,7 +280,7 @@ export function TeleconsultationManagement() {
 
     try {
       const response = await completeTeleconsultation(
-        videoCallActive.appointmentId,
+        activeSession.appointmentId,
         {
           consultationNotes: consultationNotes.trim(),
           followUpRequired,
@@ -283,7 +291,7 @@ export function TeleconsultationManagement() {
 
       if (active) {
         setActiveSessions([response])
-        setActionMessage('Teleconsultation completed and notes recorded.')
+        setActionMessage('Teleconsultation completed and notes recorded. Review the post-session summary below.')
         setConsultationNotes('')
         setFollowUpRequired(false)
         setNextFollowUpDate('')
@@ -295,6 +303,30 @@ export function TeleconsultationManagement() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  async function handleCopyCompletionSummary() {
+    if (!completedSession || typeof navigator === 'undefined' || !navigator.clipboard) {
+      return
+    }
+
+    const lines = [
+      `Session ID: ${completedSession.sessionId}`,
+      `Appointment ID: ${completedSession.appointmentId}`,
+      `Status: ${completedSession.status}`,
+      `Started: ${new Date(completedSession.startedAt).toLocaleString()}`,
+      `Joined: ${completedSession.joinedAt ? new Date(completedSession.joinedAt).toLocaleString() : 'Not recorded'}`,
+      `Completed: ${completedSession.completedAt ? new Date(completedSession.completedAt).toLocaleString() : 'Not recorded'}`,
+      `Follow-up required: ${completedSession.followUpRequired ? 'Yes' : 'No'}`,
+      `Next follow-up: ${completedSession.nextFollowUpDate ?? 'None'}`,
+      '',
+      'Consultation notes:',
+      completedSession.consultationNotes ?? '(none)',
+    ]
+
+    await navigator.clipboard.writeText(lines.join('\n'))
+    setIsError(false)
+    setActionMessage('Post-session summary copied to clipboard.')
   }
 
   let active = true
@@ -315,7 +347,7 @@ export function TeleconsultationManagement() {
         <div className={`metric-card metric-card--status metric-card--status-${teleconsultMetricStatus}`}>
           <MetricCardIcon variant="status" />
           <span>Session status</span>
-          <strong>{videoCallActive ? videoCallActive.status : 'None'}</strong>
+          <strong>{currentSession ? currentSession.status : 'None'}</strong>
         </div>
       </div>
 
@@ -348,20 +380,20 @@ export function TeleconsultationManagement() {
         </div>
       </section>
 
-      {videoCallActive ? (
+      {activeSession ? (
         <section className="teleconsult-active-panel">
           <h3>Active session</h3>
           <div className="active-session-info">
             <p>
-              <strong>Session ID:</strong> {videoCallActive.sessionId}
+              <strong>Session ID:</strong> {activeSession.sessionId}
             </p>
             <p>
-              <strong>Status:</strong> {videoCallActive.status}
+              <strong>Status:</strong> {activeSession.status}
             </p>
             <p>
-              <strong>Started:</strong> {new Date(videoCallActive.startedAt).toLocaleString()}
+              <strong>Started:</strong> {new Date(activeSession.startedAt).toLocaleString()}
             </p>
-            {videoCallActive.joinedAt ? <p><strong>Joined:</strong> {new Date(videoCallActive.joinedAt).toLocaleString()}</p> : null}
+            {activeSession.joinedAt ? <p><strong>Joined:</strong> {new Date(activeSession.joinedAt).toLocaleString()}</p> : null}
           </div>
 
           <div className="form-actions teleconsult-quick-actions">
@@ -384,7 +416,7 @@ export function TeleconsultationManagement() {
             <small>Provider must start teleconsultation before patients can join this appointment.</small>
           ) : null}
 
-          {videoCallActive.status === 'IN_PROGRESS' ? (
+          {activeSession.status === 'IN_PROGRESS' ? (
             <section className="teleconsult-completion-panel">
               <h3>Complete session</h3>
               <label className="field-block">
@@ -411,6 +443,73 @@ export function TeleconsultationManagement() {
               </div>
             </section>
           ) : null}
+        </section>
+      ) : null}
+
+      {completedSession ? (
+        <section className="teleconsult-completion-panel">
+          <h3>Post-session summary</h3>
+          <div className="active-session-info">
+            <p>
+              <strong>Session ID:</strong> {completedSession.sessionId}
+            </p>
+            <p>
+              <strong>Appointment ID:</strong> {completedSession.appointmentId}
+            </p>
+            <p>
+              <strong>Status:</strong> {completedSession.status}
+            </p>
+            <p>
+              <strong>Completed:</strong> {completedSession.completedAt ? new Date(completedSession.completedAt).toLocaleString() : 'Not recorded'}
+            </p>
+            <p>
+              <strong>Follow-up:</strong> {completedSession.followUpRequired ? `Required${completedSession.nextFollowUpDate ? `, ${new Date(completedSession.nextFollowUpDate).toLocaleString()}` : ''}` : 'Not required'}
+            </p>
+          </div>
+
+          <div className="teleconsult-post-session-notes">
+            <h4>What the platform completed</h4>
+            <ul>
+              <li>Consultation notes were saved to the appointment workflow.</li>
+              <li>The appointment was marked completed and the downstream completion event was emitted.</li>
+              <li>{completedSession.followUpRequired ? 'A follow-up reminder has been captured for the requested date.' : 'No follow-up was requested for this session.'}</li>
+            </ul>
+          </div>
+
+          {completedSession.consultationNotes ? (
+            <div className="teleconsult-post-session-notes">
+              <h4>Recorded consultation notes</h4>
+              <p>{completedSession.consultationNotes}</p>
+            </div>
+          ) : null}
+
+          {completedSession.interactionLogs.length > 0 ? (
+            <div className="teleconsult-post-session-notes">
+              <h4>Session timeline</h4>
+              <ul>
+                {completedSession.interactionLogs.map((entry) => (
+                  <li key={entry}>{entry}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <div className="form-actions teleconsult-quick-actions">
+            <button type="button" className="primary-button" onClick={() => void handleCopyCompletionSummary()}>
+              Copy post-session summary
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                setActiveSessions([])
+                setActionMessage('Completed session cleared from view. You can now start the next appointment.')
+                setIsError(false)
+              }}
+            >
+              Dismiss summary
+            </button>
+          </div>
         </section>
       ) : null}
 
