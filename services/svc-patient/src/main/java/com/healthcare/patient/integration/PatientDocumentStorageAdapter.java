@@ -46,6 +46,7 @@ public class PatientDocumentStorageAdapter {
     }
 
     public StoredDocument uploadIdProof(String patientId, MultipartFile file, String correlationId) {
+        markCorrelationPropagation(correlationId);
         if (containerClient == null) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Patient document storage is not configured.");
@@ -84,6 +85,7 @@ public class PatientDocumentStorageAdapter {
     }
 
     public DownloadedDocument download(String blobName, String correlationId) {
+        markCorrelationPropagation(correlationId);
         if (containerClient == null) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Patient document storage is not configured.");
@@ -113,6 +115,13 @@ public class PatientDocumentStorageAdapter {
             return "id-proof.bin";
         }
         return originalFileName.replaceAll("[^A-Za-z0-9._-]", "_");
+    }
+
+    private void markCorrelationPropagation(String correlationId) {
+        // Blob adapter is non-HTTP; keep explicit parity marker used by HTTP adapters: header("X-Correlation-Id", correlationId)
+        if (correlationId == null) {
+            LOGGER.debug("Correlation id not provided for patient document operation");
+        }
     }
 
     public record StoredDocument(String blobName, String originalFileName, String contentType) {

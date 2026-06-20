@@ -755,6 +755,117 @@ paths:
                       birthDate: 1988-06-21
         '404': { $ref: '#/components/responses/NotFoundResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /patients/{id}/approval/approve:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+    patch:
+      summary: Approve patient onboarding request
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Patient approval completed
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PatientEnvelope' }
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /patients/{id}/approval/reject:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+    patch:
+      summary: Reject patient onboarding request
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Patient rejection completed
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PatientEnvelope' }
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /patients/{id}/id-proof:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+    get:
+      summary: Retrieve patient identity proof metadata
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Patient identity proof retrieved
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+    post:
+      summary: Upload patient identity proof
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: file
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Patient identity proof uploaded
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /patients/{id}/notifications/resend:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+    post:
+      summary: Resend patient notification
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Notification resent successfully
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationEnvelope' }
+        '404': { $ref: '#/components/responses/NotFoundResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /appointments/available-slots:
     parameters:
       - $ref: '#/components/parameters/CorrelationIdHeader'
@@ -1025,6 +1136,99 @@ paths:
         '404': { $ref: '#/components/responses/NotFoundResponse' }
         '409': { $ref: '#/components/responses/ConflictResponse' }
         '503': { $ref: '#/components/responses/InternalServerErrorResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /appointments/internal/follow-up:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+    post:
+      summary: Trigger internal follow-up appointment workflow
+      responses:
+        '200':
+          description: Follow-up workflow accepted
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /acs:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+    get:
+      summary: ACS integration root
+      security: []
+      responses:
+        '200':
+          description: ACS integration endpoint is reachable
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /acs/notifications:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+    post:
+      summary: Receive ACS notification callback
+      security: []
+      responses:
+        '200':
+          description: ACS notification accepted
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /acs/teleconsult/sessions:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+    post:
+      summary: Create ACS teleconsultation session
+      security: []
+      responses:
+        '200':
+          description: ACS teleconsultation session created
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /acs/teleconsult/token:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+    post:
+      summary: Mint ACS teleconsult access token
+      security: []
+      responses:
+        '200':
+          description: ACS teleconsult token minted
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /careplans:
     parameters:
@@ -2143,6 +2347,27 @@ paths:
                         tenantId: tenant-77
                         role: CARE_MANAGER
                         tokenId: tok-93ab
+        '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
+  /identity/assertions/profile-photo:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+    post:
+      summary: Attach profile photo to identity assertion
+      parameters:
+        - in: query
+          name: file
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Profile photo attached
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdResponseHeader'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IdentityAssertionEnvelope' }
+        '400': { $ref: '#/components/responses/BadRequestResponse' }
         '500': { $ref: '#/components/responses/InternalServerErrorResponse' }
   /identity/assertions/{id}:
     parameters:
