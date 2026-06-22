@@ -35,12 +35,11 @@ $required = @(
 )
 
 $optional = @(
+    "SERVICEBUS_CONNECTION_STRING",
+    "FHIR_INTEGRATION_AUDIENCE",
     "ACS_INTEGRATION_BASE_URL",
     "TELECONSULT_ACS_INTEGRATION_BASE_URL",
     "TELECONSULT_JOIN_BASE_URL",
-    "ACS_EMAIL_ENDPOINT",
-    "ACS_EMAIL_ACCESS_KEY",
-    "ACS_EMAIL_FROM_ADDRESS",
     "ACS_SMS_ENDPOINT",
     "ACS_SMS_ACCESS_KEY",
     "ACS_SMS_FROM_NUMBER",
@@ -115,6 +114,12 @@ foreach ($key in $optional) {
         }
 
         switch ($key) {
+            "SERVICEBUS_CONNECTION_STRING" {
+                $content += "`n  servicebus-connection-string: `"$($values[$key])`""
+            }
+            "FHIR_INTEGRATION_AUDIENCE" {
+                $content += "`n  fhir-integration-audience: `"$($values[$key])`""
+            }
             "ACS_INTEGRATION_BASE_URL" {
                 $content += "`n  acs-integration-base-url: `"$($values[$key])`""
             }
@@ -149,6 +154,29 @@ foreach ($key in $optional) {
     }
 }
 
+$alwaysPresentAcsKeys = @(
+    "ACS_EMAIL_ENDPOINT",
+    "ACS_EMAIL_ACCESS_KEY",
+    "ACS_EMAIL_FROM_ADDRESS",
+    "ACS_IDENTITY_CONNECTION_STRING"
+)
+
+foreach ($key in $alwaysPresentAcsKeys) {
+    if ($values.ContainsKey($key) -and $values[$key] -match "<[^>]+>") {
+        throw "Unresolved placeholder for key $key in env file."
+    }
+}
+
+$acsEmailEndpoint = if ($values.ContainsKey("ACS_EMAIL_ENDPOINT")) { $values["ACS_EMAIL_ENDPOINT"] } else { "" }
+$acsEmailAccessKey = if ($values.ContainsKey("ACS_EMAIL_ACCESS_KEY")) { $values["ACS_EMAIL_ACCESS_KEY"] } else { "" }
+$acsEmailFromAddress = if ($values.ContainsKey("ACS_EMAIL_FROM_ADDRESS")) { $values["ACS_EMAIL_FROM_ADDRESS"] } else { "" }
+$acsIdentityConnectionString = if ($values.ContainsKey("ACS_IDENTITY_CONNECTION_STRING")) { $values["ACS_IDENTITY_CONNECTION_STRING"] } else { "" }
+
+$content += "`n  acs-email-endpoint: `"$acsEmailEndpoint`""
+$content += "`n  acs-email-access-key: `"$acsEmailAccessKey`""
+$content += "`n  acs-email-from-address: `"$acsEmailFromAddress`""
+$content += "`n  acs-identity-connection-string: `"$acsIdentityConnectionString`""
+
 if ($values.ContainsKey("PATIENT_IDPROOF_CONTAINER") -and -not [string]::IsNullOrWhiteSpace($values["PATIENT_IDPROOF_CONTAINER"])) {
     if ($values["PATIENT_IDPROOF_CONTAINER"] -match "<[^>]+>") {
         throw "Unresolved placeholder for key PATIENT_IDPROOF_CONTAINER in env file."
@@ -165,3 +193,4 @@ if ($values.ContainsKey("PROFILE_PHOTO_CONTAINER") -and -not [string]::IsNullOrW
 
 Set-Content -Path $OutputFile -Value $content -NoNewline
 Write-Host "Rendered secret manifest: $OutputFile"
+

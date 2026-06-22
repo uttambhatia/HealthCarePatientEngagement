@@ -15,10 +15,14 @@ This plan does not assert production readiness by itself. Production go-live sti
 
 ## 2) Minimum target architecture
 
-- Compute/orchestration: AKS
-- Traffic entry: Ingress -> API Gateway service
-- Public API path: APIM -> API Gateway -> services
-- Frontend hosting: Azure App Service (React SPA build artifact)
+- Compute/orchestration: AKS in primary and secondary regions (DR replica)
+- Browser traffic path: Traffic Manager -> Azure Front Door -> App Service (UI)
+- Public API path: APIM -> Application Gateway ingress -> API Gateway -> services
+- Frontend hosting: Azure App Service (React SPA build artifact) in both primary and secondary regions
+- Network topology: Hub and Spoke VNets
+- Hub shared services: WAF, APIM, Key Vault, Private DNS, ACS, Log Analytics, Azure Monitor, Security Center
+- Primary spoke subnets: UI layer, IoT, application, and data
+- Secondary spoke subnets: exact replica of primary for DR failover
 - Data: Azure SQL (shared contract currently expected by manifests)
 - Secrets/config: Key Vault + Kubernetes secret sync path already assumed by manifests
 - Messaging: Service Bus / Event Hubs endpoints configured via environment variables
@@ -39,6 +43,8 @@ Use separate Azure resource groups and secret scopes per environment.
 Before deploying services:
 - Azure subscription, resource groups, and AKS cluster are provisioned.
 - DNS + ingress hostnames are available.
+- Hub/Primary/Secondary VNets and peering are provisioned.
+- Traffic Manager profile and Front Door endpoint are provisioned.
 - Key Vault/secret source has required values for k8s secret materialization.
 - Container images are built and pushed to the target registry.
 - `deploy/k8s/platform-secrets.template.yaml` has been translated into real environment secrets.
@@ -53,7 +59,9 @@ Before deploying services:
 2. Shared configuration/secrets
 - Apply environment-specific secrets/config first.
 
-3. Core ingress path
+3. Edge and ingress path
+- Configure Traffic Manager with primary/secondary endpoint priorities.
+- Configure Front Door origin to route browser traffic to App Service.
 - Deploy API gateway manifests from `deploy/k8s/api-gateway/`.
 
 4. Domain services
@@ -61,6 +69,7 @@ Before deploying services:
 
 5. Frontend UI
 - Deploy frontend build artifact to Azure App Service.
+- Configure frontend redirect/public URL to Front Door hostname.
 - Configure frontend `VITE_API_BASE_URL` to APIM hostname (not direct AKS ingress/service URL).
 
 6. Optional resilience/network controls
@@ -83,7 +92,8 @@ mvn test
 Minimum success criteria:
 - Guardrail script exits successfully.
 - Key API paths are reachable through gateway.
-- Frontend app loads and browser API traffic targets APIM hostname.
+- Frontend app loads through Front Door and browser API traffic targets APIM hostname.
+- Traffic Manager health probes show primary endpoint healthy.
 - No critical crash-loop/backoff pods in AKS.
 
 ## 7) Service rollout strategy (minimum risk)
@@ -114,11 +124,16 @@ At minimum, explicitly re-check:
 Use these environment templates and checklist:
 - `deploy/k8s/env/dev/platform-secrets.dev.template.yaml`
 - `deploy/k8s/env/prod/platform-secrets.prod.template.yaml`
+- `deploy/k8s/env/secondary/platform-secrets.secondary.template.yaml`
 - `deploy/k8s/env/dev/dev.env.template`
 - `deploy/k8s/env/prod/prod.env.template`
+- `deploy/k8s/env/secondary/secondary.env.template`
+- `deploy/azure/` (hub-spoke network, edge routing, and DR IaC templates)
 - `deploy/k8s/env/render-platform-secret.ps1`
 - `deploy/k8s/env/dev/apply-dev.ps1`
 - `deploy/k8s/env/prod/apply-prod.ps1`
+- `deploy/k8s/env/secondary/apply-secondary.ps1`
+- `scripts/switch-apim-active-backend.ps1`
 - `docs/Azure_Env_Dev_Prod_Checklist.md`
 - `.github/workflows/frontend-appservice.yml`
 - `deploy/appservice/frontend/dev.appsettings.template`

@@ -19,9 +19,12 @@ public class AzureClientConfiguration {
 
     @Bean
     public ServiceBusClientBuilder serviceBusClientBuilder(DefaultAzureCredential credential,
-                                                          @Value("${platform.azure.servicebus.fqdn:}") String fqdn) {
+                                                          @Value("${platform.azure.servicebus.fqdn:}") String fqdn,
+                                                          @Value("${SERVICEBUS_CONNECTION_STRING:}") String connectionString) {
         ServiceBusClientBuilder builder = new ServiceBusClientBuilder();
-        if (!fqdn.isBlank()) {
+        if (connectionString != null && !connectionString.isBlank()) {
+            builder.connectionString(connectionString);
+        } else if (!fqdn.isBlank()) {
             builder.credential(fqdn, credential);
         }
         return builder;

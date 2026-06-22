@@ -1,0 +1,3 @@
+﻿"timestampUtc","rowNumber","email","role","environment","status","message","userId","groupName"
+"2026-06-18T18:56:22.0176789Z","1","uttambhatia01011988@gmail.com","PATIENT","dev","INVITED_AND_ASSIGNED","Guest invited and group membership created","cee22af8-9864-4d1d-9324-138f1e914abd","HCPE-PATIENT"
+"2026-06-18T18:56:27.5805990Z","2","uttambhatia1988@gmail.com","PATIENT","dev","ALREADY_ASSIGNED","User already in target role group","86eed7e5-1b7a-4f80-a33d-fd874726f931","HCPE-PATIENT"

@@ -56,6 +56,10 @@ platform:
         min: ${ALERT_RULE_SPO2_MIN:92}
   messaging:
     channel: ${ALERT_MESSAGING_CHANNEL:alert-management-service}
+    teleconsultation:
+      processorEnabled: ${TELECONSULT_TOPIC_PROCESSOR_ENABLED:true}
+      completedTopic: ${TELECONSULT_COMPLETED_TOPIC:teleconsultation-completed}
+      completedSubscription: ${TELECONSULT_COMPLETED_SUBSCRIPTION:alert-management-service}
     processorEnabled: ${ALERT_PROCESSOR_ENABLED:true}
     retryAttempts: 3
     deadLetterQueue: alert-management-service-dlq

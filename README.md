@@ -116,6 +116,13 @@ Frontend deployment (App Service, architecture path Browser -> App Service UI ->
 2. Configure repository or environment `secrets`: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
 3. Run `.github/workflows/frontend-appservice.yml` (or push to `main` with frontend changes).
 
+Local guarded deploy helper (defaults to dev, prompts if not provided, and blocks localhost leaks):
+
+```powershell
+Set-Location scripts
+.\deploy-frontend-appservice.ps1
+```
+
 Backend deployment (GitHub Actions -> GHCR -> AKS):
 
 1. Push backend changes to `main` or run `.github/workflows/build-and-push-images.yml` manually to publish service images to GHCR.

@@ -1,0 +1,5 @@
+﻿"timestampUtc","rowNumber","email","role","environment","status","message","userId","groupName"
+"2026-06-17T17:51:01.7067235Z","1","uttamkumar.bhatia@cognizant.com","COORDINATOR","dev","INVITED_AND_ASSIGNED","Guest invited and group membership created","2d723ff5-1aec-4f98-87f2-cc8cf08dc119","HCPE-COORDINATOR"
+"2026-06-17T17:51:15.7005474Z","2","uttambhatia@outlook.com","DOCTOR","dev","INVITED_AND_ASSIGNED","Guest invited and group membership created","47389a4c-404f-47a8-a7b8-60268551a411","HCPE-DOCTOR"
+"2026-06-17T17:51:32.5374708Z","3","uttamshur@gmail.com","ADMIN","dev","INVITED_AND_ASSIGNED","Guest invited and group membership created","aa6f45e1-71c2-4577-9628-0c97a0f162ff","HCPE-ADMIN"
+"2026-06-17T17:51:44.2206836Z","4","uttambhatia1988@gmail.com","PATIENT","dev","INVITED_AND_ASSIGNED","Guest invited and group membership created","86eed7e5-1b7a-4f80-a33d-fd874726f931","HCPE-PATIENT"

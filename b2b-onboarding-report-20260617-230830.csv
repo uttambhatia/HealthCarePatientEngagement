@@ -1,0 +1,5 @@
+﻿"timestampUtc","rowNumber","email","role","environment","status","message","userId","groupName"
+"2026-06-17T17:38:26.2943799Z","1","coord1@partnerhospital.com","COORDINATOR","dev","DRY_RUN","Would invite guest if missing and assign to role group","","HCPE-COORDINATOR"
+"2026-06-17T17:38:27.6731251Z","2","doctor1@partnerhospital.com","DOCTOR","dev","DRY_RUN","Would invite guest if missing and assign to role group","","HCPE-DOCTOR"
+"2026-06-17T17:38:29.0580086Z","3","admin1@partnerhospital.com","ADMIN","dev","DRY_RUN","Would invite guest if missing and assign to role group","","HCPE-ADMIN"
+"2026-06-17T17:38:30.4546967Z","4","patient1@partnerhospital.com","PATIENT","dev","DRY_RUN","Would invite guest if missing and assign to role group","","HCPE-PATIENT"

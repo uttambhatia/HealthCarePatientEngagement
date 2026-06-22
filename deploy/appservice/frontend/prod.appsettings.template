@@ -1,10 +1,18 @@
 UI_APP_SERVICE_NAME=<prod-ui-appservice-name>
+# Browser traffic chain: Traffic Manager -> Front Door -> App Service (UI)
+UI_TRAFFIC_MANAGER_PROFILE_NAME=<prod-traffic-manager-profile-name>
+UI_TRAFFIC_MANAGER_DNS_NAME=<prod-traffic-manager-dns-name>
+UI_FRONT_DOOR_PRIMARY_HOSTNAME=<prod-front-door-primary-hostname>
+UI_FRONT_DOOR_SECONDARY_HOSTNAME=<prod-front-door-secondary-hostname>
+UI_VITE_PUBLIC_BASE_URL=https://<prod-traffic-manager-dns-name>
+
+# API ingress remains APIM-driven.
 UI_VITE_API_BASE_URL=https://<prod-apim-hostname>
 UI_VITE_OIDC_CLIENT_ID=<prod-entra-client-id>
 UI_VITE_OIDC_AUTHORIZATION_ENDPOINT=https://login.microsoftonline.com/<prod-tenant-id>/oauth2/v2.0/authorize
 UI_VITE_OIDC_TOKEN_ENDPOINT=https://login.microsoftonline.com/<prod-tenant-id>/oauth2/v2.0/token
 UI_VITE_OIDC_LOGOUT_ENDPOINT=https://login.microsoftonline.com/<prod-tenant-id>/oauth2/v2.0/logout
-UI_VITE_OIDC_REDIRECT_URI=https://<prod-ui-hostname>
+UI_VITE_OIDC_REDIRECT_URI=https://<prod-traffic-manager-dns-name>
 UI_VITE_OIDC_SCOPE=openid profile api://<prod-api-app-id-uri>/access_as_user
 UI_VITE_EVENTS_WS_URL=
 UI_VITE_EVENTS_SSE_URL=

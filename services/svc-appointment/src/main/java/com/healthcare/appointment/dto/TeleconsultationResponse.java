@@ -14,6 +14,7 @@ public record TeleconsultationResponse(
         String consultationNotes,
         boolean followUpRequired,
         String nextFollowUpDate,
+        List<String> prescriptions,
         List<String> interactionLogs
 ) {
 }

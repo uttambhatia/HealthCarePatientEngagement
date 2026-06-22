@@ -39,6 +39,12 @@ spec:
                 secretKeyRef:
                   name: platform-secrets
                   key: servicebus-namespace
+            - name: SERVICEBUS_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: servicebus-connection-string
+                  optional: true
             - name: EVENTHUB_NAMESPACE
               valueFrom:
                 secretKeyRef:
@@ -89,6 +95,10 @@ spec:
                 secretKeyRef:
                   name: platform-secrets
                   key: oauth2-jwk-set-uri
+            - name: TELECONSULT_COMPLETED_TOPIC
+              value: teleconsultation-completed
+            - name: TELECONSULT_COMPLETED_SUBSCRIPTION
+              value: alert-management-service
           resources:
             requests:
               cpu: "250m"

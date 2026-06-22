@@ -48,6 +48,10 @@ platform:
       path: ${NOTIFICATION_INTEGRATION_PATH:/notifications/careplans}
   messaging:
     channel: ${CAREPLAN_MESSAGING_CHANNEL:careplan-service}
+    teleconsultation:
+      processorEnabled: ${TELECONSULT_TOPIC_PROCESSOR_ENABLED:true}
+      completedTopic: ${TELECONSULT_COMPLETED_TOPIC:teleconsultation-completed}
+      completedSubscription: ${TELECONSULT_COMPLETED_SUBSCRIPTION:careplan-service}
     processorEnabled: ${CAREPLAN_PROCESSOR_ENABLED:true}
     retryAttempts: 3
     deadLetterQueue: careplan-service-dlq

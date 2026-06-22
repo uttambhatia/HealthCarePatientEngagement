@@ -1,0 +1,5 @@
+﻿"timestampUtc","rowNumber","email","role","environment","status","message","userId","groupName"
+"2026-06-18T13:36:51.8328274Z","1","713489@cognizant.com","COORDINATOR","dev","INVITED_ALREADY_MEMBER","Guest invited; group membership already existed","2d723ff5-1aec-4f98-87f2-cc8cf08dc119","HCPE-COORDINATOR"
+"2026-06-18T13:36:55.7177210Z","2","uttambhatia@outlook.com","DOCTOR","dev","ALREADY_ASSIGNED","User already in target role group","47389a4c-404f-47a8-a7b8-60268551a411","HCPE-DOCTOR"
+"2026-06-18T13:37:00.9789445Z","3","uttamshur@gmail.com","ADMIN","dev","ALREADY_ASSIGNED","User already in target role group","aa6f45e1-71c2-4577-9628-0c97a0f162ff","HCPE-ADMIN"
+"2026-06-18T13:37:05.2368996Z","4","uttambhatia1988@gmail.com","PATIENT","dev","ALREADY_ASSIGNED","User already in target role group","86eed7e5-1b7a-4f80-a33d-fd874726f931","HCPE-PATIENT"

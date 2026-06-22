@@ -1,0 +1,239 @@
+name: DR Failover Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Traffic mode change to apply
+        required: true
+        type: choice
+        options:
+          - failover
+          - failback
+      applyTrafficSwitch:
+        description: Apply Traffic Manager endpoint priority switch
+        required: true
+        type: boolean
+        default: false
+      applyApimBackendSwitch:
+        description: Apply APIM active backend switch
+        required: true
+        type: boolean
+        default: false
+      applyCombinedControlPlaneSwitch:
+        description: Apply combined Traffic Manager + APIM backend switch
+        required: true
+        type: boolean
+        default: true
+      resourceGroup:
+        description: Resource group containing the Traffic Manager profile
+        required: true
+        type: string
+      apimServiceName:
+        description: APIM service name (required when applyApimBackendSwitch=true)
+        required: false
+        type: string
+      trafficManagerProfileName:
+        description: Traffic Manager profile name
+        required: true
+        type: string
+      trafficManagerDnsName:
+        description: Traffic Manager DNS name (for health check)
+        required: true
+        type: string
+      primaryFrontDoorHost:
+        description: Primary Front Door hostname (for health check)
+        required: true
+        type: string
+      secondaryFrontDoorHost:
+        description: Secondary Front Door hostname (for health check)
+        required: true
+        type: string
+      sqlPrimaryServerName:
+        description: Primary SQL Server name (optional, without domain)
+        required: false
+        type: string
+      sqlFailoverGroupName:
+        description: SQL failover group name (optional)
+        required: false
+        type: string
+      serviceBusPrimaryNamespace:
+        description: Primary Service Bus namespace name (optional, without domain)
+        required: false
+        type: string
+      serviceBusAliasName:
+        description: Service Bus Geo-DR alias name (optional)
+        required: false
+        type: string
+      syntheticUiPath:
+        description: Synthetic UI path through Traffic Manager
+        required: true
+        type: string
+        default: /
+      syntheticApiPath:
+        description: Synthetic API health path through Traffic Manager
+        required: true
+        type: string
+        default: /api/actuator/health
+      oidcWellKnownUrl:
+        description: OIDC discovery URL for auth path verification
+        required: true
+        type: string
+      businessEndpointPath:
+        description: Business endpoint path through Traffic Manager
+        required: true
+        type: string
+        default: /api/appointments
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  dr-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Switch traffic manager priority
+        if: ${{ github.event.inputs.applyCombinedControlPlaneSwitch != 'true' && github.event.inputs.applyTrafficSwitch == 'true' }}
+        shell: pwsh
+        run: |
+          ./scripts/switch-traffic-manager-priority.ps1 `
+            -ResourceGroup "${{ github.event.inputs.resourceGroup }}" `
+            -TrafficManagerProfileName "${{ github.event.inputs.trafficManagerProfileName }}" `
+            -Mode "${{ github.event.inputs.mode }}"
+
+      - name: Switch APIM active backend
+        if: ${{ github.event.inputs.applyCombinedControlPlaneSwitch != 'true' && github.event.inputs.applyApimBackendSwitch == 'true' && github.event.inputs.apimServiceName != '' }}
+        shell: pwsh
+        run: |
+          ./scripts/switch-apim-active-backend.ps1 `
+            -ResourceGroup "${{ github.event.inputs.resourceGroup }}" `
+            -ApimServiceName "${{ github.event.inputs.apimServiceName }}" `
+            -Mode "${{ github.event.inputs.mode }}"
+
+      - name: Precheck DR control plane (combined)
+        if: ${{ github.event.inputs.applyCombinedControlPlaneSwitch == 'true' && github.event.inputs.apimServiceName != '' }}
+        shell: pwsh
+        run: |
+          ./scripts/switch-dr-control-plane.ps1 `
+            -ResourceGroup "${{ github.event.inputs.resourceGroup }}" `
+            -TrafficManagerProfileName "${{ github.event.inputs.trafficManagerProfileName }}" `
+            -ApimServiceName "${{ github.event.inputs.apimServiceName }}" `
+            -Mode "${{ github.event.inputs.mode }}" `
+            -PrecheckOnly
+
+      - name: Switch DR control plane (combined)
+        if: ${{ github.event.inputs.applyCombinedControlPlaneSwitch == 'true' && github.event.inputs.apimServiceName != '' }}
+        shell: pwsh
+        run: |
+          ./scripts/switch-dr-control-plane.ps1 `
+            -ResourceGroup "${{ github.event.inputs.resourceGroup }}" `
+            -TrafficManagerProfileName "${{ github.event.inputs.trafficManagerProfileName }}" `
+            -ApimServiceName "${{ github.event.inputs.apimServiceName }}" `
+            -Mode "${{ github.event.inputs.mode }}"
+
+      - name: Validate Traffic Manager health
+        run: |
+          set -euo pipefail
+          code=$(curl -k -s -o /tmp/tm.out -w "%{http_code}" "https://${{ github.event.inputs.trafficManagerDnsName }}/health")
+          echo "Traffic Manager probe status: ${code}"
+          if [ "$code" -lt 200 ] || [ "$code" -ge 500 ]; then
+            cat /tmp/tm.out
+            exit 1
+          fi
+
+      - name: Validate primary Front Door health
+        run: |
+          set -euo pipefail
+          code=$(curl -k -s -o /tmp/fd-primary.out -w "%{http_code}" "https://${{ github.event.inputs.primaryFrontDoorHost }}/health")
+          echo "Primary Front Door probe status: ${code}"
+          if [ "$code" -lt 200 ] || [ "$code" -ge 500 ]; then
+            cat /tmp/fd-primary.out
+            exit 1
+          fi
+
+      - name: Validate secondary Front Door health
+        run: |
+          set -euo pipefail
+          code=$(curl -k -s -o /tmp/fd-secondary.out -w "%{http_code}" "https://${{ github.event.inputs.secondaryFrontDoorHost }}/health")
+          echo "Secondary Front Door probe status: ${code}"
+          if [ "$code" -lt 200 ] || [ "$code" -ge 500 ]; then
+            cat /tmp/fd-secondary.out
+            exit 1
+          fi
+
+      - name: Validate SQL failover group status
+        if: ${{ github.event.inputs.sqlPrimaryServerName != '' && github.event.inputs.sqlFailoverGroupName != '' }}
+        run: |
+          set -euo pipefail
+          az sql failover-group show \
+            --resource-group "${{ github.event.inputs.resourceGroup }}" \
+            --server "${{ github.event.inputs.sqlPrimaryServerName }}" \
+            --name "${{ github.event.inputs.sqlFailoverGroupName }}" \
+            --query "{name:name,readWriteEndpoint:readWriteEndpoint.failoverPolicy,replicationRole:replicationRole}" \
+            --output table
+
+      - name: Validate Service Bus Geo-DR alias status
+        if: ${{ github.event.inputs.serviceBusPrimaryNamespace != '' && github.event.inputs.serviceBusAliasName != '' }}
+        run: |
+          set -euo pipefail
+          az servicebus georecovery-alias show \
+            --resource-group "${{ github.event.inputs.resourceGroup }}" \
+            --namespace-name "${{ github.event.inputs.serviceBusPrimaryNamespace }}" \
+            --alias "${{ github.event.inputs.serviceBusAliasName }}" \
+            --query "{name:name,provisioningState:provisioningState,partnerNamespace:partnerNamespace}" \
+            --output table
+
+      - name: Validate synthetic UI and API probes through Traffic Manager
+        run: |
+          set -euo pipefail
+
+          ui_code=$(curl -k -s -o /tmp/tm-ui.out -w "%{http_code}" "https://${{ github.event.inputs.trafficManagerDnsName }}${{ github.event.inputs.syntheticUiPath }}")
+          echo "Synthetic UI status: ${ui_code}"
+          if [ "$ui_code" -lt 200 ] || [ "$ui_code" -ge 500 ]; then
+            cat /tmp/tm-ui.out
+            exit 1
+          fi
+
+          api_code=$(curl -k -s -o /tmp/tm-api.out -w "%{http_code}" "https://${{ github.event.inputs.trafficManagerDnsName }}${{ github.event.inputs.syntheticApiPath }}")
+          echo "Synthetic API status: ${api_code}"
+          if [ "$api_code" -lt 200 ] || [ "$api_code" -ge 500 ]; then
+            cat /tmp/tm-api.out
+            exit 1
+          fi
+
+      - name: Validate OIDC discovery endpoint
+        run: |
+          set -euo pipefail
+          oidc_code=$(curl -k -s -o /tmp/oidc.out -w "%{http_code}" "${{ github.event.inputs.oidcWellKnownUrl }}")
+          echo "OIDC discovery status: ${oidc_code}"
+          if [ "$oidc_code" -lt 200 ] || [ "$oidc_code" -ge 400 ]; then
+            cat /tmp/oidc.out
+            exit 1
+          fi
+
+          if ! grep -q '"issuer"' /tmp/oidc.out; then
+            echo "OIDC discovery response missing issuer"
+            cat /tmp/oidc.out
+            exit 1
+          fi
+
+      - name: Validate business endpoint probe through Traffic Manager
+        run: |
+          set -euo pipefail
+          business_code=$(curl -k -s -o /tmp/tm-business.out -w "%{http_code}" "https://${{ github.event.inputs.trafficManagerDnsName }}${{ github.event.inputs.businessEndpointPath }}")
+          echo "Business endpoint status: ${business_code}"
+          if [ "$business_code" -lt 200 ] || [ "$business_code" -ge 500 ]; then
+            cat /tmp/tm-business.out
+            exit 1
+          fi

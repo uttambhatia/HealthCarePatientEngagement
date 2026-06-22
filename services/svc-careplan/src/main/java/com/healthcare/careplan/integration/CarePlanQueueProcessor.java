@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.healthcare.careplan.event.CarePlanCreatedEvent;
 import com.healthcare.careplan.event.CarePlanEventConsumer;
+import com.healthcare.careplan.event.TeleconsultationCompletedEvent;
+import com.healthcare.careplan.event.TeleconsultationCompletedEventConsumer;
 import com.healthcare.platform.common.event.MessageEnvelope;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -26,6 +28,7 @@ public class CarePlanQueueProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(CarePlanQueueProcessor.class);
     private final ServiceBusClientBuilder serviceBusClientBuilder;
     private final CarePlanEventConsumer carePlanEventConsumer;
+    private final TeleconsultationCompletedEventConsumer teleconsultationCompletedEventConsumer;
     private final ObjectMapper objectMapper;
     private final String queueName;
     private final String deadLetterQueue;
@@ -37,6 +40,7 @@ public class CarePlanQueueProcessor {
     public CarePlanQueueProcessor(
             ObjectProvider<ServiceBusClientBuilder> serviceBusClientBuilderProvider,
             CarePlanEventConsumer carePlanEventConsumer,
+            TeleconsultationCompletedEventConsumer teleconsultationCompletedEventConsumer,
             ObjectMapper objectMapper,
             @Value("${platform.messaging.channel:careplan-service}") String queueName,
             @Value("${platform.messaging.deadLetterQueue:careplan-service-dlq}") String deadLetterQueue,
@@ -44,6 +48,7 @@ public class CarePlanQueueProcessor {
             @Value("${platform.azure.servicebus.fqdn:}") String serviceBusFqdn) {
         this.serviceBusClientBuilder = serviceBusClientBuilderProvider.getIfAvailable();
         this.carePlanEventConsumer = carePlanEventConsumer;
+        this.teleconsultationCompletedEventConsumer = teleconsultationCompletedEventConsumer;
         this.objectMapper = objectMapper;
         this.queueName = queueName;
         this.deadLetterQueue = deadLetterQueue;
@@ -83,9 +88,29 @@ public class CarePlanQueueProcessor {
         String rawBody = context.getMessage().getBody().toString();
         try {
             JsonNode body = objectMapper.readTree(rawBody);
+            String eventName = text(body, "eventType", "CarePlanCreatedEvent");
+            String correlationId = text(body, "correlationId", "n/a");
+
+            if ("TeleconsultationCompletedEvent".equals(eventName)) {
+                TeleconsultationCompletedEvent payload = new TeleconsultationCompletedEvent(
+                        text(body, "aggregateId", ""),
+                        text(body, "appointmentId", ""),
+                        text(body, "patientId", ""),
+                        text(body, "providerId", ""),
+                        text(body, "completedAt", ""),
+                        body.path("followUpRequired").asBoolean(false),
+                        text(body, "nextFollowUpDate", null)
+                );
+                MessageEnvelope<TeleconsultationCompletedEvent> envelope =
+                        new MessageEnvelope<>(correlationId, eventName, OffsetDateTime.now(), payload);
+                teleconsultationCompletedEventConsumer.handle(envelope);
+                context.complete();
+                return;
+            }
+
             MessageEnvelope<CarePlanCreatedEvent> envelope = new MessageEnvelope<>(
-                    text(body, "correlationId", "n/a"),
-                    text(body, "eventType", "CarePlanCreatedEvent"),
+                    correlationId,
+                    eventName,
                     OffsetDateTime.now(),
                     new CarePlanCreatedEvent(
                             text(body, "aggregateId", ""),

@@ -63,6 +63,12 @@ public class TeleconsultationSessionEntity {
     private String nextFollowUpDate;
 
     @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "teleconsultation_prescriptions", joinColumns = @JoinColumn(name = "session_id"))
+    @OrderColumn(name = "prescription_order")
+    @Column(name = "prescription_entry", nullable = false, length = 500)
+    private List<String> prescriptions = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "teleconsultation_interaction_logs", joinColumns = @JoinColumn(name = "session_id"))
     @OrderColumn(name = "log_order")
     @Column(name = "log_entry", nullable = false, length = 500)
@@ -85,6 +91,7 @@ public class TeleconsultationSessionEntity {
             String consultationNotes,
             boolean followUpRequired,
             String nextFollowUpDate,
+            List<String> prescriptions,
             List<String> interactionLogs) {
         this.id = id;
         this.appointmentId = appointmentId;
@@ -99,6 +106,7 @@ public class TeleconsultationSessionEntity {
         this.consultationNotes = consultationNotes;
         this.followUpRequired = followUpRequired;
         this.nextFollowUpDate = nextFollowUpDate;
+        this.prescriptions = prescriptions == null ? new ArrayList<>() : new ArrayList<>(prescriptions);
         this.interactionLogs = interactionLogs == null ? new ArrayList<>() : new ArrayList<>(interactionLogs);
     }
 
@@ -152,6 +160,10 @@ public class TeleconsultationSessionEntity {
 
     public String getNextFollowUpDate() {
         return nextFollowUpDate;
+    }
+
+    public List<String> getPrescriptions() {
+        return prescriptions;
     }
 
     public List<String> getInteractionLogs() {

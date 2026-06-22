@@ -43,6 +43,7 @@ platform:
     fhir:
       base-url: ${FHIR_INTEGRATION_BASE_URL:}
       path: ${FHIR_INTEGRATION_PATH:/fhir/patients}
+      audience: ${FHIR_INTEGRATION_AUDIENCE:}
     identity-adapter:
       base-url: ${IDENTITY_ADAPTER_INTEGRATION_BASE_URL:}
       path: ${IDENTITY_ADAPTER_INTEGRATION_PATH:/identity/assertions}

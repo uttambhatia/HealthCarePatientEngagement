@@ -1,0 +1,2433 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.44.1.10279",
+      "templateHash": "12010104341249742324"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "secondaryLocation": {
+      "type": "string",
+      "defaultValue": "eastus2"
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "dev"
+    },
+    "hubVnetName": {
+      "type": "string",
+      "defaultValue": "[format('hpe-hub-vnet-{0}', parameters('environment'))]"
+    },
+    "primaryVnetName": {
+      "type": "string",
+      "defaultValue": "[format('hpe-primary-vnet-{0}', parameters('environment'))]"
+    },
+    "secondaryVnetName": {
+      "type": "string",
+      "defaultValue": "[format('hpe-secondary-vnet-{0}', parameters('environment'))]"
+    },
+    "hubAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16"
+    },
+    "primaryAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/16"
+    },
+    "secondaryAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.2.0.0/16"
+    },
+    "trafficManagerProfileName": {
+      "type": "string",
+      "defaultValue": "[format('hpe-tm-{0}', parameters('environment'))]"
+    },
+    "trafficManagerDnsLabel": {
+      "type": "string",
+      "defaultValue": "[format('hpe-tm-{0}', parameters('environment'))]"
+    },
+    "primaryUiHostname": {
+      "type": "string",
+      "defaultValue": "[format('hpe-primary-ui-{0}.azurewebsites.net', parameters('environment'))]"
+    },
+    "secondaryUiHostname": {
+      "type": "string",
+      "defaultValue": "[format('hpe-secondary-ui-{0}.azurewebsites.net', parameters('environment'))]"
+    },
+    "trafficManagerHealthProbePath": {
+      "type": "string",
+      "defaultValue": "/health"
+    },
+    "primaryFrontDoorProfileName": {
+      "type": "string",
+      "defaultValue": "[format('hpe-afd-primary-{0}', parameters('environment'))]"
+    },
+    "primaryFrontDoorEndpointName": {
+      "type": "string",
+      "defaultValue": "[format('hpe-afd-primary-{0}', parameters('environment'))]"
+    },
+    "secondaryFrontDoorProfileName": {
+      "type": "string",
+      "defaultValue": "[format('hpe-afd-secondary-{0}', parameters('environment'))]"
+    },
+    "secondaryFrontDoorEndpointName": {
+      "type": "string",
+      "defaultValue": "[format('hpe-afd-secondary-{0}', parameters('environment'))]"
+    },
+    "frontDoorHealthProbePath": {
+      "type": "string",
+      "defaultValue": "/health"
+    },
+    "sqlServerName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "keyVaultName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "serviceBusNamespaceName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "apimServiceName": {
+      "type": "string",
+      "defaultValue": "[format('hpe-apim-{0}', parameters('environment'))]"
+    },
+    "apimPublisherName": {
+      "type": "string",
+      "defaultValue": "Healthcare Platform"
+    },
+    "apimPublisherEmail": {
+      "type": "string",
+      "defaultValue": "noreply@example.com"
+    },
+    "apimSkuName": {
+      "type": "string",
+      "defaultValue": "Developer"
+    },
+    "apimSkuCapacity": {
+      "type": "int",
+      "defaultValue": 1
+    },
+    "oauthOpenIdConfigUrl": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "oauthAudience": {
+      "type": "string",
+      "defaultValue": "api://<app-id-uri>"
+    },
+    "apimApiName": {
+      "type": "string",
+      "defaultValue": "platform-api"
+    },
+    "apimApiDisplayName": {
+      "type": "string",
+      "defaultValue": "Healthcare Platform API"
+    },
+    "apimApiPath": {
+      "type": "string",
+      "defaultValue": "api"
+    },
+    "primaryApiBackendUrl": {
+      "type": "string",
+      "defaultValue": "http://primary-app-gateway.internal"
+    },
+    "secondaryApiBackendUrl": {
+      "type": "string",
+      "defaultValue": "http://secondary-app-gateway.internal"
+    },
+    "apimActiveBackend": {
+      "type": "string",
+      "defaultValue": "primary",
+      "allowedValues": [
+        "primary",
+        "secondary"
+      ]
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "hub-spoke-nsg",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "secondaryLocation": {
+            "value": "[parameters('secondaryLocation')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "10005115041293948243"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "secondaryLocation": {
+              "type": "string",
+              "defaultValue": "eastus2"
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-primary-ui-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-primary-iot-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-primary-app-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-primary-data-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-secondary-ui-{0}-{1}', parameters('environment'), parameters('secondaryLocation'))]",
+              "location": "[parameters('secondaryLocation')]"
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-secondary-iot-{0}-{1}', parameters('environment'), parameters('secondaryLocation'))]",
+              "location": "[parameters('secondaryLocation')]"
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-secondary-app-{0}-{1}', parameters('environment'), parameters('secondaryLocation'))]",
+              "location": "[parameters('secondaryLocation')]"
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-secondary-data-{0}-{1}', parameters('environment'), parameters('secondaryLocation'))]",
+              "location": "[parameters('secondaryLocation')]"
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('nsg-hub-apim-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "AllowAPIMManagement",
+                    "properties": {
+                      "priority": 100,
+                      "direction": "Inbound",
+                      "access": "Allow",
+                      "protocol": "Tcp",
+                      "sourceAddressPrefix": "ApiManagement",
+                      "sourcePortRange": "*",
+                      "destinationAddressPrefix": "VirtualNetwork",
+                      "destinationPortRange": "3443"
+                    }
+                  },
+                  {
+                    "name": "AllowAzureLB",
+                    "properties": {
+                      "priority": 110,
+                      "direction": "Inbound",
+                      "access": "Allow",
+                      "protocol": "Tcp",
+                      "sourceAddressPrefix": "AzureLoadBalancer",
+                      "sourcePortRange": "*",
+                      "destinationAddressPrefix": "*",
+                      "destinationPortRange": "6390"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "primaryNsgIds": {
+              "type": "object",
+              "value": {
+                "ui": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-primary-ui-{0}', parameters('environment')))]",
+                "iot": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-primary-iot-{0}', parameters('environment')))]",
+                "application": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-primary-app-{0}', parameters('environment')))]",
+                "data": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-primary-data-{0}', parameters('environment')))]"
+              }
+            },
+            "secondaryNsgIds": {
+              "type": "object",
+              "value": {
+                "ui": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-secondary-ui-{0}-{1}', parameters('environment'), parameters('secondaryLocation')))]",
+                "iot": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-secondary-iot-{0}-{1}', parameters('environment'), parameters('secondaryLocation')))]",
+                "application": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-secondary-app-{0}-{1}', parameters('environment'), parameters('secondaryLocation')))]",
+                "data": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-secondary-data-{0}-{1}', parameters('environment'), parameters('secondaryLocation')))]"
+              }
+            },
+            "hubApimNsgId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-hub-apim-{0}', parameters('environment')))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "hub-vnet",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "hubVnetName": {
+            "value": "[parameters('hubVnetName')]"
+          },
+          "hubAddressPrefix": {
+            "value": "[parameters('hubAddressPrefix')]"
+          },
+          "apimSubnetNsgId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg'), '2025-04-01').outputs.hubApimNsgId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "2058529970496943666"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev"
+            },
+            "hubVnetName": {
+              "type": "string",
+              "defaultValue": "[format('hpe-hub-vnet-{0}', parameters('environment'))]"
+            },
+            "hubAddressPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.0.0/16"
+            },
+            "apimSubnetNsgId": {
+              "type": "string",
+              "defaultValue": ""
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-11-01",
+              "name": "[parameters('hubVnetName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('hubAddressPrefix')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "waf-subnet",
+                    "properties": {
+                      "addressPrefix": "10.0.1.0/24"
+                    }
+                  },
+                  {
+                    "name": "apim-subnet",
+                    "properties": {
+                      "addressPrefix": "10.0.2.0/24",
+                      "networkSecurityGroup": "[if(empty(parameters('apimSubnetNsgId')), null(), createObject('id', parameters('apimSubnetNsgId')))]"
+                    }
+                  },
+                  {
+                    "name": "keyvault-subnet",
+                    "properties": {
+                      "addressPrefix": "10.0.3.0/24"
+                    }
+                  },
+                  {
+                    "name": "private-dns-subnet",
+                    "properties": {
+                      "addressPrefix": "10.0.4.0/24"
+                    }
+                  },
+                  {
+                    "name": "acs-subnet",
+                    "properties": {
+                      "addressPrefix": "10.0.5.0/24"
+                    }
+                  },
+                  {
+                    "name": "monitoring-subnet",
+                    "properties": {
+                      "addressPrefix": "10.0.6.0/24"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "hubVnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('hubVnetName'))]"
+            },
+            "hubVnetName": {
+              "type": "string",
+              "value": "[parameters('hubVnetName')]"
+            },
+            "hubApimSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('hubVnetName'), 'apim-subnet')]"
+            },
+            "hubPrivateDnsSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('hubVnetName'), 'private-dns-subnet')]"
+            },
+            "hubKeyVaultSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('hubVnetName'), 'keyvault-subnet')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "primary-vnet",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "primaryVnetName": {
+            "value": "[parameters('primaryVnetName')]"
+          },
+          "primaryAddressPrefix": {
+            "value": "[parameters('primaryAddressPrefix')]"
+          },
+          "uiSubnetNsgId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg'), '2025-04-01').outputs.primaryNsgIds.value.ui]"
+          },
+          "iotSubnetNsgId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg'), '2025-04-01').outputs.primaryNsgIds.value.iot]"
+          },
+          "applicationSubnetNsgId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg'), '2025-04-01').outputs.primaryNsgIds.value.application]"
+          },
+          "dataSubnetNsgId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg'), '2025-04-01').outputs.primaryNsgIds.value.data]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "11310347652428942254"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev"
+            },
+            "primaryVnetName": {
+              "type": "string",
+              "defaultValue": "[format('hpe-primary-vnet-{0}', parameters('environment'))]"
+            },
+            "primaryAddressPrefix": {
+              "type": "string",
+              "defaultValue": "10.1.0.0/16"
+            },
+            "uiSubnetNsgId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "iotSubnetNsgId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "applicationSubnetNsgId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "dataSubnetNsgId": {
+              "type": "string",
+              "defaultValue": ""
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-11-01",
+              "name": "[parameters('primaryVnetName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('primaryAddressPrefix')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "ui-layer-subnet",
+                    "properties": {
+                      "addressPrefix": "10.1.1.0/24",
+                      "networkSecurityGroup": "[if(empty(parameters('uiSubnetNsgId')), null(), createObject('id', parameters('uiSubnetNsgId')))]",
+                      "delegations": [
+                        {
+                          "name": "appservice-delegation",
+                          "properties": {
+                            "serviceName": "Microsoft.Web/serverFarms"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "iot-subnet",
+                    "properties": {
+                      "addressPrefix": "10.1.2.0/24",
+                      "networkSecurityGroup": "[if(empty(parameters('iotSubnetNsgId')), null(), createObject('id', parameters('iotSubnetNsgId')))]"
+                    }
+                  },
+                  {
+                    "name": "application-subnet",
+                    "properties": {
+                      "addressPrefix": "10.1.3.0/24",
+                      "networkSecurityGroup": "[if(empty(parameters('applicationSubnetNsgId')), null(), createObject('id', parameters('applicationSubnetNsgId')))]"
+                    }
+                  },
+                  {
+                    "name": "data-subnet",
+                    "properties": {
+                      "addressPrefix": "10.1.4.0/24",
+                      "networkSecurityGroup": "[if(empty(parameters('dataSubnetNsgId')), null(), createObject('id', parameters('dataSubnetNsgId')))]"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "primaryVnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('primaryVnetName'))]"
+            },
+            "primaryVnetName": {
+              "type": "string",
+              "value": "[parameters('primaryVnetName')]"
+            },
+            "primaryUiSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('primaryVnetName'), 'ui-layer-subnet')]"
+            },
+            "primaryIotSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('primaryVnetName'), 'iot-subnet')]"
+            },
+            "primaryApplicationSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('primaryVnetName'), 'application-subnet')]"
+            },
+            "primaryDataSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('primaryVnetName'), 'data-subnet')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "secondary-vnet",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('secondaryLocation')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "secondaryVnetName": {
+            "value": "[parameters('secondaryVnetName')]"
+          },
+          "secondaryAddressPrefix": {
+            "value": "[parameters('secondaryAddressPrefix')]"
+          },
+          "uiSubnetNsgId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg'), '2025-04-01').outputs.secondaryNsgIds.value.ui]"
+          },
+          "iotSubnetNsgId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg'), '2025-04-01').outputs.secondaryNsgIds.value.iot]"
+          },
+          "applicationSubnetNsgId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg'), '2025-04-01').outputs.secondaryNsgIds.value.application]"
+          },
+          "dataSubnetNsgId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg'), '2025-04-01').outputs.secondaryNsgIds.value.data]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "14533468782495753682"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "eastus2"
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev"
+            },
+            "secondaryVnetName": {
+              "type": "string",
+              "defaultValue": "[format('hpe-secondary-vnet-{0}', parameters('environment'))]"
+            },
+            "secondaryAddressPrefix": {
+              "type": "string",
+              "defaultValue": "10.2.0.0/16"
+            },
+            "uiSubnetNsgId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "iotSubnetNsgId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "applicationSubnetNsgId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "dataSubnetNsgId": {
+              "type": "string",
+              "defaultValue": ""
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-11-01",
+              "name": "[parameters('secondaryVnetName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('secondaryAddressPrefix')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "ui-layer-subnet",
+                    "properties": {
+                      "addressPrefix": "10.2.1.0/24",
+                      "networkSecurityGroup": "[if(empty(parameters('uiSubnetNsgId')), null(), createObject('id', parameters('uiSubnetNsgId')))]",
+                      "delegations": [
+                        {
+                          "name": "appservice-delegation",
+                          "properties": {
+                            "serviceName": "Microsoft.Web/serverFarms"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "iot-subnet",
+                    "properties": {
+                      "addressPrefix": "10.2.2.0/24",
+                      "networkSecurityGroup": "[if(empty(parameters('iotSubnetNsgId')), null(), createObject('id', parameters('iotSubnetNsgId')))]"
+                    }
+                  },
+                  {
+                    "name": "application-subnet",
+                    "properties": {
+                      "addressPrefix": "10.2.3.0/24",
+                      "networkSecurityGroup": "[if(empty(parameters('applicationSubnetNsgId')), null(), createObject('id', parameters('applicationSubnetNsgId')))]"
+                    }
+                  },
+                  {
+                    "name": "data-subnet",
+                    "properties": {
+                      "addressPrefix": "10.2.4.0/24",
+                      "networkSecurityGroup": "[if(empty(parameters('dataSubnetNsgId')), null(), createObject('id', parameters('dataSubnetNsgId')))]"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "secondaryVnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('secondaryVnetName'))]"
+            },
+            "secondaryVnetName": {
+              "type": "string",
+              "value": "[parameters('secondaryVnetName')]"
+            },
+            "secondaryUiSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('secondaryVnetName'), 'ui-layer-subnet')]"
+            },
+            "secondaryIotSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('secondaryVnetName'), 'iot-subnet')]"
+            },
+            "secondaryApplicationSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('secondaryVnetName'), 'application-subnet')]"
+            },
+            "secondaryDataSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('secondaryVnetName'), 'data-subnet')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "hub-spoke-peerings",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "hubVnetName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet'), '2025-04-01').outputs.hubVnetName.value]"
+          },
+          "primaryVnetName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-vnet'), '2025-04-01').outputs.primaryVnetName.value]"
+          },
+          "secondaryVnetName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'secondary-vnet'), '2025-04-01').outputs.secondaryVnetName.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "3440641086365669684"
+            }
+          },
+          "parameters": {
+            "hubVnetName": {
+              "type": "string"
+            },
+            "primaryVnetName": {
+              "type": "string"
+            },
+            "secondaryVnetName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', parameters('hubVnetName'), 'hub-to-primary')]",
+              "properties": {
+                "remoteVirtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('primaryVnetName'))]"
+                },
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', parameters('primaryVnetName'), 'primary-to-hub')]",
+              "properties": {
+                "remoteVirtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('hubVnetName'))]"
+                },
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', parameters('hubVnetName'), 'hub-to-secondary')]",
+              "properties": {
+                "remoteVirtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('secondaryVnetName'))]"
+                },
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', parameters('secondaryVnetName'), 'secondary-to-hub')]",
+              "properties": {
+                "remoteVirtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('hubVnetName'))]"
+                },
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false
+              }
+            }
+          ],
+          "outputs": {
+            "peeringIds": {
+              "type": "object",
+              "value": {
+                "hubToPrimary": "[resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings', parameters('hubVnetName'), 'hub-to-primary')]",
+                "primaryToHub": "[resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings', parameters('primaryVnetName'), 'primary-to-hub')]",
+                "hubToSecondary": "[resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings', parameters('hubVnetName'), 'hub-to-secondary')]",
+                "secondaryToHub": "[resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings', parameters('secondaryVnetName'), 'secondary-to-hub')]"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'hub-vnet')]",
+        "[resourceId('Microsoft.Resources/deployments', 'primary-vnet')]",
+        "[resourceId('Microsoft.Resources/deployments', 'secondary-vnet')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "hub-spoke-private-dns",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "hubVnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet'), '2025-04-01').outputs.hubVnetId.value]"
+          },
+          "primaryVnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-vnet'), '2025-04-01').outputs.primaryVnetId.value]"
+          },
+          "secondaryVnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'secondary-vnet'), '2025-04-01').outputs.secondaryVnetId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "3588759565773619754"
+            }
+          },
+          "parameters": {
+            "hubVnetId": {
+              "type": "string"
+            },
+            "primaryVnetId": {
+              "type": "string"
+            },
+            "secondaryVnetId": {
+              "type": "string"
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "privatelink.database.windows.net",
+              "location": "global"
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "[format('privatelink.blob.{0}', environment().suffixes.storage)]",
+              "location": "global"
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "privatelink.vaultcore.azure.net",
+              "location": "global"
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "privatelink.servicebus.windows.net",
+              "location": "global"
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.database.windows.net', format('link-hub-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('hubVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.database.windows.net')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.database.windows.net', format('link-primary-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('primaryVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.database.windows.net')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.database.windows.net', format('link-secondary-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('secondaryVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.database.windows.net')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', format('privatelink.blob.{0}', environment().suffixes.storage), format('link-hub-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('hubVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.blob.{0}', environment().suffixes.storage))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', format('privatelink.blob.{0}', environment().suffixes.storage), format('link-primary-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('primaryVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.blob.{0}', environment().suffixes.storage))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', format('privatelink.blob.{0}', environment().suffixes.storage), format('link-secondary-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('secondaryVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.blob.{0}', environment().suffixes.storage))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.vaultcore.azure.net', format('link-hub-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('hubVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.vaultcore.azure.net')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.vaultcore.azure.net', format('link-primary-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('primaryVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.vaultcore.azure.net')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.vaultcore.azure.net', format('link-secondary-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('secondaryVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.vaultcore.azure.net')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.servicebus.windows.net', format('link-hub-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('hubVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.servicebus.windows.net')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.servicebus.windows.net', format('link-primary-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('primaryVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.servicebus.windows.net')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.servicebus.windows.net', format('link-secondary-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('secondaryVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.servicebus.windows.net')]"
+              ]
+            }
+          ],
+          "outputs": {
+            "privateDnsZoneIds": {
+              "type": "object",
+              "value": {
+                "sql": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.database.windows.net')]",
+                "blob": "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.blob.{0}', environment().suffixes.storage))]",
+                "keyVault": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.vaultcore.azure.net')]",
+                "serviceBus": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.servicebus.windows.net')]"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'hub-vnet')]",
+        "[resourceId('Microsoft.Resources/deployments', 'primary-vnet')]",
+        "[resourceId('Microsoft.Resources/deployments', 'secondary-vnet')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "hub-spoke-private-endpoints",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "primaryDataSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-vnet'), '2025-04-01').outputs.primaryDataSubnetId.value]"
+          },
+          "secondaryDataSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'secondary-vnet'), '2025-04-01').outputs.secondaryDataSubnetId.value]"
+          },
+          "sqlServerName": {
+            "value": "[parameters('sqlServerName')]"
+          },
+          "storageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "serviceBusNamespaceName": {
+            "value": "[parameters('serviceBusNamespaceName')]"
+          },
+          "sqlPrivateDnsZoneId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-private-dns'), '2025-04-01').outputs.privateDnsZoneIds.value.sql]"
+          },
+          "blobPrivateDnsZoneId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-private-dns'), '2025-04-01').outputs.privateDnsZoneIds.value.blob]"
+          },
+          "keyVaultPrivateDnsZoneId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-private-dns'), '2025-04-01').outputs.privateDnsZoneIds.value.keyVault]"
+          },
+          "serviceBusPrivateDnsZoneId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-private-dns'), '2025-04-01').outputs.privateDnsZoneIds.value.serviceBus]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "179504175534400667"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev"
+            },
+            "primaryDataSubnetId": {
+              "type": "string"
+            },
+            "secondaryDataSubnetId": {
+              "type": "string"
+            },
+            "sqlServerName": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "storageAccountName": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "keyVaultName": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "serviceBusNamespaceName": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "sqlPrivateDnsZoneId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "blobPrivateDnsZoneId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "keyVaultPrivateDnsZoneId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "serviceBusPrivateDnsZoneId": {
+              "type": "string",
+              "defaultValue": ""
+            }
+          },
+          "resources": [
+            {
+              "condition": "[not(empty(parameters('sqlServerName')))]",
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "[format('pep-primary-sql-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('primaryDataSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "sql-connection",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]",
+                      "groupIds": [
+                        "sqlServer"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('sqlServerName')))]",
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "[format('pep-secondary-sql-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('secondaryDataSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "sql-connection",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]",
+                      "groupIds": [
+                        "sqlServer"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('storageAccountName')))]",
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "[format('pep-primary-blob-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('primaryDataSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "blob-connection",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                      "groupIds": [
+                        "blob"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('storageAccountName')))]",
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "[format('pep-secondary-blob-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('secondaryDataSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "blob-connection",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                      "groupIds": [
+                        "blob"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('keyVaultName')))]",
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "[format('pep-primary-kv-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('primaryDataSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "keyvault-connection",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+                      "groupIds": [
+                        "vault"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('keyVaultName')))]",
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "[format('pep-secondary-kv-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('secondaryDataSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "keyvault-connection",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+                      "groupIds": [
+                        "vault"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('serviceBusNamespaceName')))]",
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "[format('pep-primary-sb-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('primaryDataSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "servicebus-connection",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespaceName'))]",
+                      "groupIds": [
+                        "namespace"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('serviceBusNamespaceName')))]",
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "[format('pep-secondary-sb-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('secondaryDataSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "servicebus-connection",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespaceName'))]",
+                      "groupIds": [
+                        "namespace"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "condition": "[and(not(empty(parameters('sqlServerName'))), not(empty(parameters('sqlPrivateDnsZoneId'))))]",
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('pep-primary-sql-{0}', parameters('environment')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "sql-zone",
+                    "properties": {
+                      "privateDnsZoneId": "[parameters('sqlPrivateDnsZoneId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', format('pep-primary-sql-{0}', parameters('environment')))]"
+              ]
+            },
+            {
+              "condition": "[and(not(empty(parameters('storageAccountName'))), not(empty(parameters('blobPrivateDnsZoneId'))))]",
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('pep-primary-blob-{0}', parameters('environment')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "blob-zone",
+                    "properties": {
+                      "privateDnsZoneId": "[parameters('blobPrivateDnsZoneId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', format('pep-primary-blob-{0}', parameters('environment')))]"
+              ]
+            },
+            {
+              "condition": "[and(not(empty(parameters('keyVaultName'))), not(empty(parameters('keyVaultPrivateDnsZoneId'))))]",
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('pep-primary-kv-{0}', parameters('environment')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "keyvault-zone",
+                    "properties": {
+                      "privateDnsZoneId": "[parameters('keyVaultPrivateDnsZoneId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', format('pep-primary-kv-{0}', parameters('environment')))]"
+              ]
+            },
+            {
+              "condition": "[and(not(empty(parameters('serviceBusNamespaceName'))), not(empty(parameters('serviceBusPrivateDnsZoneId'))))]",
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('pep-primary-sb-{0}', parameters('environment')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "servicebus-zone",
+                    "properties": {
+                      "privateDnsZoneId": "[parameters('serviceBusPrivateDnsZoneId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', format('pep-primary-sb-{0}', parameters('environment')))]"
+              ]
+            },
+            {
+              "condition": "[and(not(empty(parameters('sqlServerName'))), not(empty(parameters('sqlPrivateDnsZoneId'))))]",
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('pep-secondary-sql-{0}', parameters('environment')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "sql-zone",
+                    "properties": {
+                      "privateDnsZoneId": "[parameters('sqlPrivateDnsZoneId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', format('pep-secondary-sql-{0}', parameters('environment')))]"
+              ]
+            },
+            {
+              "condition": "[and(not(empty(parameters('storageAccountName'))), not(empty(parameters('blobPrivateDnsZoneId'))))]",
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('pep-secondary-blob-{0}', parameters('environment')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "blob-zone",
+                    "properties": {
+                      "privateDnsZoneId": "[parameters('blobPrivateDnsZoneId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', format('pep-secondary-blob-{0}', parameters('environment')))]"
+              ]
+            },
+            {
+              "condition": "[and(not(empty(parameters('keyVaultName'))), not(empty(parameters('keyVaultPrivateDnsZoneId'))))]",
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('pep-secondary-kv-{0}', parameters('environment')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "keyvault-zone",
+                    "properties": {
+                      "privateDnsZoneId": "[parameters('keyVaultPrivateDnsZoneId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', format('pep-secondary-kv-{0}', parameters('environment')))]"
+              ]
+            },
+            {
+              "condition": "[and(not(empty(parameters('serviceBusNamespaceName'))), not(empty(parameters('serviceBusPrivateDnsZoneId'))))]",
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('pep-secondary-sb-{0}', parameters('environment')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "servicebus-zone",
+                    "properties": {
+                      "privateDnsZoneId": "[parameters('serviceBusPrivateDnsZoneId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', format('pep-secondary-sb-{0}', parameters('environment')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "privateEndpointSummary": {
+              "type": "object",
+              "value": {
+                "sqlEnabled": "[not(empty(parameters('sqlServerName')))]",
+                "blobEnabled": "[not(empty(parameters('storageAccountName')))]",
+                "keyVaultEnabled": "[not(empty(parameters('keyVaultName')))]",
+                "serviceBusEnabled": "[not(empty(parameters('serviceBusNamespaceName')))]"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'primary-vnet')]",
+        "[resourceId('Microsoft.Resources/deployments', 'hub-spoke-private-dns')]",
+        "[resourceId('Microsoft.Resources/deployments', 'secondary-vnet')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "hub-apim",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "apimServiceName": {
+            "value": "[parameters('apimServiceName')]"
+          },
+          "apimPublisherName": {
+            "value": "[parameters('apimPublisherName')]"
+          },
+          "apimPublisherEmail": {
+            "value": "[parameters('apimPublisherEmail')]"
+          },
+          "apimSkuName": {
+            "value": "[parameters('apimSkuName')]"
+          },
+          "apimSkuCapacity": {
+            "value": "[parameters('apimSkuCapacity')]"
+          },
+          "apimSubnetResourceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet'), '2025-04-01').outputs.hubApimSubnetId.value]"
+          },
+          "oauthOpenIdConfigUrl": {
+            "value": "[parameters('oauthOpenIdConfigUrl')]"
+          },
+          "oauthAudience": {
+            "value": "[parameters('oauthAudience')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "3639776596262227917"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev"
+            },
+            "apimServiceName": {
+              "type": "string",
+              "defaultValue": "[format('hpe-apim-{0}', parameters('environment'))]"
+            },
+            "apimPublisherName": {
+              "type": "string",
+              "defaultValue": "Healthcare Platform"
+            },
+            "apimPublisherEmail": {
+              "type": "string",
+              "defaultValue": "noreply@example.com"
+            },
+            "apimSkuName": {
+              "type": "string",
+              "defaultValue": "Developer"
+            },
+            "apimSkuCapacity": {
+              "type": "int",
+              "defaultValue": 1
+            },
+            "apimSubnetResourceId": {
+              "type": "string"
+            },
+            "oauthOpenIdConfigUrl": {
+              "type": "string"
+            },
+            "oauthAudience": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "$fxv#0": "<policies>\r\n  <inbound>\r\n    <rate-limit-by-key calls=\"300\" renewal-period=\"60\" counter-key=\"@(context.Request.IpAddress)\" />\r\n    <validate-jwt header-name=\"Authorization\" failed-validation-httpcode=\"401\" failed-validation-error-message=\"Unauthorized\">\r\n      <openid-config url=\"{{oauth-openid-config-url}}\" />\r\n      <audiences>\r\n        <audience>{{oauth-audience}}</audience>\r\n      </audiences>\r\n    </validate-jwt>\r\n  </inbound>\r\n  <backend>\r\n  </backend>\r\n  <outbound>\r\n    <set-header name=\"X-Correlation-Id\" exists-action=\"skip\">\r\n      <value>@((string)context.Request.Headers.GetValueOrDefault(\"X-Correlation-Id\", Guid.NewGuid().ToString()))</value>\r\n    </set-header>\r\n  </outbound>\r\n  <on-error>\r\n  </on-error>\r\n</policies>\r\n"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service",
+              "apiVersion": "2022-08-01",
+              "name": "[parameters('apimServiceName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[parameters('apimSkuName')]",
+                "capacity": "[parameters('apimSkuCapacity')]"
+              },
+              "properties": {
+                "publisherName": "[parameters('apimPublisherName')]",
+                "publisherEmail": "[parameters('apimPublisherEmail')]",
+                "virtualNetworkType": "External",
+                "virtualNetworkConfiguration": {
+                  "subnetResourceId": "[parameters('apimSubnetResourceId')]"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/namedValues",
+              "apiVersion": "2022-08-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'oauth-openid-config-url')]",
+              "properties": {
+                "displayName": "oauth-openid-config-url",
+                "value": "[parameters('oauthOpenIdConfigUrl')]",
+                "secret": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/namedValues",
+              "apiVersion": "2022-08-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'oauth-audience')]",
+              "properties": {
+                "displayName": "oauth-audience",
+                "value": "[parameters('oauthAudience')]",
+                "secret": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/policies",
+              "apiVersion": "2022-08-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'policy')]",
+              "properties": {
+                "format": "rawxml",
+                "value": "[variables('$fxv#0')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), 'oauth-audience')]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), 'oauth-openid-config-url')]"
+              ]
+            }
+          ],
+          "outputs": {
+            "apimServiceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+            },
+            "apimGatewayUrl": {
+              "type": "string",
+              "value": "[format('https://{0}.azure-api.net', parameters('apimServiceName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'hub-vnet')]",
+        "[resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "hub-apim-api-routing",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apimServiceName": {
+            "value": "[parameters('apimServiceName')]"
+          },
+          "apiName": {
+            "value": "[parameters('apimApiName')]"
+          },
+          "apiDisplayName": {
+            "value": "[parameters('apimApiDisplayName')]"
+          },
+          "apiPath": {
+            "value": "[parameters('apimApiPath')]"
+          },
+          "primaryBackendUrl": {
+            "value": "[parameters('primaryApiBackendUrl')]"
+          },
+          "secondaryBackendUrl": {
+            "value": "[parameters('secondaryApiBackendUrl')]"
+          },
+          "activeBackend": {
+            "value": "[parameters('apimActiveBackend')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "12103905246411910934"
+            }
+          },
+          "parameters": {
+            "apimServiceName": {
+              "type": "string"
+            },
+            "apiName": {
+              "type": "string",
+              "defaultValue": "platform-api"
+            },
+            "apiDisplayName": {
+              "type": "string",
+              "defaultValue": "Healthcare Platform API"
+            },
+            "apiPath": {
+              "type": "string",
+              "defaultValue": "api"
+            },
+            "primaryBackendUrl": {
+              "type": "string"
+            },
+            "secondaryBackendUrl": {
+              "type": "string"
+            },
+            "activeBackend": {
+              "type": "string",
+              "defaultValue": "primary"
+            }
+          },
+          "variables": {
+            "$fxv#0": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-variable name=\"activeBackend\" value=\"{{apim-active-backend}}\" />\r\n    <choose>\r\n      <when condition=\"@((string)context.Variables[&quot;activeBackend&quot;] == &quot;secondary&quot;)\">\r\n        <set-backend-service backend-id=\"backend-secondary-appgw\" />\r\n      </when>\r\n      <otherwise>\r\n        <set-backend-service backend-id=\"backend-primary-appgw\" />\r\n      </otherwise>\r\n    </choose>\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>\r\n"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service/namedValues",
+              "apiVersion": "2022-08-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'apim-active-backend')]",
+              "properties": {
+                "displayName": "apim-active-backend",
+                "value": "[parameters('activeBackend')]",
+                "secret": false
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/backends",
+              "apiVersion": "2022-08-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'backend-primary-appgw')]",
+              "properties": {
+                "title": "Primary Application Gateway Backend",
+                "protocol": "http",
+                "url": "[parameters('primaryBackendUrl')]"
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/backends",
+              "apiVersion": "2022-08-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), 'backend-secondary-appgw')]",
+              "properties": {
+                "title": "Secondary Application Gateway Backend",
+                "protocol": "http",
+                "url": "[parameters('secondaryBackendUrl')]"
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis",
+              "apiVersion": "2022-08-01",
+              "name": "[format('{0}/{1}', parameters('apimServiceName'), parameters('apiName'))]",
+              "properties": {
+                "displayName": "[parameters('apiDisplayName')]",
+                "path": "[parameters('apiPath')]",
+                "protocols": [
+                  "https"
+                ],
+                "subscriptionRequired": false
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/policies",
+              "apiVersion": "2022-08-01",
+              "name": "[format('{0}/{1}/{2}', parameters('apimServiceName'), parameters('apiName'), 'policy')]",
+              "properties": {
+                "format": "rawxml",
+                "value": "[variables('$fxv#0')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), 'apim-active-backend')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), 'backend-primary-appgw')]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), 'backend-secondary-appgw')]"
+              ]
+            }
+          ],
+          "outputs": {
+            "apiId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            },
+            "primaryBackendId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), 'backend-primary-appgw')]"
+            },
+            "secondaryBackendId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), 'backend-secondary-appgw')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'hub-apim')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "front-door-primary-edge",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "frontDoorProfileName": {
+            "value": "[parameters('primaryFrontDoorProfileName')]"
+          },
+          "frontDoorEndpointName": {
+            "value": "[parameters('primaryFrontDoorEndpointName')]"
+          },
+          "appServiceHostname": {
+            "value": "[parameters('primaryUiHostname')]"
+          },
+          "healthProbePath": {
+            "value": "[parameters('frontDoorHealthProbePath')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "1833199888748947706"
+            }
+          },
+          "parameters": {
+            "frontDoorProfileName": {
+              "type": "string"
+            },
+            "frontDoorEndpointName": {
+              "type": "string"
+            },
+            "appServiceHostname": {
+              "type": "string"
+            },
+            "healthProbePath": {
+              "type": "string",
+              "defaultValue": "/health"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Cdn/profiles",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('frontDoorProfileName')]",
+              "location": "global",
+              "sku": {
+                "name": "Standard_AzureFrontDoor"
+              }
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('frontDoorProfileName'), parameters('frontDoorEndpointName'))]",
+              "location": "global",
+              "properties": {
+                "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', parameters('frontDoorProfileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('frontDoorProfileName'), 'app-service-origin-group')]",
+              "properties": {
+                "sessionAffinityState": "Disabled",
+                "healthProbeSettings": {
+                  "probePath": "[parameters('healthProbePath')]",
+                  "probeRequestType": "HEAD",
+                  "probeProtocol": "Https",
+                  "probeIntervalInSeconds": 100
+                },
+                "loadBalancingSettings": {
+                  "sampleSize": 4,
+                  "successfulSamplesRequired": 3,
+                  "additionalLatencyInMilliseconds": 0
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', parameters('frontDoorProfileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups/origins",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('frontDoorProfileName'), 'app-service-origin-group', 'app-service-origin')]",
+              "properties": {
+                "hostName": "[parameters('appServiceHostname')]",
+                "httpPort": 80,
+                "httpsPort": 443,
+                "originHostHeader": "[parameters('appServiceHostname')]",
+                "priority": 1,
+                "weight": 1000,
+                "enabledState": "Enabled",
+                "enforceCertificateNameCheck": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('frontDoorProfileName'), 'app-service-origin-group')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('frontDoorProfileName'), parameters('frontDoorEndpointName'), 'default-route')]",
+              "properties": {
+                "originGroup": {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('frontDoorProfileName'), 'app-service-origin-group')]"
+                },
+                "supportedProtocols": [
+                  "Http",
+                  "Https"
+                ],
+                "patternsToMatch": [
+                  "/*"
+                ],
+                "forwardingProtocol": "HttpsOnly",
+                "httpsRedirect": "Enabled",
+                "linkToDefaultDomain": "Enabled",
+                "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('frontDoorProfileName'), parameters('frontDoorEndpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('frontDoorProfileName'), 'app-service-origin-group')]"
+              ]
+            }
+          ],
+          "outputs": {
+            "frontDoorProfileId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Cdn/profiles', parameters('frontDoorProfileName'))]"
+            },
+            "frontDoorEndpointHost": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('frontDoorProfileName'), parameters('frontDoorEndpointName')), '2023-05-01').hostName]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "front-door-secondary-edge",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "frontDoorProfileName": {
+            "value": "[parameters('secondaryFrontDoorProfileName')]"
+          },
+          "frontDoorEndpointName": {
+            "value": "[parameters('secondaryFrontDoorEndpointName')]"
+          },
+          "appServiceHostname": {
+            "value": "[parameters('secondaryUiHostname')]"
+          },
+          "healthProbePath": {
+            "value": "[parameters('frontDoorHealthProbePath')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "1833199888748947706"
+            }
+          },
+          "parameters": {
+            "frontDoorProfileName": {
+              "type": "string"
+            },
+            "frontDoorEndpointName": {
+              "type": "string"
+            },
+            "appServiceHostname": {
+              "type": "string"
+            },
+            "healthProbePath": {
+              "type": "string",
+              "defaultValue": "/health"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Cdn/profiles",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('frontDoorProfileName')]",
+              "location": "global",
+              "sku": {
+                "name": "Standard_AzureFrontDoor"
+              }
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('frontDoorProfileName'), parameters('frontDoorEndpointName'))]",
+              "location": "global",
+              "properties": {
+                "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', parameters('frontDoorProfileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('frontDoorProfileName'), 'app-service-origin-group')]",
+              "properties": {
+                "sessionAffinityState": "Disabled",
+                "healthProbeSettings": {
+                  "probePath": "[parameters('healthProbePath')]",
+                  "probeRequestType": "HEAD",
+                  "probeProtocol": "Https",
+                  "probeIntervalInSeconds": 100
+                },
+                "loadBalancingSettings": {
+                  "sampleSize": 4,
+                  "successfulSamplesRequired": 3,
+                  "additionalLatencyInMilliseconds": 0
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles', parameters('frontDoorProfileName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/originGroups/origins",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('frontDoorProfileName'), 'app-service-origin-group', 'app-service-origin')]",
+              "properties": {
+                "hostName": "[parameters('appServiceHostname')]",
+                "httpPort": 80,
+                "httpsPort": 443,
+                "originHostHeader": "[parameters('appServiceHostname')]",
+                "priority": 1,
+                "weight": 1000,
+                "enabledState": "Enabled",
+                "enforceCertificateNameCheck": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('frontDoorProfileName'), 'app-service-origin-group')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('frontDoorProfileName'), parameters('frontDoorEndpointName'), 'default-route')]",
+              "properties": {
+                "originGroup": {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('frontDoorProfileName'), 'app-service-origin-group')]"
+                },
+                "supportedProtocols": [
+                  "Http",
+                  "Https"
+                ],
+                "patternsToMatch": [
+                  "/*"
+                ],
+                "forwardingProtocol": "HttpsOnly",
+                "httpsRedirect": "Enabled",
+                "linkToDefaultDomain": "Enabled",
+                "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('frontDoorProfileName'), parameters('frontDoorEndpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('frontDoorProfileName'), 'app-service-origin-group')]"
+              ]
+            }
+          ],
+          "outputs": {
+            "frontDoorProfileId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Cdn/profiles', parameters('frontDoorProfileName'))]"
+            },
+            "frontDoorEndpointHost": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('frontDoorProfileName'), parameters('frontDoorEndpointName')), '2023-05-01').hostName]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "traffic-manager-edge",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "trafficManagerProfileName": {
+            "value": "[parameters('trafficManagerProfileName')]"
+          },
+          "trafficManagerDnsLabel": {
+            "value": "[parameters('trafficManagerDnsLabel')]"
+          },
+          "primaryEndpointTarget": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door-primary-edge'), '2025-04-01').outputs.frontDoorEndpointHost.value]"
+          },
+          "secondaryEndpointTarget": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door-secondary-edge'), '2025-04-01').outputs.frontDoorEndpointHost.value]"
+          },
+          "monitorPath": {
+            "value": "[parameters('trafficManagerHealthProbePath')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "15957205915347102845"
+            }
+          },
+          "parameters": {
+            "trafficManagerProfileName": {
+              "type": "string"
+            },
+            "trafficManagerDnsLabel": {
+              "type": "string"
+            },
+            "primaryEndpointTarget": {
+              "type": "string"
+            },
+            "secondaryEndpointTarget": {
+              "type": "string"
+            },
+            "monitorPath": {
+              "type": "string",
+              "defaultValue": "/health"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/trafficmanagerprofiles",
+              "apiVersion": "2022-04-01",
+              "name": "[parameters('trafficManagerProfileName')]",
+              "location": "global",
+              "properties": {
+                "profileStatus": "Enabled",
+                "trafficRoutingMethod": "Priority",
+                "dnsConfig": {
+                  "relativeName": "[parameters('trafficManagerDnsLabel')]",
+                  "ttl": 60
+                },
+                "monitorConfig": {
+                  "protocol": "HTTPS",
+                  "port": 443,
+                  "path": "[parameters('monitorPath')]",
+                  "intervalInSeconds": 30,
+                  "timeoutInSeconds": 10,
+                  "toleratedNumberOfFailures": 3
+                },
+                "endpoints": [
+                  {
+                    "name": "primary-ui-endpoint",
+                    "type": "Microsoft.Network/trafficManagerProfiles/externalEndpoints",
+                    "properties": {
+                      "target": "[parameters('primaryEndpointTarget')]",
+                      "endpointStatus": "Enabled",
+                      "priority": 1
+                    }
+                  },
+                  {
+                    "name": "secondary-ui-endpoint",
+                    "type": "Microsoft.Network/trafficManagerProfiles/externalEndpoints",
+                    "properties": {
+                      "target": "[parameters('secondaryEndpointTarget')]",
+                      "endpointStatus": "Enabled",
+                      "priority": 2
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "trafficManagerId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/trafficmanagerprofiles', parameters('trafficManagerProfileName'))]"
+            },
+            "trafficManagerDnsName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/trafficmanagerprofiles', parameters('trafficManagerProfileName')), '2022-04-01').dnsConfig.fqdn]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'front-door-primary-edge')]",
+        "[resourceId('Microsoft.Resources/deployments', 'front-door-secondary-edge')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "hubVnetId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-vnet'), '2025-04-01').outputs.hubVnetId.value]"
+    },
+    "primaryVnetId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-vnet'), '2025-04-01').outputs.primaryVnetId.value]"
+    },
+    "secondaryVnetId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'secondary-vnet'), '2025-04-01').outputs.secondaryVnetId.value]"
+    },
+    "peeringIds": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-peerings'), '2025-04-01').outputs.peeringIds.value]"
+    },
+    "nsgIds": {
+      "type": "object",
+      "value": {
+        "primary": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg'), '2025-04-01').outputs.primaryNsgIds.value]",
+        "secondary": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg'), '2025-04-01').outputs.secondaryNsgIds.value]"
+      }
+    },
+    "privateDnsZoneIds": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-private-dns'), '2025-04-01').outputs.privateDnsZoneIds.value]"
+    },
+    "privateEndpointSummary": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-private-endpoints'), '2025-04-01').outputs.privateEndpointSummary.value]"
+    },
+    "apimServiceId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-apim'), '2025-04-01').outputs.apimServiceId.value]"
+    },
+    "apimGatewayUrl": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-apim'), '2025-04-01').outputs.apimGatewayUrl.value]"
+    },
+    "apimApiId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-apim-api-routing'), '2025-04-01').outputs.apiId.value]"
+    },
+    "trafficManagerDnsName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'traffic-manager-edge'), '2025-04-01').outputs.trafficManagerDnsName.value]"
+    },
+    "primaryFrontDoorEndpointHost": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door-primary-edge'), '2025-04-01').outputs.frontDoorEndpointHost.value]"
+    },
+    "secondaryFrontDoorEndpointHost": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door-secondary-edge'), '2025-04-01').outputs.frontDoorEndpointHost.value]"
+    }
+  }
+}

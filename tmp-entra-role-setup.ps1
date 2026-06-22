@@ -89,6 +89,22 @@ foreach ($rv in $roleValues) {
   }
 }
 
+# Re-check the doctor assignment explicitly so a missed or stale admin action
+# cannot leave the guest group without the DOCTOR app role.
+$doctorGroupId = $groupMap['DOCTOR']
+$doctorRoleId = $roleMap['DOCTOR']
+if ($doctorGroupId -and $doctorRoleId) {
+  $doctorExisting = az rest --method GET --url "https://graph.microsoft.com/v1.0/servicePrincipals/$spOid/appRoleAssignedTo" --query "value[?principalId=='$doctorGroupId' && appRoleId=='$doctorRoleId']" -o json | ConvertFrom-Json
+  if ($doctorExisting.Count -eq 0) {
+    $doctorAssign = @{principalId=$doctorGroupId;resourceId=$spOid;appRoleId=$doctorRoleId} | ConvertTo-Json -Compress
+    $tmpDoctor = Join-Path $PWD 'tmp-doctor-assign.json'
+    Set-Content -Path $tmpDoctor -Value $doctorAssign -Encoding utf8
+    az rest --method POST --url "https://graph.microsoft.com/v1.0/servicePrincipals/$spOid/appRoleAssignedTo" --headers "Content-Type=application/json" --body "@$tmpDoctor" | Out-Null
+    Remove-Item $tmpDoctor -Force
+    Write-Host 'Assignment created: HCPE-DOCTOR -> DOCTOR'
+  }
+}
+
 Write-Host '=== SPA required resource access ==='
 $spaRra=az ad app show --id $spaAppId --query 'requiredResourceAccess' -o json | ConvertFrom-Json
 $already=$null

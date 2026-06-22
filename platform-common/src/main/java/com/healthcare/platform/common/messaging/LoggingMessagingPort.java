@@ -35,7 +35,11 @@ public class LoggingMessagingPort implements MessagingPort {
 
         ServiceBusSenderClient sender = senderByChannel.computeIfAbsent(channel, targetChannel -> {
             try {
-                return builder.sender().queueName(targetChannel).buildClient();
+                Destination destination = resolveDestination(targetChannel);
+                if (destination.topic()) {
+                    return builder.sender().topicName(destination.entityName()).buildClient();
+                }
+                return builder.sender().queueName(destination.entityName()).buildClient();
             } catch (RuntimeException ex) {
                 LOGGER.warn("Service Bus sender initialization failed channel={} error={}", targetChannel, ex.getMessage());
                 return null;
@@ -106,5 +110,22 @@ public class LoggingMessagingPort implements MessagingPort {
             return "";
         }
         return value.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private Destination resolveDestination(String channel) {
+        if (channel == null) {
+            return new Destination(false, "");
+        }
+
+        if (channel.startsWith("topic:")) {
+            return new Destination(true, channel.substring("topic:".length()));
+        }
+        if (channel.startsWith("queue:")) {
+            return new Destination(false, channel.substring("queue:".length()));
+        }
+        return new Destination(false, channel);
+    }
+
+    private record Destination(boolean topic, String entityName) {
     }
 }

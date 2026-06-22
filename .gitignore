@@ -6,3 +6,16 @@
 **/coverage/
 **/node_modules/
 **/.env
+# Generated environment and secret files (contain real credentials)
+deploy/k8s/env/dev/dev.env
+deploy/k8s/env/dev/platform-secrets.dev.generated.yaml
+deploy/k8s/env/prod/prod.env
+deploy/k8s/env/prod/platform-secrets.prod.generated.yaml
+**/*.generated.yaml
+**/*.generated.env
+# Temporary files (may contain secrets)
+tmp/
+tmp*.json
+tmp*.txt
+tmp*.ps1
+tmp-*

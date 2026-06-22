@@ -39,41 +39,59 @@ public class NotificationEventConsumer {
         LOGGER.info("Consumed eventName={} correlationId={} appointmentId={} followUpRequired={}",
                 envelope.eventName(), envelope.correlationId(), payload.appointmentId(), payload.followUpRequired());
 
-        if (!payload.followUpRequired()) {
-            return;
-        }
-
-        String nextFollowUpDate = payload.nextFollowUpDate();
-        String followUpMessage = (nextFollowUpDate == null || nextFollowUpDate.isBlank())
-                ? "Your teleconsultation has been completed. Please schedule your follow-up appointment."
-                : "Your teleconsultation has been completed. Please schedule your follow-up appointment for "
-                + nextFollowUpDate + ".";
+        // Always send patient a consultation summary notification
+        String summaryMessage = payload.followUpRequired() && payload.nextFollowUpDate() != null && !payload.nextFollowUpDate().isBlank()
+                ? "Your teleconsultation has been completed. Your follow-up is scheduled for " + payload.nextFollowUpDate() + ". Please check your care plan for details."
+                : "Your teleconsultation has been completed. Your doctor has recorded consultation notes. Please contact your care coordinator if you have questions.";
 
         notificationService.sendNotification(
                 new CreateNotificationRequest(
                         payload.patientId(),
                         followUpChannel,
-                        followUpTemplateId,
-                        followUpMessage
+                        "teleconsult-summary-v1",
+                        summaryMessage
                 ),
                 envelope.correlationId()
         );
 
-        if (nextFollowUpDate != null && !nextFollowUpDate.isBlank()) {
-            try {
-                followUpAppointmentAdapter.createFollowUpAppointment(
-                        payload.patientId(),
-                        payload.providerId(),
-                        nextFollowUpDate,
-                        envelope.correlationId()
-                );
-            } catch (Exception ex) {
-                LOGGER.error("Failed to create follow-up appointment draft appointmentId={} patientId={} correlationId={} error={}",
-                        payload.appointmentId(), payload.patientId(), envelope.correlationId(), ex.getMessage());
+        // Follow-up appointment creation when follow-up is required
+        if (payload.followUpRequired()) {
+            String nextFollowUpDate = payload.nextFollowUpDate();
+            if (nextFollowUpDate != null && !nextFollowUpDate.isBlank()) {
+                try {
+                    followUpAppointmentAdapter.createFollowUpAppointment(
+                            payload.patientId(),
+                            payload.providerId(),
+                            nextFollowUpDate,
+                            envelope.correlationId()
+                    );
+                } catch (Exception ex) {
+                    LOGGER.error("Failed to create follow-up appointment draft appointmentId={} patientId={} correlationId={} error={}",
+                            payload.appointmentId(), payload.patientId(), envelope.correlationId(), ex.getMessage());
+                }
+            } else {
+                LOGGER.warn("Follow-up appointment not scheduled because nextFollowUpDate is blank appointmentId={} correlationId={}",
+                        payload.appointmentId(), envelope.correlationId());
             }
-        } else {
-            LOGGER.warn("Follow-up appointment not scheduled because nextFollowUpDate is blank appointmentId={} correlationId={}",
-                    payload.appointmentId(), envelope.correlationId());
+        }
+
+        // Notify care coordinator
+        try {
+            notificationService.sendNotification(
+                    new CreateNotificationRequest(
+                            payload.providerId(),
+                            followUpChannel,
+                            "teleconsult-coordinator-update-v1",
+                            "Teleconsultation completed for patient " + payload.patientId()
+                                    + ". Appointment: " + payload.appointmentId()
+                                    + (payload.followUpRequired() ? ". Follow-up required: " + payload.nextFollowUpDate() : "")
+                                    + ". Please review care plan and assign any follow-up tasks."
+                    ),
+                    envelope.correlationId()
+            );
+        } catch (Exception ex) {
+            LOGGER.warn("Failed to send coordinator teleconsult completion notification providerId={} correlationId={} error={}",
+                    payload.providerId(), envelope.correlationId(), ex.getMessage());
         }
     }
 }

@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.healthcare.alertmanagement.event.AlertEventConsumer;
 import com.healthcare.alertmanagement.event.AlertTriggeredEvent;
+import com.healthcare.alertmanagement.event.TeleconsultationAlertConsumer;
+import com.healthcare.alertmanagement.event.TeleconsultationCompletedEvent;
 import com.healthcare.platform.common.event.MessageEnvelope;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -27,6 +29,7 @@ public class AlertQueueProcessor {
 
     private final ServiceBusClientBuilder serviceBusClientBuilder;
     private final AlertEventConsumer alertEventConsumer;
+    private final TeleconsultationAlertConsumer teleconsultationAlertConsumer;
     private final ObjectMapper objectMapper;
     private final String queueName;
     private final String deadLetterQueue;
@@ -39,6 +42,7 @@ public class AlertQueueProcessor {
     public AlertQueueProcessor(
             ObjectProvider<ServiceBusClientBuilder> serviceBusClientBuilderProvider,
             AlertEventConsumer alertEventConsumer,
+            TeleconsultationAlertConsumer teleconsultationAlertConsumer,
             ObjectMapper objectMapper,
             @Value("${platform.messaging.channel:alert-management-service}") String queueName,
             @Value("${platform.messaging.deadLetterQueue:alert-management-service-dlq}") String deadLetterQueue,
@@ -46,6 +50,7 @@ public class AlertQueueProcessor {
             @Value("${platform.azure.servicebus.fqdn:}") String serviceBusFqdn) {
         this.serviceBusClientBuilder = serviceBusClientBuilderProvider.getIfAvailable();
         this.alertEventConsumer = alertEventConsumer;
+        this.teleconsultationAlertConsumer = teleconsultationAlertConsumer;
         this.objectMapper = objectMapper;
         this.queueName = queueName;
         this.deadLetterQueue = deadLetterQueue;
@@ -93,6 +98,23 @@ public class AlertQueueProcessor {
             JsonNode body = objectMapper.readTree(rawBody);
             String eventName = text(body, "eventType", "AlertTriggeredEvent");
             String correlationId = text(body, "correlationId", "n/a");
+
+            if ("TeleconsultationCompletedEvent".equals(eventName)) {
+                TeleconsultationCompletedEvent payload = new TeleconsultationCompletedEvent(
+                        text(body, "aggregateId", ""),
+                        text(body, "appointmentId", ""),
+                        text(body, "patientId", ""),
+                        text(body, "providerId", ""),
+                        text(body, "completedAt", ""),
+                        body.path("followUpRequired").asBoolean(false),
+                        text(body, "nextFollowUpDate", null)
+                );
+                MessageEnvelope<TeleconsultationCompletedEvent> envelope =
+                        new MessageEnvelope<>(correlationId, eventName, OffsetDateTime.now(), payload);
+                teleconsultationAlertConsumer.handle(envelope);
+                context.complete();
+                return;
+            }
 
             AlertTriggeredEvent payload = new AlertTriggeredEvent(
                     text(body, "aggregateId", ""),

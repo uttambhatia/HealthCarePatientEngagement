@@ -181,8 +181,9 @@ PASS: validate-integration-adapter-readiness.sh
 
 ==> validate-integration-reliability-hygiene.sh
 Validating integration reliability hygiene (retry and DLQ contracts)
-Validation passed: integration reliability hygiene is complete.
-PASS: validate-integration-reliability-hygiene.sh
+FAIL: services/svc-patient/src/main/java/com/healthcare/patient/integration/PatientFhirAdapter.java missing terminal exception throw after retry exhaustion
+Validation failed: integration reliability hygiene has 1 issue(s).
+FAIL: validate-integration-reliability-hygiene.sh
 
 ==> validate-integration-adapter-contract-tests.sh
 Running integration adapter contract tests
@@ -211,7 +212,7 @@ Running integration adapter contract tests
 [INFO] --- compiler:3.14.0:compile (default-compile) @ platform-common ---
 [INFO] Recompiling the module because of added or removed source files.
 [WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
-[INFO] Compiling 10 source files with javac [debug release 17] to target/classes
+[INFO] Compiling 12 source files with javac [debug release 17] to target/classes
 [INFO] 
 [INFO] --- resources:3.3.1:testResources (default-testResources) @ platform-common ---
 [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
@@ -228,6 +229,32 @@ Running integration adapter contract tests
 [INFO] Building svc-patient 0.1.0-SNAPSHOT                                [3/3]
 [INFO]   from services/svc-patient/pom.xml
 [INFO] --------------------------------[ jar ]---------------------------------
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-storage-blob/12.28.0/azure-storage-blob-12.28.0.pom
+Progress (1): 1.1 kBProgress (1): 2.3 kBProgress (1): 5.1 kBProgress (1): 9.1 kBProgress (1): 11 kB Progress (1): 11 kB                   Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-storage-blob/12.28.0/azure-storage-blob-12.28.0.pom (11 kB at 8.5 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-core/1.52.0/azure-core-1.52.0.pom
+Progress (1): 1.0 kBProgress (1): 2.1 kBProgress (1): 4.8 kBProgress (1): 9.0 kBProgress (1): 12 kB Progress (1): 15 kB                   Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-core/1.52.0/azure-core-1.52.0.pom (15 kB at 133 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-json/1.3.0/azure-json-1.3.0.pom
+Progress (1): 1.0 kBProgress (1): 2.1 kBProgress (1): 4.3 kBProgress (1): 6.7 kBProgress (1): 8.4 kBProgress (1): 11 kB                    Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-json/1.3.0/azure-json-1.3.0.pom (11 kB at 83 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-xml/1.1.0/azure-xml-1.1.0.pom
+Progress (1): 1.1 kBProgress (1): 2.2 kBProgress (1): 4.8 kBProgress (1): 5.7 kB                    Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-xml/1.1.0/azure-xml-1.1.0.pom (5.7 kB at 48 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-core-http-netty/1.15.4/azure-core-http-netty-1.15.4.pom
+Progress (1): 1.0 kBProgress (1): 2.1 kBProgress (1): 4.4 kBProgress (1): 9.3 kBProgress (1): 12 kB                    Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-core-http-netty/1.15.4/azure-core-http-netty-1.15.4.pom (12 kB at 101 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-storage-common/12.27.0/azure-storage-common-12.27.0.pom
+Progress (1): 1.1 kBProgress (1): 2.4 kBProgress (1): 5.0 kBProgress (1): 7.7 kBProgress (1): 8.2 kB                    Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-storage-common/12.27.0/azure-storage-common-12.27.0.pom (8.2 kB at 50 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-storage-internal-avro/12.13.0/azure-storage-internal-avro-12.13.0.pom
+Progress (1): 1.1 kBProgress (1): 2.2 kBProgress (1): 5.0 kBProgress (1): 7.5 kBProgress (1): 7.9 kB                    Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-storage-internal-avro/12.13.0/azure-storage-internal-avro-12.13.0.pom (7.9 kB at 42 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-storage-blob/12.28.0/azure-storage-blob-12.28.0.jar
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-core/1.52.0/azure-core-1.52.0.jar
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-core-http-netty/1.15.4/azure-core-http-netty-1.15.4.jar
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-storage-common/12.27.0/azure-storage-common-12.27.0.jar
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-storage-internal-avro/12.13.0/azure-storage-internal-avro-12.13.0.jar
+Progress (1): 0.9/838 kBProgress (1): 2.3/838 kBProgress (1): 3.6/838 kBProgress (1): 5.0/838 kBProgress (1): 6.4/838 kBProgress (1): 7.7/838 kBProgress (1): 9.1/838 kBProgress (1): 10/838 kB Progress (1): 12/838 kBProgress (1): 13/838 kBProgress (1): 15/838 kBProgress (1): 16/838 kBProgress (1): 17/838 kBProgress (1): 19/838 kBProgress (1): 20/838 kBProgress (1): 21/838 kBProgress (1): 24/838 kBProgress (1): 28/838 kBProgress (1): 33/838 kBProgress (1): 37/838 kBProgress (1): 41/838 kBProgress (1): 45/838 kBProgress (1): 49/838 kBProgress (1): 54/838 kBProgress (1): 58/838 kBProgress (1): 62/838 kBProgress (1): 66/838 kBProgress (1): 71/838 kBProgress (1): 75/838 kBProgress (1): 79/838 kBProgress (1): 83/838 kBProgress (1): 88/838 kBProgress (1): 92/838 kBProgress (1): 96/838 kBProgress (1): 100/838 kBProgress (1): 104/838 kBProgress (1): 109/838 kBProgress (1): 113/838 kBProgress (1): 117/838 kBProgress (1): 121/838 kBProgress (1): 126/838 kBProgress (1): 130/838 kBProgress (1): 134/838 kBProgress (1): 138/838 kBProgress (1): 143/838 kBProgress (1): 147/838 kBProgress (1): 151/838 kBProgress (1): 155/838 kBProgress (1): 159/838 kBProgress (1): 164/838 kBProgress (1): 168/838 kBProgress (1): 172/838 kBProgress (1): 176/838 kBProgress (1): 181/838 kBProgress (1): 185/838 kBProgress (1): 189/838 kBProgress (1): 205/838 kBProgress (2): 205/838 kB | 0.9/82 kBProgress (2): 205/838 kB | 2.3/82 kBProgress (2): 205/838 kB | 3.6/82 kBProgress (2): 205/838 kB | 5.0/82 kBProgress (2): 222/838 kB | 5.0/82 kBProgress (2): 222/838 kB | 6.4/82 kBProgress (2): 222/838 kB | 7.7/82 kBProgress (2): 222/838 kB | 9.1/82 kBProgress (2): 222/838 kB | 10/82 kB Progress (2): 222/838 kB | 12/82 kBProgress (2): 222/838 kB | 13/82 kBProgress (2): 222/838 kB | 15/82 kBProgress (2): 222/838 kB | 16/82 kBProgress (2): 222/838 kB | 17/82 kBProgress (2): 222/838 kB | 19/82 kBProgress (3): 222/838 kB | 19/82 kB | 0.9/143 kBProgress (3): 222/838 kB | 20/82 kB | 0.9/143 kBProgress (3): 238/838 kB | 20/82 kB | 0.9/143 kBProgress (3): 238/838 kB | 20/82 kB | 2.3/143 kBProgress (3): 238/838 kB | 21/82 kB | 2.3/143 kBProgress (3): 238/838 kB | 21/82 kB | 3.6/143 kBProgress (3): 238/838 kB | 23/82 kB | 3.6/143 kBProgress (3): 238/838 kB | 23/82 kB | 5.0/143 kBProgress (3): 238/838 kB | 23/82 kB | 6.4/143 kBProgress (3): 238/838 kB | 23/82 kB | 7.7/143 kBProgress (3): 238/838 kB | 23/82 kB | 9.1/143 kBProgress (3): 238/838 kB | 23/82 kB | 10/143 kB Progress (3): 238/838 kB | 23/82 kB | 11/143 kBProgress (3): 238/838 kB | 23/82 kB | 13/143 kBProgress (3): 238/838 kB | 23/82 kB | 14/143 kBProgress (3): 238/838 kB | 24/82 kB | 14/143 kBProgress (3): 238/838 kB | 24/82 kB | 15/143 kBProgress (3): 238/838 kB | 26/82 kB | 15/143 kBProgress (3): 238/838 kB | 27/82 kB | 15/143 kBProgress (3): 238/838 kB | 27/82 kB | 17/143 kBProgress (3): 238/838 kB | 28/82 kB | 17/143 kBProgress (3): 238/838 kB | 28/82 kB | 18/143 kBProgress (3): 238/838 kB | 30/82 kB | 18/143 kBProgress (3): 238/838 kB | 31/82 kB | 18/143 kBProgress (4): 238/838 kB | 31/82 kB | 18/143 kB | 0.9/71 kBProgress (4): 238/838 kB | 32/82 kB | 18/143 kB | 0.9/71 kBProgress (4): 238/838 kB | 32/82 kB | 20/143 kB | 0.9/71 kBProgress (4): 255/838 kB | 32/82 kB | 20/143 kB | 0.9/71 kBProgress (4): 255/838 kB | 32/82 kB | 20/143 kB | 2.3/71 kBProgress (4): 255/838 kB | 34/82 kB | 20/143 kB | 2.3/71 kBProgress (5): 255/838 kB | 34/82 kB | 20/143 kB | 2.3/71 kB | 0.9/851 kBProgress (5): 255/838 kB | 34/82 kB | 21/143 kB | 2.3/71 kB | 0.9/851 kBProgress (5): 255/838 kB | 35/82 kB | 21/143 kB | 2.3/71 kB | 0.9/851 kBProgress (5): 255/838 kB | 35/82 kB | 21/143 kB | 3.6/71 kB | 0.9/851 kBProgress (5): 255/838 kB | 35/82 kB | 21/143 kB | 3.6/71 kB | 2.3/851 kBProgress (5): 255/838 kB | 36/82 kB | 21/143 kB | 3.6/71 kB | 2.3/851 kBProgress (5): 255/838 kB | 36/82 kB | 22/143 kB | 3.6/71 kB | 2.3/851 kBProgress (5): 255/838 kB | 36/82 kB | 22/143 kB | 3.6/71 kB | 3.6/851 kBProgress (5): 255/838 kB | 36/82 kB | 22/143 kB | 5.0/71 kB | 3.6/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 5.0/71 kB | 3.6/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 6.4/71 kB | 3.6/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 6.4/71 kB | 5.0/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 7.7/71 kB | 5.0/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 7.7/71 kB | 6.4/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 9.1/71 kB | 6.4/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 10/71 kB | 6.4/851 kB Progress (5): 255/838 kB | 36/82 kB | 24/143 kB | 10/71 kB | 7.7/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 12/71 kB | 7.7/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 12/71 kB | 9.1/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 13/71 kB | 9.1/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 15/71 kB | 9.1/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 15/71 kB | 10/851 kB Progress (5): 255/838 kB | 36/82 kB | 24/143 kB | 15/71 kB | 12/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 15/71 kB | 12/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 15/71 kB | 14/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 15/71 kB | 15/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 15/71 kB | 16/851 kBProgress (5): 255/838 kB | 36/82 kB | 24/143 kB | 15/71 kB | 18/851 kBProgress (5): 255/838 kB | 36/82 kB | 25/143 kB | 15/71 kB | 18/851 kBProgress (5): 255/838 kB | 36/82 kB | 25/143 kB | 15/71 kB | 19/851 kBProgress (5): 255/838 kB | 36/82 kB | 26/143 kB | 15/71 kB | 19/851 kBProgress (5): 255/838 kB | 36/82 kB | 26/143 kB | 15/71 kB | 21/851 kBProgress (5): 255/838 kB | 36/82 kB | 26/143 kB | 16/71 kB | 21/851 kBProgress (5): 255/838 kB | 38/82 kB | 26/143 kB | 16/71 kB | 21/851 kBProgress (5): 255/838 kB | 38/82 kB | 28/143 kB | 16/71 kB | 21/851 kBProgress (5): 255/838 kB | 38/82 kB | 28/143 kB | 16/71 kB | 22/851 kBProgress (5): 255/838 kB | 38/82 kB | 28/143 kB | 16/71 kB | 23/851 kBProgress (5): 255/838 kB | 38/82 kB | 29/143 kB | 16/71 kB | 23/851 kBProgress (5): 255/838 kB | 38/82 kB | 29/143 kB | 16/71 kB | 25/851 kBProgress (5): 255/838 kB | 38/82 kB | 29/143 kB | 17/71 kB | 25/851 kBProgress (5): 255/838 kB | 39/82 kB | 29/143 kB | 17/71 kB | 25/851 kBProgress (5): 255/838 kB | 41/82 kB | 29/143 kB | 17/71 kB | 25/851 kBProgress (5): 255/838 kB | 41/82 kB | 29/143 kB | 19/71 kB | 25/851 kBProgress (5): 255/838 kB | 42/82 kB | 29/143 kB | 19/71 kB | 25/851 kBProgress (5): 255/838 kB | 42/82 kB | 29/143 kB | 20/71 kB | 25/851 kBProgress (5): 255/838 kB | 42/82 kB | 31/143 kB | 20/71 kB | 25/851 kBProgress (5): 255/838 kB | 42/82 kB | 31/143 kB | 20/71 kB | 26/851 kBProgress (5): 255/838 kB | 42/82 kB | 31/143 kB | 20/71 kB | 27/851 kBProgress (5): 255/838 kB | 42/82 kB | 32/143 kB | 20/71 kB | 27/851 kBProgress (5): 271/838 kB | 42/82 kB | 32/143 kB | 20/71 kB | 27/851 kBProgress (5): 271/838 kB | 42/82 kB | 32/143 kB | 21/71 kB | 27/851 kBProgress (5): 271/838 kB | 43/82 kB | 32/143 kB | 21/71 kB | 27/851 kBProgress (5): 271/838 kB | 43/82 kB | 32/143 kB | 23/71 kB | 27/851 kBProgress (5): 271/838 kB | 43/82 kB | 32/143 kB | 23/71 kB | 29/851 kBProgress (5): 271/838 kB | 43/82 kB | 33/143 kB | 23/71 kB | 29/851 kBProgress (5): 271/838 kB | 43/82 kB | 35/143 kB | 23/71 kB | 29/851 kBProgress (5): 271/838 kB | 45/82 kB | 35/143 kB | 23/71 kB | 29/851 kBProgress (5): 271/838 kB | 45/82 kB | 35/143 kB | 23/71 kB | 30/851 kBProgress (5): 271/838 kB | 46/82 kB | 35/143 kB | 23/71 kB | 30/851 kBProgress (5): 271/838 kB | 46/82 kB | 35/143 kB | 24/71 kB | 30/851 kBProgress (5): 271/838 kB | 46/82 kB | 35/143 kB | 24/71 kB | 31/851 kBProgress (5): 271/838 kB | 47/82 kB | 35/143 kB | 24/71 kB | 31/851 kBProgress (5): 271/838 kB | 47/82 kB | 36/143 kB | 24/71 kB | 31/851 kBProgress (5): 271/838 kB | 47/82 kB | 36/143 kB | 26/71 kB | 31/851 kBProgress (5): 271/838 kB | 47/82 kB | 36/143 kB | 26/71 kB | 33/851 kBProgress (5): 271/838 kB | 47/82 kB | 37/143 kB | 26/71 kB | 33/851 kBProgress (5): 271/838 kB | 47/82 kB | 37/143 kB | 27/71 kB | 33/851 kBProgress (5): 271/838 kB | 49/82 kB | 37/143 kB | 27/71 kB | 33/851 kBProgress (5): 271/838 kB | 49/82 kB | 37/143 kB | 28/71 kB | 33/851 kBProgress (5): 271/838 kB | 49/82 kB | 39/143 kB | 28/71 kB | 33/851 kBProgress (5): 271/838 kB | 49/82 kB | 39/143 kB | 29/71 kB | 33/851 kBProgress (5): 271/838 kB | 50/82 kB | 39/143 kB | 29/71 kB | 33/851 kBProgress (5): 271/838 kB | 50/82 kB | 40/143 kB | 29/71 kB | 33/851 kBProgress (5): 271/838 kB | 50/82 kB | 40/143 kB | 29/71 kB | 34/851 kBProgress (5): 271/838 kB | 50/82 kB | 40/143 kB | 29/71 kB | 36/851 kBProgress (5): 271/838 kB | 50/82 kB | 40/143 kB | 30/71 kB | 36/851 kBProgress (5): 271/838 kB | 50/82 kB | 40/143 kB | 31/71 kB | 36/851 kBProgress (5): 271/838 kB | 52/82 kB | 40/143 kB | 31/71 kB | 36/851 kBProgress (5): 271/838 kB | 52/82 kB | 40/143 kB | 31/71 kB | 37/851 kBProgress (5): 271/838 kB | 53/82 kB | 40/143 kB | 31/71 kB | 37/851 kBProgress (5): 286/838 kB | 53/82 kB | 40/143 kB | 31/71 kB | 37/851 kBProgress (5): 286/838 kB | 53/82 kB | 41/143 kB | 31/71 kB | 37/851 kBProgress (5): 286/838 kB | 53/82 kB | 43/143 kB | 31/71 kB | 37/851 kBProgress (5): 286/838 kB | 53/82 kB | 43/143 kB | 31/71 kB | 38/851 kBProgress (5): 286/838 kB | 53/82 kB | 43/143 kB | 33/71 kB | 38/851 kBProgress (5): 286/838 kB | 53/82 kB | 44/143 kB | 33/71 kB | 38/851 kBProgress (5): 286/838 kB | 54/82 kB | 44/143 kB | 33/71 kB | 38/851 kBProgress (5): 286/838 kB | 54/82 kB | 44/143 kB | 33/71 kB | 40/851 kBProgress (5): 286/838 kB | 54/82 kB | 44/143 kB | 34/71 kB | 40/851 kBProgress (5): 286/838 kB | 54/82 kB | 46/143 kB | 34/71 kB | 40/851 kBProgress (5): 286/838 kB | 56/82 kB | 46/143 kB | 34/71 kB | 40/851 kBProgress (5): 286/838 kB | 56/82 kB | 46/143 kB | 34/71 kB | 41/851 kBProgress (5): 286/838 kB | 56/82 kB | 47/143 kB | 34/71 kB | 41/851 kBProgress (5): 286/838 kB | 56/82 kB | 47/143 kB | 34/71 kB | 42/851 kBProgress (5): 286/838 kB | 56/82 kB | 47/143 kB | 36/71 kB | 42/851 kBProgress (5): 286/838 kB | 56/82 kB | 47/143 kB | 37/71 kB | 42/851 kBProgress (5): 286/838 kB | 56/82 kB | 47/143 kB | 37/71 kB | 44/851 kBProgress (5): 286/838 kB | 56/82 kB | 48/143 kB | 37/71 kB | 44/851 kBProgress (5): 286/838 kB | 60/82 kB | 48/143 kB | 37/71 kB | 44/851 kBProgress (5): 286/838 kB | 60/82 kB | 50/143 kB | 37/71 kB | 44/851 kBProgress (5): 286/838 kB | 60/82 kB | 50/143 kB | 38/71 kB | 44/851 kBProgress (5): 286/838 kB | 60/82 kB | 50/143 kB | 40/71 kB | 44/851 kBProgress (5): 286/838 kB | 60/82 kB | 51/143 kB | 40/71 kB | 44/851 kBProgress (5): 286/838 kB | 60/82 kB | 52/143 kB | 40/71 kB | 44/851 kBProgress (5): 286/838 kB | 60/82 kB | 52/143 kB | 41/71 kB | 44/851 kBProgress (5): 286/838 kB | 60/82 kB | 52/143 kB | 42/71 kB | 44/851 kBProgress (5): 286/838 kB | 60/82 kB | 52/143 kB | 42/71 kB | 45/851 kBProgress (5): 286/838 kB | 60/82 kB | 52/143 kB | 42/71 kB | 47/851 kBProgress (5): 286/838 kB | 64/82 kB | 52/143 kB | 42/71 kB | 47/851 kBProgress (5): 286/838 kB | 64/82 kB | 54/143 kB | 42/71 kB | 47/851 kBProgress (5): 286/838 kB | 64/82 kB | 54/143 kB | 44/71 kB | 47/851 kBProgress (5): 286/838 kB | 64/82 kB | 55/143 kB | 44/71 kB | 47/851 kBProgress (5): 286/838 kB | 64/82 kB | 55/143 kB | 45/71 kB | 47/851 kBProgress (5): 303/838 kB | 64/82 kB | 55/143 kB | 45/71 kB | 47/851 kBProgress (5): 303/838 kB | 64/82 kB | 55/143 kB | 45/71 kB | 48/851 kBProgress (5): 303/838 kB | 64/82 kB | 55/143 kB | 45/71 kB | 49/851 kBProgress (5): 303/838 kB | 64/82 kB | 55/143 kB | 45/71 kB | 51/851 kBProgress (5): 303/838 kB | 66/82 kB | 55/143 kB | 45/71 kB | 51/851 kBProgress (5): 303/838 kB | 66/82 kB | 55/143 kB | 45/71 kB | 52/851 kBProgress (5): 303/838 kB | 66/82 kB | 59/143 kB | 45/71 kB | 52/851 kBProgress (5): 303/838 kB | 66/82 kB | 59/143 kB | 45/71 kB | 53/851 kBProgress (5): 303/838 kB | 66/82 kB | 59/143 kB | 46/71 kB | 53/851 kBProgress (5): 303/838 kB | 66/82 kB | 59/143 kB | 46/71 kB | 55/851 kBProgress (5): 303/838 kB | 66/82 kB | 59/143 kB | 48/71 kB | 55/851 kBProgress (5): 319/838 kB | 66/82 kB | 59/143 kB | 48/71 kB | 55/851 kBProgress (5): 319/838 kB | 66/82 kB | 59/143 kB | 48/71 kB | 59/851 kBProgress (5): 319/838 kB | 66/82 kB | 59/143 kB | 49/71 kB | 59/851 kBProgress (5): 319/838 kB | 66/82 kB | 59/143 kB | 49/71 kB | 63/851 kBProgress (5): 319/838 kB | 66/82 kB | 59/143 kB | 51/71 kB | 63/851 kBProgress (5): 319/838 kB | 66/82 kB | 59/143 kB | 52/71 kB | 63/851 kBProgress (5): 319/838 kB | 66/82 kB | 59/143 kB | 53/71 kB | 63/851 kBProgress (5): 319/838 kB | 66/82 kB | 59/143 kB | 55/71 kB | 63/851 kBProgress (5): 319/838 kB | 66/82 kB | 59/143 kB | 59/71 kB | 63/851 kBProgress (5): 335/838 kB | 66/82 kB | 59/143 kB | 59/71 kB | 63/851 kBProgress (5): 335/838 kB | 66/82 kB | 59/143 kB | 63/71 kB | 63/851 kBProgress (5): 335/838 kB | 66/82 kB | 59/143 kB | 63/71 kB | 67/851 kBProgress (5): 352/838 kB | 66/82 kB | 59/143 kB | 63/71 kB | 67/851 kBProgress (5): 368/838 kB | 66/82 kB | 59/143 kB | 63/71 kB | 67/851 kBProgress (5): 385/838 kB | 66/82 kB | 59/143 kB | 63/71 kB | 67/851 kBProgress (5): 401/838 kB | 66/82 kB | 59/143 kB | 63/71 kB | 67/851 kBProgress (5): 417/838 kB | 66/82 kB | 59/143 kB | 63/71 kB | 67/851 kBProgress (5): 434/838 kB | 66/82 kB | 59/143 kB | 63/71 kB | 67/851 kBProgress (5): 434/838 kB | 70/82 kB | 59/143 kB | 63/71 kB | 67/851 kBProgress (5): 434/838 kB | 74/82 kB | 59/143 kB | 63/71 kB | 67/851 kBProgress (5): 434/838 kB | 74/82 kB | 64/143 kB | 63/71 kB | 67/851 kBProgress (5): 434/838 kB | 74/82 kB | 64/143 kB | 67/71 kB | 67/851 kBProgress (5): 434/838 kB | 78/82 kB | 64/143 kB | 67/71 kB | 67/851 kBProgress (5): 434/838 kB | 78/82 kB | 64/143 kB | 67/71 kB | 72/851 kBProgress (5): 434/838 kB | 78/82 kB | 68/143 kB | 67/71 kB | 72/851 kBProgress (5): 434/838 kB | 82 kB | 68/143 kB | 67/71 kB | 72/851 kB   Progress (5): 434/838 kB | 82 kB | 68/143 kB | 67/71 kB | 76/851 kBProgress (5): 450/838 kB | 82 kB | 68/143 kB | 67/71 kB | 76/851 kBProgress (5): 450/838 kB | 82 kB | 72/143 kB | 67/71 kB | 76/851 kBProgress (5): 450/838 kB | 82 kB | 72/143 kB | 71 kB | 76/851 kB   Progress (5): 450/838 kB | 82 kB | 72/143 kB | 71 kB | 80/851 kBProgress (5): 450/838 kB | 82 kB | 76/143 kB | 71 kB | 80/851 kBProgress (5): 466/838 kB | 82 kB | 76/143 kB | 71 kB | 80/851 kBProgress (5): 466/838 kB | 82 kB | 76/143 kB | 71 kB | 84/851 kBProgress (5): 466/838 kB | 82 kB | 81/143 kB | 71 kB | 84/851 kBProgress (5): 466/838 kB | 82 kB | 81/143 kB | 71 kB | 89/851 kBProgress (5): 466/838 kB | 82 kB | 81/143 kB | 71 kB | 93/851 kBProgress (5): 466/838 kB | 82 kB | 85/143 kB | 71 kB | 93/851 kBProgress (5): 466/838 kB | 82 kB | 85/143 kB | 71 kB | 97/851 kBProgress (5): 466/838 kB | 82 kB | 89/143 kB | 71 kB | 97/851 kBProgress (5): 483/838 kB | 82 kB | 89/143 kB | 71 kB | 97/851 kBProgress (5): 483/838 kB | 82 kB | 93/143 kB | 71 kB | 97/851 kBProgress (5): 483/838 kB | 82 kB | 93/143 kB | 71 kB | 101/851 kBProgress (5): 483/838 kB | 82 kB | 97/143 kB | 71 kB | 101/851 kBProgress (5): 483/838 kB | 82 kB | 97/143 kB | 71 kB | 105/851 kBProgress (5): 499/838 kB | 82 kB | 97/143 kB | 71 kB | 105/851 kBProgress (5): 516/838 kB | 82 kB | 97/143 kB | 71 kB | 105/851 kBProgress (5): 516/838 kB | 82 kB | 102/143 kB | 71 kB | 105/851 kBProgress (5): 516/838 kB | 82 kB | 106/143 kB | 71 kB | 105/851 kBProgress (5): 516/838 kB | 82 kB | 106/143 kB | 71 kB | 110/851 kBProgress (5): 516/838 kB | 82 kB | 110/143 kB | 71 kB | 110/851 kBProgress (5): 516/838 kB | 82 kB | 110/143 kB | 71 kB | 114/851 kBProgress (5): 516/838 kB | 82 kB | 114/143 kB | 71 kB | 114/851 kBProgress (5): 516/838 kB | 82 kB | 114/143 kB | 71 kB | 118/851 kBProgress (5): 532/838 kB | 82 kB | 114/143 kB | 71 kB | 118/851 kBProgress (5): 532/838 kB | 82 kB | 114/143 kB | 71 kB | 122/851 kBProgress (5): 548/838 kB | 82 kB | 114/143 kB | 71 kB | 122/851 kBProgress (5): 548/838 kB | 82 kB | 114/143 kB | 71 kB | 127/851 kBProgress (5): 548/838 kB | 82 kB | 119/143 kB | 71 kB | 127/851 kBProgress (5): 548/838 kB | 82 kB | 119/143 kB | 71 kB | 131/851 kBProgress (5): 548/838 kB | 82 kB | 123/143 kB | 71 kB | 131/851 kBProgress (5): 565/838 kB | 82 kB | 123/143 kB | 71 kB | 131/851 kBProgress (5): 565/838 kB | 82 kB | 127/143 kB | 71 kB | 131/851 kBProgress (5): 565/838 kB | 82 kB | 131/143 kB | 71 kB | 131/851 kBProgress (5): 565/838 kB | 82 kB | 131/143 kB | 71 kB | 135/851 kBProgress (5): 581/838 kB | 82 kB | 131/143 kB | 71 kB | 135/851 kBProgress (5): 581/838 kB | 82 kB | 131/143 kB | 71 kB | 139/851 kBProgress (5): 581/838 kB | 82 kB | 131/143 kB | 71 kB | 143/851 kBProgress (5): 598/838 kB | 82 kB | 131/143 kB | 71 kB | 143/851 kBProgress (5): 614/838 kB | 82 kB | 131/143 kB | 71 kB | 143/851 kBProgress (5): 630/838 kB | 82 kB | 131/143 kB | 71 kB | 143/851 kB                                                                  Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-storage-internal-avro/12.13.0/azure-storage-internal-avro-12.13.0.jar (71 kB at 134 kB/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-core-http-netty/1.15.4/azure-core-http-netty-1.15.4.jar (82 kB at 155 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/com/azure/azure-xml/1.1.0/azure-xml-1.1.0.jar
+Progress (3): 630/838 kB | 131/143 kB | 148/851 kBProgress (3): 630/838 kB | 131/143 kB | 152/851 kBProgress (3): 647/838 kB | 131/143 kB | 152/851 kBProgress (3): 647/838 kB | 131/143 kB | 156/851 kBProgress (3): 663/838 kB | 131/143 kB | 156/851 kBProgress (3): 679/838 kB | 131/143 kB | 156/851 kBProgress (3): 696/838 kB | 131/143 kB | 156/851 kBProgress (3): 712/838 kB | 131/143 kB | 156/851 kBProgress (3): 729/838 kB | 131/143 kB | 156/851 kBProgress (3): 745/838 kB | 131/143 kB | 156/851 kBProgress (3): 761/838 kB | 131/143 kB | 156/851 kBProgress (3): 778/838 kB | 131/143 kB | 156/851 kBProgress (3): 794/838 kB | 131/143 kB | 156/851 kBProgress (3): 794/838 kB | 136/143 kB | 156/851 kBProgress (3): 794/838 kB | 136/143 kB | 160/851 kBProgress (3): 811/838 kB | 136/143 kB | 160/851 kBProgress (3): 811/838 kB | 140/143 kB | 160/851 kBProgress (3): 811/838 kB | 142/143 kB | 160/851 kBProgress (3): 811/838 kB | 143 kB | 160/851 kB    Progress (3): 811/838 kB | 143 kB | 165/851 kBProgress (3): 811/838 kB | 143 kB | 169/851 kBProgress (3): 827/838 kB | 143 kB | 169/851 kBProgress (3): 838 kB | 143 kB | 169/851 kB                                              Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-storage-common/12.27.0/azure-storage-common-12.27.0.jar (143 kB at 249 kB/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-storage-blob/12.28.0/azure-storage-blob-12.28.0.jar (838 kB at 1.4 MB/s)
+Progress (1): 173/851 kBProgress (1): 177/851 kBProgress (1): 181/851 kBProgress (1): 186/851 kBProgress (1): 190/851 kBProgress (1): 194/851 kBProgress (1): 198/851 kBProgress (1): 203/851 kBProgress (1): 207/851 kBProgress (1): 211/851 kBProgress (1): 215/851 kBProgress (1): 219/851 kBProgress (1): 224/851 kBProgress (1): 240/851 kBProgress (1): 256/851 kBProgress (1): 273/851 kBProgress (2): 273/851 kB | 3.8/22 kBProgress (2): 273/851 kB | 8.0/22 kBProgress (2): 274/851 kB | 8.0/22 kBProgress (2): 274/851 kB | 12/22 kB Progress (2): 274/851 kB | 16/22 kBProgress (2): 274/851 kB | 21/22 kBProgress (2): 274/851 kB | 22 kB                                   Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-xml/1.1.0/azure-xml-1.1.0.jar (22 kB at 34 kB/s)
+Progress (1): 291/851 kBProgress (1): 307/851 kBProgress (1): 324/851 kBProgress (1): 340/851 kBProgress (1): 343/851 kBProgress (1): 359/851 kBProgress (1): 376/851 kBProgress (1): 392/851 kBProgress (1): 408/851 kBProgress (1): 425/851 kBProgress (1): 441/851 kBProgress (1): 457/851 kBProgress (1): 474/851 kBProgress (1): 490/851 kBProgress (1): 507/851 kBProgress (1): 523/851 kBProgress (1): 539/851 kBProgress (1): 556/851 kBProgress (1): 572/851 kBProgress (1): 589/851 kBProgress (1): 605/851 kBProgress (1): 621/851 kBProgress (1): 638/851 kBProgress (1): 654/851 kBProgress (1): 670/851 kBProgress (1): 687/851 kBProgress (1): 703/851 kBProgress (1): 720/851 kBProgress (1): 736/851 kBProgress (1): 752/851 kBProgress (1): 769/851 kBProgress (1): 785/851 kBProgress (1): 802/851 kBProgress (1): 818/851 kBProgress (1): 834/851 kBProgress (1): 851/851 kBProgress (1): 851 kB                        Downloaded from central: https://repo.maven.apache.org/maven2/com/azure/azure-core/1.52.0/azure-core-1.52.0.jar (851 kB at 1.0 MB/s)
 [INFO] 
 [INFO] --- resources:3.3.1:resources (default-resources) @ svc-patient ---
 [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
@@ -236,7 +263,7 @@ Running integration adapter contract tests
 [INFO] --- compiler:3.14.0:compile (default-compile) @ svc-patient ---
 [INFO] Recompiling the module because of changed dependency.
 [WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
-[INFO] Compiling 23 source files with javac [debug release 17] to target/classes
+[INFO] Compiling 26 source files with javac [debug release 17] to target/classes
 [INFO] 
 [INFO] --- resources:3.3.1:testResources (default-testResources) @ svc-patient ---
 [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
@@ -253,327 +280,3 @@ Running integration adapter contract tests
 [INFO] -------------------------------------------------------
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
-[INFO] Running com.healthcare.patient.integration.PatientFhirAdapterContractTest
-16:21:20.403 [main] WARN com.healthcare.patient.integration.PatientFhirAdapter -- Patient FHIR integration attempt failed aggregateId=pat-1 correlationId=corr-123 attempt=1 maxAttempts=2 error=500 Internal Server Error: [no body]
-16:21:20.447 [main] WARN com.healthcare.patient.integration.PatientFhirAdapter -- Patient FHIR integration attempt failed aggregateId=pat-1 correlationId=corr-123 attempt=2 maxAttempts=2 error=500 Internal Server Error: [no body]
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.23 s -- in com.healthcare.patient.integration.PatientFhirAdapterContractTest
-[INFO] 
-[INFO] Results:
-[INFO] 
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-[INFO] 
-[INFO] ------------------------------------------------------------------------
-[INFO] Reactor Summary for healthcare-patient-engagement 0.1.0-SNAPSHOT:
-[INFO] 
-[INFO] healthcare-patient-engagement ...................... SUCCESS [  0.020 s]
-[INFO] platform-common .................................... SUCCESS [ 11.158 s]
-[INFO] svc-patient ........................................ SUCCESS [ 31.114 s]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  44.468 s
-[INFO] Finished at: 2026-06-14T16:21:21Z
-[INFO] ------------------------------------------------------------------------
-[INFO] Scanning for projects...
-[INFO] ------------------------------------------------------------------------
-[INFO] Reactor Build Order:
-[INFO] 
-[INFO] healthcare-patient-engagement                                      [pom]
-[INFO] platform-common                                                    [jar]
-[INFO] svc-event-messaging                                                [jar]
-[INFO] 
-[INFO] -------< com.healthcare.platform:healthcare-patient-engagement >--------
-[INFO] Building healthcare-patient-engagement 0.1.0-SNAPSHOT              [1/3]
-[INFO]   from pom.xml
-[INFO] --------------------------------[ pom ]---------------------------------
-[INFO] 
-[INFO] --------------< com.healthcare.platform:platform-common >---------------
-[INFO] Building platform-common 0.1.0-SNAPSHOT                            [2/3]
-[INFO]   from platform-common/pom.xml
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO] 
-[INFO] --- resources:3.3.1:resources (default-resources) @ platform-common ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/main/resources
-[INFO] 
-[INFO] --- compiler:3.14.0:compile (default-compile) @ platform-common ---
-[INFO] Nothing to compile - all classes are up to date.
-[INFO] 
-[INFO] --- resources:3.3.1:testResources (default-testResources) @ platform-common ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/test/resources
-[INFO] 
-[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ platform-common ---
-[INFO] Nothing to compile - all classes are up to date.
-[INFO] 
-[INFO] --- surefire:3.2.5:test (default-test) @ platform-common ---
-[INFO] 
-[INFO] ------------< com.healthcare.platform:svc-event-messaging >-------------
-[INFO] Building svc-event-messaging 0.1.0-SNAPSHOT                        [3/3]
-[INFO]   from services/svc-event-messaging/pom.xml
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO] 
-[INFO] --- resources:3.3.1:resources (default-resources) @ svc-event-messaging ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] Copying 1 resource from src/main/resources to target/classes
-[INFO] 
-[INFO] --- compiler:3.14.0:compile (default-compile) @ svc-event-messaging ---
-[INFO] Recompiling the module because of added or removed source files.
-[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
-[INFO] Compiling 23 source files with javac [debug release 17] to target/classes
-[INFO] 
-[INFO] --- resources:3.3.1:testResources (default-testResources) @ svc-event-messaging ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/services/svc-event-messaging/src/test/resources
-[INFO] 
-[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ svc-event-messaging ---
-[INFO] Recompiling the module because of changed dependency.
-[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
-[INFO] Compiling 3 source files with javac [debug release 17] to target/test-classes
-[INFO] 
-[INFO] --- surefire:3.2.5:test (default-test) @ svc-event-messaging ---
-[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
-[INFO] 
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running com.healthcare.eventmessaging.integration.ServiceBusAdapterContractTest
-16:22:02.580 [main] WARN com.healthcare.eventmessaging.integration.ServiceBusAdapter -- Service bus integration attempt failed aggregateId=msg-1 correlationId=corr-123 attempt=1 maxAttempts=2 error=500 Internal Server Error: [no body]
-16:22:02.620 [main] WARN com.healthcare.eventmessaging.integration.ServiceBusAdapter -- Service bus integration attempt failed aggregateId=msg-1 correlationId=corr-123 attempt=2 maxAttempts=2 error=500 Internal Server Error: [no body]
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.485 s -- in com.healthcare.eventmessaging.integration.ServiceBusAdapterContractTest
-[INFO] 
-[INFO] Results:
-[INFO] 
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-[INFO] 
-[INFO] ------------------------------------------------------------------------
-[INFO] Reactor Summary for healthcare-patient-engagement 0.1.0-SNAPSHOT:
-[INFO] 
-[INFO] healthcare-patient-engagement ...................... SUCCESS [  0.020 s]
-[INFO] platform-common .................................... SUCCESS [  3.453 s]
-[INFO] svc-event-messaging ................................ SUCCESS [ 27.320 s]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  32.437 s
-[INFO] Finished at: 2026-06-14T16:22:03Z
-[INFO] ------------------------------------------------------------------------
-[INFO] Scanning for projects...
-[INFO] ------------------------------------------------------------------------
-[INFO] Reactor Build Order:
-[INFO] 
-[INFO] healthcare-patient-engagement                                      [pom]
-[INFO] platform-common                                                    [jar]
-[INFO] svc-medical-record                                                 [jar]
-[INFO] 
-[INFO] -------< com.healthcare.platform:healthcare-patient-engagement >--------
-[INFO] Building healthcare-patient-engagement 0.1.0-SNAPSHOT              [1/3]
-[INFO]   from pom.xml
-[INFO] --------------------------------[ pom ]---------------------------------
-[INFO] 
-[INFO] --------------< com.healthcare.platform:platform-common >---------------
-[INFO] Building platform-common 0.1.0-SNAPSHOT                            [2/3]
-[INFO]   from platform-common/pom.xml
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO] 
-[INFO] --- resources:3.3.1:resources (default-resources) @ platform-common ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/main/resources
-[INFO] 
-[INFO] --- compiler:3.14.0:compile (default-compile) @ platform-common ---
-[INFO] Nothing to compile - all classes are up to date.
-[INFO] 
-[INFO] --- resources:3.3.1:testResources (default-testResources) @ platform-common ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/test/resources
-[INFO] 
-[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ platform-common ---
-[INFO] Nothing to compile - all classes are up to date.
-[INFO] 
-[INFO] --- surefire:3.2.5:test (default-test) @ platform-common ---
-[INFO] 
-[INFO] -------------< com.healthcare.platform:svc-medical-record >-------------
-[INFO] Building svc-medical-record 0.1.0-SNAPSHOT                         [3/3]
-[INFO]   from services/svc-medical-record/pom.xml
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO] 
-[INFO] --- resources:3.3.1:resources (default-resources) @ svc-medical-record ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] Copying 1 resource from src/main/resources to target/classes
-[INFO] 
-[INFO] --- compiler:3.14.0:compile (default-compile) @ svc-medical-record ---
-[INFO] Recompiling the module because of added or removed source files.
-[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
-[INFO] Compiling 23 source files with javac [debug release 17] to target/classes
-[INFO] 
-[INFO] --- resources:3.3.1:testResources (default-testResources) @ svc-medical-record ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/services/svc-medical-record/src/test/resources
-[INFO] 
-[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ svc-medical-record ---
-[INFO] Recompiling the module because of changed dependency.
-[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
-[INFO] Compiling 3 source files with javac [debug release 17] to target/test-classes
-[INFO] 
-[INFO] --- surefire:3.2.5:test (default-test) @ svc-medical-record ---
-[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
-[INFO] 
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running com.healthcare.medicalrecord.integration.FhirAdapterContractTest
-16:22:45.086 [main] WARN com.healthcare.medicalrecord.integration.FhirAdapter -- Medical record FHIR integration attempt failed aggregateId=mr-1 correlationId=corr-123 attempt=1 maxAttempts=2 error=500 Internal Server Error: [no body]
-16:22:45.127 [main] WARN com.healthcare.medicalrecord.integration.FhirAdapter -- Medical record FHIR integration attempt failed aggregateId=mr-1 correlationId=corr-123 attempt=2 maxAttempts=2 error=500 Internal Server Error: [no body]
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.911 s -- in com.healthcare.medicalrecord.integration.FhirAdapterContractTest
-[INFO] 
-[INFO] Results:
-[INFO] 
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-[INFO] 
-[INFO] ------------------------------------------------------------------------
-[INFO] Reactor Summary for healthcare-patient-engagement 0.1.0-SNAPSHOT:
-[INFO] 
-[INFO] healthcare-patient-engagement ...................... SUCCESS [  0.019 s]
-[INFO] platform-common .................................... SUCCESS [  3.551 s]
-[INFO] svc-medical-record ................................. SUCCESS [ 28.005 s]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  33.212 s
-[INFO] Finished at: 2026-06-14T16:22:45Z
-[INFO] ------------------------------------------------------------------------
-[INFO] Scanning for projects...
-[INFO] ------------------------------------------------------------------------
-[INFO] Reactor Build Order:
-[INFO] 
-[INFO] healthcare-patient-engagement                                      [pom]
-[INFO] platform-common                                                    [jar]
-[INFO] svc-careplan                                                       [jar]
-[INFO] 
-[INFO] -------< com.healthcare.platform:healthcare-patient-engagement >--------
-[INFO] Building healthcare-patient-engagement 0.1.0-SNAPSHOT              [1/3]
-[INFO]   from pom.xml
-[INFO] --------------------------------[ pom ]---------------------------------
-[INFO] 
-[INFO] --------------< com.healthcare.platform:platform-common >---------------
-[INFO] Building platform-common 0.1.0-SNAPSHOT                            [2/3]
-[INFO]   from platform-common/pom.xml
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO] 
-[INFO] --- resources:3.3.1:resources (default-resources) @ platform-common ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/main/resources
-[INFO] 
-[INFO] --- compiler:3.14.0:compile (default-compile) @ platform-common ---
-[INFO] Nothing to compile - all classes are up to date.
-[INFO] 
-[INFO] --- resources:3.3.1:testResources (default-testResources) @ platform-common ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/platform-common/src/test/resources
-[INFO] 
-[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ platform-common ---
-[INFO] Nothing to compile - all classes are up to date.
-[INFO] 
-[INFO] --- surefire:3.2.5:test (default-test) @ platform-common ---
-[INFO] 
-[INFO] ----------------< com.healthcare.platform:svc-careplan >----------------
-[INFO] Building svc-careplan 0.1.0-SNAPSHOT                               [3/3]
-[INFO]   from services/svc-careplan/pom.xml
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO] 
-[INFO] --- resources:3.3.1:resources (default-resources) @ svc-careplan ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] Copying 1 resource from src/main/resources to target/classes
-[INFO] 
-[INFO] --- compiler:3.14.0:compile (default-compile) @ svc-careplan ---
-[INFO] Recompiling the module because of added or removed source files.
-[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
-[INFO] Compiling 27 source files with javac [debug release 17] to target/classes
-[INFO] 
-[INFO] --- resources:3.3.1:testResources (default-testResources) @ svc-careplan ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] skip non existing resourceDirectory /mnt/f/StackRoute/U2A/HealthCarePatientEngagement/services/svc-careplan/src/test/resources
-[INFO] 
-[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ svc-careplan ---
-[INFO] Recompiling the module because of changed dependency.
-[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
-[INFO] Compiling 3 source files with javac [debug release 17] to target/test-classes
-[INFO] 
-[INFO] --- surefire:3.2.5:test (default-test) @ svc-careplan ---
-[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
-[INFO] 
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running com.healthcare.careplan.integration.CarePlanFhirAdapterContractTest
-16:23:28.929 [main] WARN com.healthcare.careplan.integration.CarePlanFhirAdapter -- Careplan FHIR integration attempt failed aggregateId=cp-1 correlationId=corr-123 attempt=1 maxAttempts=2 error=500 Internal Server Error: [no body]
-16:23:28.977 [main] WARN com.healthcare.careplan.integration.CarePlanFhirAdapter -- Careplan FHIR integration attempt failed aggregateId=cp-1 correlationId=corr-123 attempt=2 maxAttempts=2 error=500 Internal Server Error: [no body]
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.320 s -- in com.healthcare.careplan.integration.CarePlanFhirAdapterContractTest
-[INFO] 
-[INFO] Results:
-[INFO] 
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-[INFO] 
-[INFO] ------------------------------------------------------------------------
-[INFO] Reactor Summary for healthcare-patient-engagement 0.1.0-SNAPSHOT:
-[INFO] 
-[INFO] healthcare-patient-engagement ...................... SUCCESS [  0.021 s]
-[INFO] platform-common .................................... SUCCESS [  3.460 s]
-[INFO] svc-careplan ....................................... SUCCESS [ 29.481 s]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  34.543 s
-[INFO] Finished at: 2026-06-14T16:23:29Z
-[INFO] ------------------------------------------------------------------------
-Integration adapter contract tests passed.
-PASS: validate-integration-adapter-contract-tests.sh
-
-==> validate-integration-correlation-id-propagation.sh
-Validating integration adapter correlation-id propagation contract tests
-Validation passed: integration adapter contract tests enforce X-Correlation-Id propagation.
-PASS: validate-integration-correlation-id-propagation.sh
-
-==> validate-api-gateway-route-coverage.sh
-Validating API gateway route coverage
-Validation passed: API gateway route coverage includes all platform service routes.
-PASS: validate-api-gateway-route-coverage.sh
-
-==> validate-api-gateway-security-policy.sh
-Validating API gateway security policy
-Validation passed: API gateway security policy covers route-level authorization and correlation header exposure.
-PASS: validate-api-gateway-security-policy.sh
-
-==> validate-correlation-id-contract.sh
-Validating correlation-id contract and runtime propagation
-Validation passed: correlation-id contract and runtime propagation are aligned.
-PASS: validate-correlation-id-contract.sh
-
-==> validate-openapi-controller-coverage.sh
-Validating OpenAPI coverage against implemented controller mappings
-Validation passed: OpenAPI contract covers implemented controller paths.
-PASS: validate-openapi-controller-coverage.sh
-
-==> validate-openapi-operation-parity.sh
-Validating OpenAPI operation and parameter parity
-Validation passed: OpenAPI operation and parameter parity is intact.
-PASS: validate-openapi-operation-parity.sh
-
-==> validate-dr-readiness-artifacts.sh
-Validating DR readiness artifacts
-Checking docs/Disaster_Recovery_Runbook.md
-Checking docs/dr/DR_Drill_Report_Template.md
-Checking docs/dr/DR_Backup_Verification_Log_Template.md
-Checking docs/dr/evidence/drills
-Checking docs/dr/evidence/backups
-Validation passed: DR readiness artifacts are complete.
-PASS: validate-dr-readiness-artifacts.sh
-
-==> validate-dr-evidence-freshness.sh
-Validating DR evidence freshness
-Checking monthly backup evidence for 2026-06
-Checking quarterly drill evidence for 2026 (months 04|05|06)
-Validation passed: DR evidence is fresh for current period.
-PASS: validate-dr-evidence-freshness.sh
-
-Guardrail run passed.

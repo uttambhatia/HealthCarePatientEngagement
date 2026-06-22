@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -33,17 +34,34 @@ public class TeleconsultationMedicalRecordAdapter {
         this.maxAttempts = Math.max(1, maxAttempts);
     }
 
-    public void syncConsultationNotes(TeleconsultationSession session, String consultationNotes, String correlationId) {
+    public void syncConsultationNotes(TeleconsultationSession session, String consultationNotes, List<String> prescriptions, String correlationId) {
         if (restClient == null) {
             LOGGER.warn("Skipping teleconsultation medical-record integration for sessionId={} because base URL is not configured", session.id());
             return;
         }
 
+        // Primary Encounter record
+        sendRecord(session, fhirResourceType, consultationNotes, correlationId);
+
+        // MedicationRequest record when prescriptions are present
+        if (prescriptions != null && !prescriptions.isEmpty()) {
+            String medicationSummary = String.join("; ", prescriptions);
+            sendRecord(session, "MedicationRequest", medicationSummary, correlationId);
+        }
+
+        // CarePlan record when follow-up is required
+        if (session.followUpRequired() && session.nextFollowUpDate() != null && !session.nextFollowUpDate().isBlank()) {
+            String carePlanSummary = "Follow-up scheduled for " + session.nextFollowUpDate();
+            sendRecord(session, "CarePlan", carePlanSummary, correlationId);
+        }
+    }
+
+    private void sendRecord(TeleconsultationSession session, String resourceType, String summary, String correlationId) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("patientId", session.patientId());
-        payload.put("fhirResourceType", fhirResourceType);
+        payload.put("fhirResourceType", resourceType);
         payload.put("resourceReference", "Appointment/" + session.appointmentId() + "/Teleconsultation/" + session.id());
-        payload.put("summary", consultationNotes);
+        payload.put("summary", summary);
 
         RuntimeException lastError = null;
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -55,17 +73,17 @@ public class TeleconsultationMedicalRecordAdapter {
                         .body(payload)
                         .retrieve()
                         .toBodilessEntity();
-                LOGGER.info("Teleconsultation medical-record integration succeeded sessionId={} correlationId={} attempt={}", session.id(), correlationId, attempt);
+                LOGGER.info("Teleconsultation medical-record integration succeeded resourceType={} sessionId={} correlationId={} attempt={}", resourceType, session.id(), correlationId, attempt);
                 return;
             } catch (RuntimeException ex) {
                 lastError = ex;
-                LOGGER.warn("Teleconsultation medical-record integration attempt failed sessionId={} correlationId={} attempt={} maxAttempts={} error={}",
-                        session.id(), correlationId, attempt, maxAttempts, ex.getMessage());
+                LOGGER.warn("Teleconsultation medical-record integration attempt failed resourceType={} sessionId={} correlationId={} attempt={} maxAttempts={} error={}",
+                        resourceType, session.id(), correlationId, attempt, maxAttempts, ex.getMessage());
             }
         }
 
         throw new TeleconsultationNetworkException(
-                "Medical record synchronization failed for teleconsultation sessionId=" + session.id(),
+                "Medical record synchronization failed for teleconsultation sessionId=" + session.id() + " resourceType=" + resourceType,
                 lastError
         );
     }

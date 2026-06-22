@@ -45,7 +45,8 @@ class TeleconsultationWorkflowServiceTest {
             new CompleteTeleconsultationRequest(
                 "Patient reports mild improvement; continue prescribed plan.",
                 true,
-                "2026-07-15T11:00:00Z"
+                "2026-07-15T11:00:00Z",
+                null
             ),
                 "corr-tel-103"
         );
@@ -78,7 +79,7 @@ class TeleconsultationWorkflowServiceTest {
 
             var completed = service.completeTeleconsultation(
                     appointment.id(),
-                    new CompleteTeleconsultationRequest("Own patient session notes", false, null),
+                    new CompleteTeleconsultationRequest("Own patient session notes", false, null, null),
                     "corr-tel-304"
             );
             assertThat(completed.status()).isEqualTo("COMPLETED");
@@ -99,7 +100,7 @@ class TeleconsultationWorkflowServiceTest {
 
             assertThatThrownBy(() -> service.completeTeleconsultation(
                     appointment.id(),
-                    new CompleteTeleconsultationRequest("Should fail", false, null),
+                    new CompleteTeleconsultationRequest("Should fail", false, null, null),
                     "corr-tel-404"
             )).isInstanceOf(AccessDeniedException.class);
         });

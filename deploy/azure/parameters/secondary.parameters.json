@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastus2"
+    },
+    "secondaryLocation": {
+      "value": "centralindia"
+    },
+    "environment": {
+      "value": "secondary"
+    },
+    "hubVnetName": {
+      "value": "hpe-hub-vnet-secondary"
+    },
+    "primaryVnetName": {
+      "value": "hpe-primary-vnet-secondary"
+    },
+    "secondaryVnetName": {
+      "value": "hpe-secondary-vnet-secondary"
+    },
+    "trafficManagerProfileName": {
+      "value": "hpe-tm-secondary"
+    },
+    "trafficManagerDnsLabel": {
+      "value": "hpe-tm-secondary"
+    },
+    "primaryUiHostname": {
+      "value": "hpe-primary-ui-secondary.azurewebsites.net"
+    },
+    "secondaryUiHostname": {
+      "value": "hpe-secondary-ui-secondary.azurewebsites.net"
+    },
+    "primaryFrontDoorProfileName": {
+      "value": "hpe-afd-primary-secondary"
+    },
+    "primaryFrontDoorEndpointName": {
+      "value": "hpe-afd-primary-secondary"
+    },
+    "secondaryFrontDoorProfileName": {
+      "value": "hpe-afd-secondary-secondary"
+    },
+    "secondaryFrontDoorEndpointName": {
+      "value": "hpe-afd-secondary-secondary"
+    },
+    "apimServiceName": {
+      "value": "hpe-apim-secondary"
+    },
+    "apimPublisherName": {
+      "value": "Healthcare Platform"
+    },
+    "apimPublisherEmail": {
+      "value": "noreply@example.com"
+    },
+    "apimSkuName": {
+      "value": "Developer"
+    },
+    "oauthOpenIdConfigUrl": {
+      "value": "https://login.microsoftonline.com/<tenant-id>/v2.0/.well-known/openid-configuration"
+    },
+    "oauthAudience": {
+      "value": "api://<app-id-uri>"
+    },
+    "apimApiName": {
+      "value": "platform-api"
+    },
+    "apimApiDisplayName": {
+      "value": "Healthcare Platform API"
+    },
+    "apimApiPath": {
+      "value": "api"
+    },
+    "primaryApiBackendUrl": {
+      "value": "http://primary-app-gateway.internal"
+    },
+    "secondaryApiBackendUrl": {
+      "value": "http://secondary-app-gateway.internal"
+    },
+    "apimActiveBackend": {
+      "value": "secondary"
+    }
+  }
+}

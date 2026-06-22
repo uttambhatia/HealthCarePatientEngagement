@@ -37,7 +37,7 @@ Required value groups:
 
 Teleconsult real ACS token mode additionally needs:
 - `ACS_IDENTITY_CONNECTION_STRING` in env files (renders to secret key `acs-identity-connection-string`)
-- `TELECONSULT_JOIN_BASE_URL` set to a reachable public teleconsult host
+- `TELECONSULT_JOIN_BASE_URL` set to a reachable public teleconsult host (environment-specific; no `<...>` placeholders)
 - An Azure Communication Services resource in the same environment/subscription
 
 Frontend App Service build-time settings (GitHub repository variables):
@@ -62,7 +62,7 @@ Frontend deployment workflow credentials (GitHub secrets):
 0. (Optional) Bootstrap minimum Azure dev infrastructure and generate env values:
 
 ```powershell
-.\deploy\k8s\env\dev\bootstrap-dev-azure.ps1
+.\deploy\k8s\env\dev\bootstrap-dev-azure.ps1 -TeleconsultJoinBaseUrl "https://teleconsult-dev.contoso.com/session"
 ```
 
 This provisions the minimum Azure dependencies for the repo's AKS manifests,

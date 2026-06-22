@@ -13,7 +13,7 @@ Param(
     [string]$AcsResourceName = "",
     [string]$AcsDataLocation = "",
     [string]$AcsIdentityConnectionString = "",
-    [string]$TeleconsultJoinBaseUrl = "https://<dev-teleconsult-public-host>/session",
+    [string]$TeleconsultJoinBaseUrl = "",
     [string]$FhirIntegrationBaseUrl = "",
     [string]$ServiceBusIntegrationBaseUrl = "",
     [string]$OtelOtlpEndpoint = "http://otel-collector.monitoring.svc.cluster.local:4317",
@@ -237,6 +237,25 @@ function Ensure-ServiceBusNamespace {
     )
 }
 
+function Resolve-ServiceBusConnectionString {
+    Param(
+        [Parameter(Mandatory = $true)][string]$NamespaceName
+    )
+
+    $keys = Invoke-AzJson -Arguments @(
+        "servicebus", "namespace", "authorization-rule", "keys", "list",
+        "--resource-group", $ResourceGroupName,
+        "--namespace-name", $NamespaceName,
+        "--name", "RootManageSharedAccessKey"
+    ) -AllowFailure
+
+    if ($null -eq $keys -or -not $keys.primaryConnectionString) {
+        return ""
+    }
+
+    return $keys.primaryConnectionString
+}
+
 function Ensure-EventHubNamespace {
     Param(
         [Parameter(Mandatory = $true)][string]$Name
@@ -405,6 +424,48 @@ function Ensure-SqlDatabase {
     )
 }
 
+function Ensure-StorageAccount {
+    Param(
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+
+    $existing = Invoke-AzJson -Arguments @("storage", "account", "show", "--resource-group", $ResourceGroupName, "--name", $Name) -AllowFailure
+    if ($null -ne $existing) {
+        return $existing
+    }
+
+    Write-Host "Creating Storage Account $Name"
+    return Invoke-AzJson -Arguments @(
+        "storage", "account", "create",
+        "--resource-group", $ResourceGroupName,
+        "--name", $Name,
+        "--location", $Location,
+        "--sku", "Standard_LRS",
+        "--kind", "StorageV2",
+        "--https-only", "true",
+        "--allow-blob-public-access", "false"
+    )
+}
+
+function Resolve-StorageConnectionString {
+    Param(
+        [Parameter(Mandatory = $true)][string]$StorageAccountName
+    )
+
+    $keyResult = Invoke-AzJson -Arguments @(
+        "storage", "account", "keys", "list",
+        "--resource-group", $ResourceGroupName,
+        "--account-name", $StorageAccountName
+    ) -AllowFailure
+
+    if ($null -eq $keyResult -or $keyResult.Count -eq 0 -or -not $keyResult[0].value) {
+        return ""
+    }
+
+    $primaryKey = $keyResult[0].value
+    return "DefaultEndpointsProtocol=https;AccountName=$StorageAccountName;AccountKey=$primaryKey;EndpointSuffix=core.windows.net"
+}
+
 function Ensure-AksCluster {
     Param(
         [Parameter(Mandatory = $true)][string]$Name
@@ -518,6 +579,7 @@ $managedIdentityName = Get-TrimmedName -Base "id-$baseHyphen" -MaxLength 128
 $serviceBusNamespaceName = Get-TrimmedName -Base "sb-$baseHyphen-$suffix" -MaxLength 50
 $eventHubNamespaceName = Get-TrimmedName -Base "eh-$baseHyphen-$suffix" -MaxLength 50
 $sqlServerName = Get-TrimmedName -Base "sql$baseAlphaNum$suffix" -MaxLength 63
+$storageAccountName = Get-TrimmedName -Base "st$baseAlphaNum$suffix" -MaxLength 24
 $keyVaultName = Get-TrimmedName -Base "kv-$baseHyphen-$suffix" -MaxLength 24
 
 if ($AcsResourceName -eq "") {
@@ -541,6 +603,18 @@ if ($ServiceBusIntegrationBaseUrl -eq "") {
     $ServiceBusIntegrationBaseUrl = "https://svc-event-messaging.$Namespace.svc.cluster.local"
 }
 
+if ([string]::IsNullOrWhiteSpace($TeleconsultJoinBaseUrl)) {
+    throw "TeleconsultJoinBaseUrl is required. Pass an environment-specific value, for example: -TeleconsultJoinBaseUrl 'https://teleconsult-dev.contoso.com/session'"
+}
+
+if ($TeleconsultJoinBaseUrl -match "<[^>]+>") {
+    throw "TeleconsultJoinBaseUrl contains unresolved placeholder markers (<...>). Pass a real environment-specific URL."
+}
+
+if ($TeleconsultJoinBaseUrl -notmatch '^https?://') {
+    throw "TeleconsultJoinBaseUrl must be an absolute URL starting with http:// or https://"
+}
+
 $oauthAudienceValue = Ensure-EntraAudience -BaseName $baseHyphen -Suffix $suffix -TenantId $tenantId
 $entraApiAppId = ""
 if ($oauthAudienceValue -match '^api://(?<appId>.+)$') {
@@ -555,10 +629,19 @@ Ensure-ResourceGroup -Name $ResourceGroupName -Region $Location
 $managedIdentity = Ensure-UserAssignedIdentity -Name $managedIdentityName
 $keyVault = Ensure-KeyVault -Name $keyVaultName
 $null = Ensure-ServiceBusNamespace -Name $serviceBusNamespaceName
+$serviceBusConnectionString = Resolve-ServiceBusConnectionString -NamespaceName $serviceBusNamespaceName
+if ($serviceBusConnectionString -eq "") {
+    Write-Warning "Unable to resolve Service Bus connection string. Set SERVICEBUS_CONNECTION_STRING manually in dev.env."
+}
 $null = Ensure-EventHubNamespace -Name $eventHubNamespaceName
 $null = Ensure-EventHub -NamespaceName $eventHubNamespaceName -Name $EventHubName
 $sqlServer = Ensure-SqlServer -Name $sqlServerName -AdminUser $SqlAdminUsername -AdminPassword $SqlAdminPassword
 $null = Ensure-SqlDatabase -ServerName $sqlServerName -DatabaseName $SqlDatabaseName
+$null = Ensure-StorageAccount -Name $storageAccountName
+$storageConnectionString = Resolve-StorageConnectionString -StorageAccountName $storageAccountName
+if ($storageConnectionString -eq "") {
+    Write-Warning "Unable to resolve storage account connection string. Set AZURE_BLOB_CONNECTION_STRING manually in dev.env."
+}
 
 if ($AcsIdentityConnectionString -eq "" -and -not $SkipAcsInfrastructure) {
     try {
@@ -579,6 +662,12 @@ Write-Host "Storing bootstrap secrets in Key Vault $keyVaultName"
 try {
     Invoke-AzCli -Arguments @("keyvault", "secret", "set", "--vault-name", $keyVaultName, "--name", "sql-admin-password", "--value", $SqlAdminPassword) | Out-Null
     Invoke-AzCli -Arguments @("keyvault", "secret", "set", "--vault-name", $keyVaultName, "--name", "oauth2-audience", "--value", $oauthAudienceValue) | Out-Null
+    if ($serviceBusConnectionString -ne "") {
+        Invoke-AzCli -Arguments @("keyvault", "secret", "set", "--vault-name", $keyVaultName, "--name", "servicebus-connection-string", "--value", $serviceBusConnectionString) | Out-Null
+    }
+    if ($storageConnectionString -ne "") {
+        Invoke-AzCli -Arguments @("keyvault", "secret", "set", "--vault-name", $keyVaultName, "--name", "azure-blob-connection-string", "--value", $storageConnectionString) | Out-Null
+    }
     if ($AcsIdentityConnectionString -ne "") {
         Invoke-AzCli -Arguments @("keyvault", "secret", "set", "--vault-name", $keyVaultName, "--name", "acs-identity-connection-string", "--value", $AcsIdentityConnectionString) | Out-Null
     }
@@ -608,6 +697,7 @@ $envContent = @(
     "KUBE_CONTEXT=$currentContext",
     "",
     "SERVICEBUS_NAMESPACE=$serviceBusNamespaceName.servicebus.windows.net",
+    "SERVICEBUS_CONNECTION_STRING=$serviceBusConnectionString",
     "EVENTHUB_NAMESPACE=$eventHubNamespaceName.servicebus.windows.net",
     "KEY_VAULT_URL=https://$keyVaultName.vault.azure.net/",
     "FHIR_INTEGRATION_BASE_URL=$FhirIntegrationBaseUrl",
@@ -628,6 +718,7 @@ $envContent = @(
     "AZURE_SQL_JDBC_URL=$jdbcUrl",
     "AZURE_SQL_USERNAME=$SqlAdminUsername",
     "AZURE_SQL_PASSWORD=$SqlAdminPassword",
+    "AZURE_BLOB_CONNECTION_STRING=$storageConnectionString",
     "AZURE_MANAGED_IDENTITY_CLIENT_ID=$($managedIdentity.clientId)"
 )
 

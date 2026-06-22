@@ -45,6 +45,7 @@ public class TeleconsultationSessionJpaRepositoryAdapter implements Teleconsulta
                 session.consultationNotes(),
                 session.followUpRequired(),
                 session.nextFollowUpDate(),
+                session.prescriptions(),
                 session.interactionLogs()
         );
     }
@@ -64,6 +65,7 @@ public class TeleconsultationSessionJpaRepositoryAdapter implements Teleconsulta
                 entity.getConsultationNotes(),
                 entity.isFollowUpRequired(),
                 entity.getNextFollowUpDate(),
+                entity.getPrescriptions(),
                 entity.getInteractionLogs()
         );
     }

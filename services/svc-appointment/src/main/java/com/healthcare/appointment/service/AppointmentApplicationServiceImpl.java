@@ -21,6 +21,7 @@ import com.healthcare.appointment.integration.TeleconsultationAcsAdapter;
 import com.healthcare.appointment.integration.TeleconsultationMedicalRecordAdapter;
 import com.healthcare.appointment.repository.AppointmentRepository;
 import com.healthcare.appointment.repository.TeleconsultationSessionRepository;
+import com.healthcare.platform.common.audit.AuditLogger;
 import com.healthcare.platform.common.messaging.MessagingPort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -57,7 +58,11 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
     private final TeleconsultationSessionRepository teleconsultationRepository;
     private final TeleconsultationMedicalRecordAdapter teleconsultationMedicalRecordAdapter;
     private final TeleconsultationAcsAdapter teleconsultationAcsAdapter;
+    private final AuditLogger auditLogger;
     private final String secureTeleconsultBaseUrl;
+
+    @Value("${platform.messaging.teleconsultation.completedChannel:topic:teleconsultation-completed}")
+    private String teleconsultationCompletedChannel;
 
     public AppointmentApplicationServiceImpl(
             AppointmentRepository repository,
@@ -67,6 +72,7 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
             TeleconsultationSessionRepository teleconsultationRepository,
             TeleconsultationMedicalRecordAdapter teleconsultationMedicalRecordAdapter,
             TeleconsultationAcsAdapter teleconsultationAcsAdapter,
+            AuditLogger auditLogger,
             @Value("${platform.integration.teleconsult.secure-base-url:https://teleconsult.healthcare.local}") String secureTeleconsultBaseUrl) {
         this.repository = repository;
         this.messagingPort = messagingPort;
@@ -75,6 +81,7 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
         this.teleconsultationRepository = teleconsultationRepository;
         this.teleconsultationMedicalRecordAdapter = teleconsultationMedicalRecordAdapter;
         this.teleconsultationAcsAdapter = teleconsultationAcsAdapter;
+        this.auditLogger = auditLogger;
         this.secureTeleconsultBaseUrl = secureTeleconsultBaseUrl;
     }
 
@@ -178,6 +185,7 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
                 null,
                 false,
                 null,
+                List.of(),
                 List.of(logEntry("Teleconsultation initiated by doctor"))
         ));
 
@@ -189,6 +197,7 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
                 session.startedAt()
         ));
 
+        auditLogger.log(resolveActor(), "START_TELECONSULTATION", appointmentId, correlationId);
         return mapTeleconsultation(session);
     }
 
@@ -221,9 +230,11 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
                 session.consultationNotes(),
                 session.followUpRequired(),
                 session.nextFollowUpDate(),
+                session.prescriptions(),
                 appendLog(session.interactionLogs(), "Patient joined teleconsultation session")
         ));
 
+        auditLogger.log(resolveActor(), "JOIN_TELECONSULTATION", appointmentId, correlationId);
         return mapTeleconsultation(updated);
     }
 
@@ -244,17 +255,19 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
 
         String trimmedNotes = request.consultationNotes().trim();
         boolean followUpRequired = request.followUpRequired();
+        List<String> prescriptions = request.prescriptions() == null ? List.of() :
+                request.prescriptions().stream().filter(p -> p != null && !p.isBlank()).toList();
         String normalizedNextFollowUpDate = null;
         if (followUpRequired) {
             String requestedNextFollowUpDate = request.nextFollowUpDate();
             if (requestedNextFollowUpDate == null || requestedNextFollowUpDate.isBlank()) {
                 throw new IllegalArgumentException("nextFollowUpDate is required when followUpRequired is true");
             }
-            normalizedNextFollowUpDate = requestedNextFollowUpDate.trim();
+            normalizedNextFollowUpDate = normaliseFollowUpDate(requestedNextFollowUpDate);
         }
 
         try {
-            teleconsultationMedicalRecordAdapter.syncConsultationNotes(session, trimmedNotes, correlationId);
+            teleconsultationMedicalRecordAdapter.syncConsultationNotes(session, trimmedNotes, prescriptions, correlationId);
         } catch (RuntimeException ex) {
             teleconsultationRepository.save(new TeleconsultationSession(
                     session.id(),
@@ -270,6 +283,7 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
                     session.consultationNotes(),
                     session.followUpRequired(),
                     session.nextFollowUpDate(),
+                    session.prescriptions(),
                     appendLog(session.interactionLogs(), "Teleconsultation completion failed due to network/integration issue")
             ));
             throw ex;
@@ -289,19 +303,25 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
                 trimmedNotes,
                 followUpRequired,
                 normalizedNextFollowUpDate,
+                prescriptions,
                 appendLog(session.interactionLogs(), "Doctor completed teleconsultation and notes were recorded")
         ));
 
-        messagingPort.publish("appointment-service", correlationId, new TeleconsultationCompletedEvent(
+        // Mark the parent appointment as COMPLETED
+        repository.findById(appointmentId).ifPresent(appt -> repository.save(new AppointmentRecord(
+                appt.id(), "COMPLETED", appt.patientId(), appt.providerId(), appt.scheduledAt(), appt.channel())));
+
+        messagingPort.publish(teleconsultationCompletedChannel, correlationId, new TeleconsultationCompletedEvent(
                 completed.id(),
                 completed.appointmentId(),
                 completed.patientId(),
                 completed.providerId(),
-            completed.completedAt(),
-            completed.followUpRequired(),
-            completed.nextFollowUpDate()
+                completed.completedAt(),
+                completed.followUpRequired(),
+                completed.nextFollowUpDate()
         ));
 
+        auditLogger.log(resolveActor(), "COMPLETE_TELECONSULTATION", appointmentId, correlationId);
         return mapTeleconsultation(completed);
     }
 
@@ -328,6 +348,19 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
 
     private String now() {
         return OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    }
+
+    /**
+     * Normalises a follow-up date value so it always becomes a full ISO-8601 datetime.
+     * If the value is already a datetime (contains 'T') it is returned as-is.
+     * A date-only value (yyyy-MM-dd) is suffixed with T09:00:00Z.
+     */
+    private String normaliseFollowUpDate(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        return trimmed.contains("T") ? trimmed : trimmed + "T09:00:00Z";
     }
 
     private String logEntry(String message) {
@@ -377,6 +410,7 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
                 session.consultationNotes(),
                 session.followUpRequired(),
                 session.nextFollowUpDate(),
+                session.prescriptions(),
                 session.interactionLogs()
         );
     }
@@ -413,5 +447,19 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
             }
         }
         return Optional.empty();
+    }
+
+    private String resolveActor() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "anonymous";
+        }
+        if (authentication instanceof JwtAuthenticationToken jwt) {
+            String sub = jwt.getToken().getClaimAsString("sub");
+            if (sub != null && !sub.isBlank()) {
+                return sub;
+            }
+        }
+        return authentication.getName() != null ? authentication.getName() : "unknown";
     }
 }

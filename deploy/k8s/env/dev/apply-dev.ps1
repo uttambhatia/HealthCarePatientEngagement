@@ -43,10 +43,16 @@ function Test-SecretTemplate {
 
     $requiredKeys = @(
         "servicebus-namespace",
+        "servicebus-connection-string",
         "eventhub-namespace",
         "key-vault-url",
         "fhir-integration-base-url",
         "service-bus-integration-base-url",
+        "acs-integration-base-url",
+        "acs-email-endpoint",
+        "acs-email-access-key",
+        "acs-email-from-address",
+        "acs-identity-connection-string",
         "otel-otlp-endpoint",
         "oauth2-issuer",
         "oauth2-audience",

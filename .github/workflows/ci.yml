@@ -95,6 +95,39 @@ jobs:
       - name: Validate DR evidence freshness
         run: bash scripts/validate-dr-evidence-freshness.sh
 
+      - name: Validate hub-spoke environment model
+        run: bash scripts/validate-hub-spoke-env-model.sh
+
+      - name: Validate edge routing app service config
+        run: bash scripts/validate-edge-routing-appservice-config.sh
+
+      - name: Validate DR traffic manager and front door runbook coverage
+        run: bash scripts/validate-dr-traffic-manager-frontdoor-runbook.sh
+
+      - name: Validate DR automation scripts
+        run: bash scripts/validate-dr-automation-scripts.sh
+
+      - name: Validate secondary DR deployment assets
+        run: bash scripts/validate-secondary-dr-assets.sh
+
+      - name: Validate DR failover smoke workflow
+        run: bash scripts/validate-dr-smoke-workflow.sh
+
+      - name: Validate APIM hardening IaC
+        run: bash scripts/validate-apim-hardening-iac.sh
+
+      - name: Validate APIM API routing IaC
+        run: bash scripts/validate-apim-api-routing-iac.sh
+
+      - name: Validate Azure parameter files
+        run: bash scripts/validate-azure-parameter-files.sh
+
+      - name: Validate APIM backend switch script
+        run: bash scripts/validate-apim-backend-switch-script.sh
+
+      - name: Validate DR combined switch script
+        run: bash scripts/validate-dr-combined-switch-script.sh
+
       - name: Build backend
         run: mvn -B test
 

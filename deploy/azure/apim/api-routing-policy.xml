@@ -1,0 +1,23 @@
+<policies>
+  <inbound>
+    <base />
+    <set-variable name="activeBackend" value="{{apim-active-backend}}" />
+    <choose>
+      <when condition="@((string)context.Variables[&quot;activeBackend&quot;] == &quot;secondary&quot;)">
+        <set-backend-service backend-id="backend-secondary-appgw" />
+      </when>
+      <otherwise>
+        <set-backend-service backend-id="backend-primary-appgw" />
+      </otherwise>
+    </choose>
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>

@@ -55,6 +55,8 @@ platform:
       fhirResourceType: ${MEDICAL_RECORD_FHIR_RESOURCE_TYPE:Encounter}
   messaging:
     channel: ${APPOINTMENT_MESSAGING_CHANNEL:appointment-service}
+    teleconsultation:
+      completedChannel: ${TELECONSULT_COMPLETED_CHANNEL:topic:teleconsultation-completed}
     processorEnabled: ${APPOINTMENT_PROCESSOR_ENABLED:true}
     retryAttempts: 3
     deadLetterQueue: appointment-service-dlq

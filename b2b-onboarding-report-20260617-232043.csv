@@ -1,0 +1,5 @@
+﻿"timestampUtc","rowNumber","email","role","environment","status","message","userId","groupName"
+"2026-06-17T17:50:43.5581461Z","1","uttamkumar.bhatia@cognizant.com","COORDINATOR","dev","VALID","Row validation passed","","HCPE-COORDINATOR"
+"2026-06-17T17:50:43.5591442Z","2","uttambhatia@outlook.com","DOCTOR","dev","VALID","Row validation passed","","HCPE-DOCTOR"
+"2026-06-17T17:50:43.5591442Z","3","uttamshur@gmail.com","ADMIN","dev","VALID","Row validation passed","","HCPE-ADMIN"
+"2026-06-17T17:50:43.5591442Z","4","uttambhatia1988@gmail.com","PATIENT","dev","VALID","Row validation passed","","HCPE-PATIENT"

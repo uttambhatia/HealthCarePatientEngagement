@@ -42,6 +42,22 @@ type RenderedView = {
   view: { target: HTMLElement; dispose?: () => void }
 }
 
+function participantId(participant: RemoteParticipant) {
+  const id = participant.identifier
+  switch (id.kind) {
+    case 'communicationUser':
+      return `communicationUser:${id.communicationUserId}`
+    case 'microsoftTeamsUser':
+      return `teamsUser:${id.microsoftTeamsUserId}`
+    case 'phoneNumber':
+      return `phone:${id.phoneNumber}`
+    case 'microsoftTeamsApp':
+      return `teamsApp:${(id as { teamsAppId?: string }).teamsAppId ?? 'unknown'}`
+    default:
+      return `${id.kind}:unknown`
+  }
+}
+
 export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
   const { session } = useAuth()
   const [showEmbedded, setShowEmbedded] = useState(true)
@@ -235,7 +251,7 @@ export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
             return
           }
 
-          const key = `${participant.identifier.kind}-${stream.id}`
+          const key = `${participantId(participant)}-${stream.id}`
           if (remoteViewsRef.current.has(key)) {
             return
           }
@@ -260,7 +276,7 @@ export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
         }
 
         const detachRemoteVideo = (participant: RemoteParticipant, stream: RemoteVideoStream) => {
-          const key = `${participant.identifier.kind}-${stream.id}`
+          const key = `${participantId(participant)}-${stream.id}`
           const rendered = remoteViewsRef.current.get(key)
           if (!rendered) {
             return
@@ -365,7 +381,7 @@ export function TeleconsultCallClientPage({ joinUrl, role }: Props) {
 
       void stopCall()
     }
-  }, [cameraEnabled, canUseAcsCalling, role, session?.displayName, sessionId, tokenBootstrap?.accessToken])
+  }, [canUseAcsCalling, role, session?.displayName, sessionId, tokenBootstrap?.accessToken])
 
   useEffect(() => {
     async function syncMicState() {

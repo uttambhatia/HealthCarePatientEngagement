@@ -61,6 +61,12 @@ spec:
                 secretKeyRef:
                   name: platform-secrets
                   key: servicebus-namespace
+            - name: SERVICEBUS_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: servicebus-connection-string
+                  optional: true
             - name: EVENTHUB_NAMESPACE
               valueFrom:
                 secretKeyRef:
@@ -77,6 +83,8 @@ spec:
                   name: platform-secrets
                   key: teleconsult-acs-integration-base-url
                   optional: true
+            - name: TELECONSULT_COMPLETED_CHANNEL
+              value: topic:teleconsultation-completed
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               valueFrom:
                 secretKeyRef:

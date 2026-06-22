@@ -27,6 +27,17 @@ checks=(
   "validate-openapi-operation-parity.sh"
   "validate-dr-readiness-artifacts.sh"
   "validate-dr-evidence-freshness.sh"
+  "validate-hub-spoke-env-model.sh"
+  "validate-edge-routing-appservice-config.sh"
+  "validate-dr-traffic-manager-frontdoor-runbook.sh"
+  "validate-dr-automation-scripts.sh"
+  "validate-secondary-dr-assets.sh"
+  "validate-dr-smoke-workflow.sh"
+  "validate-apim-hardening-iac.sh"
+  "validate-apim-api-routing-iac.sh"
+  "validate-azure-parameter-files.sh"
+  "validate-apim-backend-switch-script.sh"
+  "validate-dr-combined-switch-script.sh"
 )
 
 failures=0
