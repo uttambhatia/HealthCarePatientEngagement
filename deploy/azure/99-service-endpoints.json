@@ -1,0 +1,98 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.44.1.10279",
+      "templateHash": "11073222164593061541"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "centralindia"
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "dev"
+    }
+  },
+  "variables": {
+    "primaryVNetName": "[format('hpe-primary-vnet-{0}', parameters('environment'))]",
+    "dataSubnetName": "data-subnet",
+    "applicationSubnetName": "application-subnet"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2023-02-01",
+      "name": "[format('{0}/{1}', variables('primaryVNetName'), variables('dataSubnetName'))]",
+      "properties": {
+        "addressPrefix": "10.1.4.0/24",
+        "serviceEndpoints": [
+          {
+            "service": "Microsoft.Sql"
+          },
+          {
+            "service": "Microsoft.Storage"
+          },
+          {
+            "service": "Microsoft.KeyVault"
+          },
+          {
+            "service": "Microsoft.ServiceBus"
+          },
+          {
+            "service": "Microsoft.EventHub"
+          }
+        ],
+        "delegations": [],
+        "privateEndpointNetworkPolicies": "Disabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2023-02-01",
+      "name": "[format('{0}/{1}', variables('primaryVNetName'), variables('applicationSubnetName'))]",
+      "properties": {
+        "addressPrefix": "10.1.3.0/24",
+        "serviceEndpoints": [
+          {
+            "service": "Microsoft.Sql"
+          },
+          {
+            "service": "Microsoft.Storage"
+          },
+          {
+            "service": "Microsoft.KeyVault"
+          },
+          {
+            "service": "Microsoft.ServiceBus"
+          },
+          {
+            "service": "Microsoft.EventHub"
+          }
+        ],
+        "delegations": [],
+        "privateEndpointNetworkPolicies": "Disabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      }
+    }
+  ],
+  "outputs": {
+    "dataSubnetId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('primaryVNetName'), variables('dataSubnetName'))]"
+    },
+    "applicationSubnetId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('primaryVNetName'), variables('applicationSubnetName'))]"
+    },
+    "serviceEndpointsConfigured": {
+      "type": "bool",
+      "value": true
+    }
+  }
+}

@@ -26,6 +26,16 @@ param sqlServerName string = ''
 param storageAccountName string = ''
 param keyVaultName string = ''
 param serviceBusNamespaceName string = ''
+param eventHubNamespaceName string = ''
+
+param aksClusterName string = 'aks-hpe-${environment}'
+param aksNodeCount int = 3
+param aksNodeVmSize string = 'Standard_B2s_v2'
+param aksVersion string = '1.34.8'
+
+param iotHubName string = 'iothub-hpe-${environment}'
+param iotHubSkuName string = 'S1'
+param iotHubSkuCapacity int = 1
 
 param apimServiceName string = 'hpe-apim-${environment}'
 param apimPublisherName string = 'Healthcare Platform'
@@ -106,6 +116,23 @@ module peering './04-vnet-peering.bicep' = {
   }
 }
 
+module aksCluster './04-aks.bicep' = {
+  name: 'primary-aks-cluster'
+  dependsOn: [
+    peering
+    primary
+    nsg
+  ]
+  params: {
+    location: location
+    environment: environment
+    aksClusterName: aksClusterName
+    aksNodeCount: aksNodeCount
+    aksNodeVmSize: aksNodeVmSize
+    aksVersion: aksVersion
+    primaryApplicationSubnetId: primary.outputs.primaryApplicationSubnetId
+  }
+}
 
 module privateDns './08-private-dns.bicep' = {
   name: 'hub-spoke-private-dns'
@@ -132,6 +159,38 @@ module privateEndpoints './09-private-endpoints.bicep' = {
     blobPrivateDnsZoneId: privateDns.outputs.privateDnsZoneIds.blob
     keyVaultPrivateDnsZoneId: privateDns.outputs.privateDnsZoneIds.keyVault
     serviceBusPrivateDnsZoneId: privateDns.outputs.privateDnsZoneIds.serviceBus
+  }
+}
+
+module iotHub './13-iot-hub.bicep' = {
+  name: 'primary-iot-hub'
+  params: {
+    location: location
+    environment: environment
+    iotHubName: iotHubName
+    iotHubSkuName: iotHubSkuName
+    iotHubSkuCapacity: iotHubSkuCapacity
+    dataSubnetId: primary.outputs.primaryDataSubnetId
+    iotPrivateDnsZoneId: privateDns.outputs.privateDnsZoneIds.iot
+  }
+}
+
+module dataNetworkSecurity './14-data-network-security.bicep' = {
+  name: 'data-layer-security'
+  dependsOn: [
+    privateEndpoints
+    iotHub
+  ]
+  params: {
+    location: location
+    environment: environment
+    sqlServerName: sqlServerName
+    storageAccountName: storageAccountName
+    keyVaultName: keyVaultName
+    serviceBusNamespaceName: serviceBusNamespaceName
+    eventHubNamespaceName: eventHubNamespaceName
+    dataSubnetId: primary.outputs.primaryDataSubnetId
+    primaryApplicationSubnetId: primary.outputs.primaryApplicationSubnetId
   }
 }
 
@@ -201,6 +260,22 @@ module trafficManager './05-traffic-manager.bicep' = {
   }
 }
 
+module appService './12-appservice.bicep' = {
+  name: 'ui-appservice'
+  dependsOn: [
+    primary
+  ]
+  params: {
+    location: location
+    environment: environment
+    appServicePlanName: 'appservice-plan-hpe-${environment}'
+    appServiceName: 'healthcarepatientengagement'
+    appServiceSkuName: 'B2'
+    nodeVersion: '24-lts'
+    uiSubnetId: primary.outputs.primaryUiSubnetId
+  }
+}
+
 output hubVnetId string = hub.outputs.hubVnetId
 output primaryVnetId string = primary.outputs.primaryVnetId
 output secondaryVnetId string = secondary.outputs.secondaryVnetId
@@ -217,3 +292,21 @@ output apimApiId string = apimApiRouting.outputs.apiId
 output trafficManagerDnsName string = trafficManager.outputs.trafficManagerDnsName
 output primaryFrontDoorEndpointHost string = primaryFrontDoor.outputs.frontDoorEndpointHost
 output secondaryFrontDoorEndpointHost string = secondaryFrontDoor.outputs.frontDoorEndpointHost
+output appServiceId string = appService.outputs.appServiceId
+output appServiceName string = appService.outputs.appServiceName
+output appServiceUrl string = appService.outputs.appServiceUrl
+output appServiceHostname string = appService.outputs.appServiceHostname
+output aksClusterId string = aksCluster.outputs.aksClusterId
+output aksClusterName string = aksCluster.outputs.aksClusterName
+output aksClusterFqdn string = aksCluster.outputs.aksClusterFqdn
+output aksNodeResourceGroup string = aksCluster.outputs.aksNodeResourceGroup
+output iotHubId string = iotHub.outputs.iotHubId
+output iotHubName string = iotHub.outputs.iotHubName
+output iotHubEventHubEndpoint string = iotHub.outputs.iotHubEventHubEndpoint
+output dataNetworkSecurityApplied object = {
+  sql: dataNetworkSecurity.outputs.sqlVnetRulesApplied
+  storage: dataNetworkSecurity.outputs.storageNetworkRulesApplied
+  keyVault: dataNetworkSecurity.outputs.keyVaultNetworkRulesApplied
+  serviceBus: dataNetworkSecurity.outputs.serviceBusNetworkRulesApplied
+  eventHub: dataNetworkSecurity.outputs.eventHubNetworkRulesApplied
+}

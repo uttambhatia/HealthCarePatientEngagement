@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "12010104341249742324"
+      "templateHash": "12854221495443064987"
     }
   },
   "parameters": {
@@ -100,6 +100,38 @@
     "serviceBusNamespaceName": {
       "type": "string",
       "defaultValue": ""
+    },
+    "eventHubNamespaceName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "aksClusterName": {
+      "type": "string",
+      "defaultValue": "[format('aks-hpe-{0}', parameters('environment'))]"
+    },
+    "aksNodeCount": {
+      "type": "int",
+      "defaultValue": 3
+    },
+    "aksNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_B2s_v2"
+    },
+    "aksVersion": {
+      "type": "string",
+      "defaultValue": "1.34.8"
+    },
+    "iotHubName": {
+      "type": "string",
+      "defaultValue": "[format('iothub-hpe-{0}', parameters('environment'))]"
+    },
+    "iotHubSkuName": {
+      "type": "string",
+      "defaultValue": "S1"
+    },
+    "iotHubSkuCapacity": {
+      "type": "int",
+      "defaultValue": 1
     },
     "apimServiceName": {
       "type": "string",
@@ -905,6 +937,200 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
+      "name": "primary-aks-cluster",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "aksClusterName": {
+            "value": "[parameters('aksClusterName')]"
+          },
+          "aksNodeCount": {
+            "value": "[parameters('aksNodeCount')]"
+          },
+          "aksNodeVmSize": {
+            "value": "[parameters('aksNodeVmSize')]"
+          },
+          "aksVersion": {
+            "value": "[parameters('aksVersion')]"
+          },
+          "primaryApplicationSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-vnet'), '2025-04-01').outputs.primaryApplicationSubnetId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "6736726770038096159"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev"
+            },
+            "aksClusterName": {
+              "type": "string",
+              "defaultValue": "[format('aks-hpe-{0}', parameters('environment'))]"
+            },
+            "aksNodeCount": {
+              "type": "int",
+              "defaultValue": 3
+            },
+            "aksNodeVmSize": {
+              "type": "string",
+              "defaultValue": "Standard_B2s_v2"
+            },
+            "aksVersion": {
+              "type": "string",
+              "defaultValue": "1.34.8"
+            },
+            "primaryApplicationSubnetId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ContainerService/managedClusters",
+              "apiVersion": "2024-02-01",
+              "name": "[parameters('aksClusterName')]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "sku": {
+                "name": "Base",
+                "tier": "Standard"
+              },
+              "properties": {
+                "kubernetesVersion": "[parameters('aksVersion')]",
+                "dnsPrefix": "[format('{0}-dns', parameters('aksClusterName'))]",
+                "agentPoolProfiles": [
+                  {
+                    "name": "nodepool1",
+                    "count": "[parameters('aksNodeCount')]",
+                    "vmSize": "[parameters('aksNodeVmSize')]",
+                    "mode": "System",
+                    "osType": "Linux",
+                    "osDiskSizeGB": 128,
+                    "vnetSubnetID": "[parameters('primaryApplicationSubnetId')]",
+                    "enableNodePublicIP": false,
+                    "nodeLabels": {
+                      "workload": "general"
+                    }
+                  }
+                ],
+                "networkProfile": {
+                  "networkPlugin": "kubenet",
+                  "networkPolicy": "azure",
+                  "serviceCidrs": [
+                    "10.10.0.0/16"
+                  ],
+                  "dnsServiceIP": "10.10.0.10",
+                  "outboundType": "loadBalancer",
+                  "loadBalancerProfile": {
+                    "managedOutboundIPs": {
+                      "count": 1
+                    }
+                  }
+                },
+                "addonProfiles": {
+                  "httpApplicationRouting": {
+                    "enabled": false
+                  },
+                  "omsagent": {
+                    "enabled": false
+                  }
+                },
+                "apiServerAccessProfile": {
+                  "enablePrivateCluster": false,
+                  "authorizedIPRanges": [
+                    "0.0.0.0/0"
+                  ]
+                },
+                "autoUpgradeProfile": {
+                  "upgradeChannel": "stable"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(resourceId('Microsoft.ContainerService/managedClusters', parameters('aksClusterName')), 'AcrPull')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+                "principalId": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('aksClusterName')), '2024-02-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', parameters('aksClusterName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "aksClusterId": {
+              "type": "string",
+              "metadata": {
+                "description": "The AKS Cluster ID"
+              },
+              "value": "[resourceId('Microsoft.ContainerService/managedClusters', parameters('aksClusterName'))]"
+            },
+            "aksClusterName": {
+              "type": "string",
+              "metadata": {
+                "description": "The AKS Cluster Name"
+              },
+              "value": "[parameters('aksClusterName')]"
+            },
+            "aksClusterFqdn": {
+              "type": "string",
+              "metadata": {
+                "description": "The AKS Cluster FQDN"
+              },
+              "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('aksClusterName')), '2024-02-01').fqdn]"
+            },
+            "aksKubeletIdentity": {
+              "type": "object",
+              "metadata": {
+                "description": "The AKS Cluster Kubelet Identity"
+              },
+              "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('aksClusterName')), '2024-02-01').identityProfile.kubeletidentity]"
+            },
+            "aksNodeResourceGroup": {
+              "type": "string",
+              "metadata": {
+                "description": "The AKS Node Resource Group"
+              },
+              "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('aksClusterName')), '2024-02-01').nodeResourceGroup]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'hub-spoke-nsg')]",
+        "[resourceId('Microsoft.Resources/deployments', 'hub-spoke-peerings')]",
+        "[resourceId('Microsoft.Resources/deployments', 'primary-vnet')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
       "name": "hub-spoke-private-dns",
       "properties": {
         "expressionEvaluationOptions": {
@@ -932,7 +1158,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.44.1.10279",
-              "templateHash": "3588759565773619754"
+              "templateHash": "17814988588396179976"
             }
           },
           "parameters": {
@@ -973,6 +1199,12 @@
               "type": "Microsoft.Network/privateDnsZones",
               "apiVersion": "2020-06-01",
               "name": "privatelink.servicebus.windows.net",
+              "location": "global"
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "privatelink.azure-devices.net",
               "location": "global"
             },
             {
@@ -1154,6 +1386,51 @@
               "dependsOn": [
                 "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.servicebus.windows.net')]"
               ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.azure-devices.net', format('link-hub-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('hubVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azure-devices.net')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.azure-devices.net', format('link-primary-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('primaryVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azure-devices.net')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', 'privatelink.azure-devices.net', format('link-secondary-{0}', parameters('environment')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', last(split(parameters('secondaryVnetId'), '/')))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azure-devices.net')]"
+              ]
             }
           ],
           "outputs": {
@@ -1163,7 +1440,8 @@
                 "sql": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.database.windows.net')]",
                 "blob": "[resourceId('Microsoft.Network/privateDnsZones', format('privatelink.blob.{0}', environment().suffixes.storage))]",
                 "keyVault": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.vaultcore.azure.net')]",
-                "serviceBus": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.servicebus.windows.net')]"
+                "serviceBus": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.servicebus.windows.net')]",
+                "iot": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azure-devices.net')]"
               }
             }
           }
@@ -1635,6 +1913,448 @@
         "[resourceId('Microsoft.Resources/deployments', 'primary-vnet')]",
         "[resourceId('Microsoft.Resources/deployments', 'hub-spoke-private-dns')]",
         "[resourceId('Microsoft.Resources/deployments', 'secondary-vnet')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "primary-iot-hub",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "iotHubName": {
+            "value": "[parameters('iotHubName')]"
+          },
+          "iotHubSkuName": {
+            "value": "[parameters('iotHubSkuName')]"
+          },
+          "iotHubSkuCapacity": {
+            "value": "[parameters('iotHubSkuCapacity')]"
+          },
+          "dataSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-vnet'), '2025-04-01').outputs.primaryDataSubnetId.value]"
+          },
+          "iotPrivateDnsZoneId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'hub-spoke-private-dns'), '2025-04-01').outputs.privateDnsZoneIds.value.iot]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "14834843599198038927"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev"
+            },
+            "iotHubName": {
+              "type": "string",
+              "defaultValue": "[format('iothub-hpe-{0}', parameters('environment'))]"
+            },
+            "iotHubSkuName": {
+              "type": "string",
+              "defaultValue": "S1"
+            },
+            "iotHubSkuCapacity": {
+              "type": "int",
+              "defaultValue": 1
+            },
+            "dataSubnetId": {
+              "type": "string"
+            },
+            "iotPrivateDnsZoneId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "iotPrivateDnsZoneName": {
+              "type": "string",
+              "defaultValue": "privatelink.azure-devices.net"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Devices/IotHubs",
+              "apiVersion": "2023-06-01-preview",
+              "name": "[parameters('iotHubName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[parameters('iotHubSkuName')]",
+                "capacity": "[parameters('iotHubSkuCapacity')]"
+              },
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "ipFilterRules": [],
+                "minTlsVersion": "1.2",
+                "publicNetworkAccess": "Enabled",
+                "routing": {
+                  "endpoints": {
+                    "serviceBusQueues": [],
+                    "serviceBusTopics": [],
+                    "eventHubs": [],
+                    "storageContainers": [],
+                    "cosmosDBSqlCollections": []
+                  },
+                  "routes": [],
+                  "fallbackRoute": {
+                    "name": "$fallback",
+                    "source": "DeviceMessages",
+                    "condition": "true",
+                    "endpointNames": [
+                      "events"
+                    ],
+                    "isEnabled": true
+                  }
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "[format('pep-iot-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('dataSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "iot-connection",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName'))]",
+                      "groupIds": [
+                        "iotHub"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName'))]"
+              ]
+            },
+            {
+              "condition": "[not(empty(parameters('iotPrivateDnsZoneId')))]",
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}/{1}', format('pep-iot-{0}', parameters('environment')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "[parameters('iotPrivateDnsZoneName')]",
+                    "properties": {
+                      "privateDnsZoneId": "[parameters('iotPrivateDnsZoneId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', format('pep-iot-{0}', parameters('environment')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "iotHubId": {
+              "type": "string",
+              "metadata": {
+                "description": "The IoT Hub ID"
+              },
+              "value": "[resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName'))]"
+            },
+            "iotHubName": {
+              "type": "string",
+              "metadata": {
+                "description": "The IoT Hub Name"
+              },
+              "value": "[parameters('iotHubName')]"
+            },
+            "iotHubEventHubEndpoint": {
+              "type": "string",
+              "metadata": {
+                "description": "The IoT Hub Event Hub Endpoint"
+              },
+              "value": "[reference(resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName')), '2023-06-01-preview').eventHubEndpoints.events.endpoint]"
+            },
+            "iotHubEndpointDescription": {
+              "type": "string",
+              "metadata": {
+                "description": "The IoT Hub Connection String (reference only, retrieve from portal)"
+              },
+              "value": "Retrieve connection string from Azure Portal - IoT Hub → Shared access policies → owner"
+            },
+            "iotPrivateEndpointId": {
+              "type": "string",
+              "metadata": {
+                "description": "The IoT Private Endpoint ID"
+              },
+              "value": "[resourceId('Microsoft.Network/privateEndpoints', format('pep-iot-{0}', parameters('environment')))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'primary-vnet')]",
+        "[resourceId('Microsoft.Resources/deployments', 'hub-spoke-private-dns')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "data-layer-security",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "sqlServerName": {
+            "value": "[parameters('sqlServerName')]"
+          },
+          "storageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "serviceBusNamespaceName": {
+            "value": "[parameters('serviceBusNamespaceName')]"
+          },
+          "eventHubNamespaceName": {
+            "value": "[parameters('eventHubNamespaceName')]"
+          },
+          "dataSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-vnet'), '2025-04-01').outputs.primaryDataSubnetId.value]"
+          },
+          "primaryApplicationSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-vnet'), '2025-04-01').outputs.primaryApplicationSubnetId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "13613406468784279981"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev"
+            },
+            "sqlServerName": {
+              "type": "string"
+            },
+            "storageAccountName": {
+              "type": "string"
+            },
+            "keyVaultName": {
+              "type": "string"
+            },
+            "serviceBusNamespaceName": {
+              "type": "string"
+            },
+            "eventHubNamespaceName": {
+              "type": "string"
+            },
+            "dataSubnetId": {
+              "type": "string"
+            },
+            "primaryApplicationSubnetId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "condition": "[not(empty(parameters('sqlServerName')))]",
+              "type": "Microsoft.Sql/servers/virtualNetworkRules",
+              "apiVersion": "2022-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('sqlServerName'), 'allow-data-subnet')]",
+              "properties": {
+                "virtualNetworkSubnetId": "[parameters('dataSubnetId')]",
+                "ignoreMissingVnetServiceEndpoint": false
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('sqlServerName')))]",
+              "type": "Microsoft.Sql/servers/virtualNetworkRules",
+              "apiVersion": "2022-05-01-preview",
+              "name": "[format('{0}/{1}', parameters('sqlServerName'), 'allow-app-subnet')]",
+              "properties": {
+                "virtualNetworkSubnetId": "[parameters('primaryApplicationSubnetId')]",
+                "ignoreMissingVnetServiceEndpoint": false
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('storageAccountName')))]",
+              "type": "Microsoft.Storage/storageAccounts/networkAcls",
+              "apiVersion": "2023-01-01",
+              "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
+              "properties": {
+                "bypass": [
+                  "AzureServices"
+                ],
+                "defaultAction": "Deny",
+                "virtualNetworkRules": [
+                  {
+                    "id": "[parameters('dataSubnetId')]",
+                    "action": "Allow",
+                    "state": "Succeeded"
+                  },
+                  {
+                    "id": "[parameters('primaryApplicationSubnetId')]",
+                    "action": "Allow",
+                    "state": "Succeeded"
+                  }
+                ],
+                "ipRules": []
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('keyVaultName')))]",
+              "type": "Microsoft.KeyVault/vaults/networkAcls",
+              "apiVersion": "2023-02-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'default')]",
+              "properties": {
+                "bypass": "AzureServices",
+                "defaultAction": "Deny",
+                "virtualNetworkRules": [
+                  {
+                    "id": "[parameters('dataSubnetId')]"
+                  },
+                  {
+                    "id": "[parameters('primaryApplicationSubnetId')]"
+                  }
+                ],
+                "ipRules": []
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('serviceBusNamespaceName')))]",
+              "type": "Microsoft.ServiceBus/namespaces/networkRuleSets",
+              "apiVersion": "2022-10-01-preview",
+              "name": "[format('{0}/{1}', parameters('serviceBusNamespaceName'), 'default')]",
+              "properties": {
+                "defaultAction": "Deny",
+                "virtualNetworkRules": [
+                  {
+                    "subnet": {
+                      "id": "[parameters('dataSubnetId')]"
+                    },
+                    "ignoreMissingVnetServiceEndpoint": false
+                  },
+                  {
+                    "subnet": {
+                      "id": "[parameters('primaryApplicationSubnetId')]"
+                    },
+                    "ignoreMissingVnetServiceEndpoint": false
+                  }
+                ],
+                "ipRules": [],
+                "publicNetworkAccess": "Disabled"
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('eventHubNamespaceName')))]",
+              "type": "Microsoft.EventHub/namespaces/networkRuleSets",
+              "apiVersion": "2022-10-01-preview",
+              "name": "[format('{0}/{1}', parameters('eventHubNamespaceName'), 'default')]",
+              "properties": {
+                "defaultAction": "Deny",
+                "virtualNetworkRules": [
+                  {
+                    "subnet": {
+                      "id": "[parameters('dataSubnetId')]"
+                    },
+                    "ignoreMissingVnetServiceEndpoint": false
+                  },
+                  {
+                    "subnet": {
+                      "id": "[parameters('primaryApplicationSubnetId')]"
+                    },
+                    "ignoreMissingVnetServiceEndpoint": false
+                  }
+                ],
+                "ipRules": [],
+                "publicNetworkAccess": "Disabled"
+              }
+            }
+          ],
+          "outputs": {
+            "sqlVnetRulesApplied": {
+              "type": "bool",
+              "metadata": {
+                "description": "SQL Server VNet Rules Applied"
+              },
+              "value": true
+            },
+            "storageNetworkRulesApplied": {
+              "type": "bool",
+              "metadata": {
+                "description": "Storage Network Rules Applied"
+              },
+              "value": true
+            },
+            "keyVaultNetworkRulesApplied": {
+              "type": "bool",
+              "metadata": {
+                "description": "Key Vault Network Rules Applied"
+              },
+              "value": true
+            },
+            "serviceBusNetworkRulesApplied": {
+              "type": "bool",
+              "metadata": {
+                "description": "Service Bus Network Rules Applied"
+              },
+              "value": true
+            },
+            "eventHubNetworkRulesApplied": {
+              "type": "bool",
+              "metadata": {
+                "description": "Event Hub Network Rules Applied"
+              },
+              "value": true
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'primary-iot-hub')]",
+        "[resourceId('Microsoft.Resources/deployments', 'primary-vnet')]",
+        "[resourceId('Microsoft.Resources/deployments', 'hub-spoke-private-endpoints')]"
       ]
     },
     {
@@ -2371,6 +3091,186 @@
         "[resourceId('Microsoft.Resources/deployments', 'front-door-primary-edge')]",
         "[resourceId('Microsoft.Resources/deployments', 'front-door-secondary-edge')]"
       ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "ui-appservice",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "appServicePlanName": {
+            "value": "[format('appservice-plan-hpe-{0}', parameters('environment'))]"
+          },
+          "appServiceName": {
+            "value": "healthcarepatientengagement"
+          },
+          "appServiceSkuName": {
+            "value": "B2"
+          },
+          "nodeVersion": {
+            "value": "24-lts"
+          },
+          "uiSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-vnet'), '2025-04-01').outputs.primaryUiSubnetId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "11353354087766004679"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev"
+            },
+            "appServicePlanName": {
+              "type": "string",
+              "defaultValue": "[format('appservice-plan-hpe-{0}', parameters('environment'))]"
+            },
+            "appServiceName": {
+              "type": "string",
+              "defaultValue": "healthcarepatientengagement"
+            },
+            "appServiceSkuName": {
+              "type": "string",
+              "defaultValue": "B2"
+            },
+            "nodeVersion": {
+              "type": "string",
+              "defaultValue": "24-lts"
+            },
+            "uiSubnetId": {
+              "type": "string",
+              "defaultValue": ""
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2023-01-01",
+              "name": "[parameters('appServicePlanName')]",
+              "location": "[parameters('location')]",
+              "kind": "linux",
+              "sku": {
+                "name": "[parameters('appServiceSkuName')]",
+                "tier": "Standard",
+                "capacity": 1
+              },
+              "properties": {
+                "reserved": true
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2023-01-01",
+              "name": "[parameters('appServiceName')]",
+              "location": "[parameters('location')]",
+              "kind": "app,linux",
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+                "virtualNetworkSubnetId": "[if(empty(parameters('uiSubnetId')), null(), parameters('uiSubnetId'))]",
+                "siteConfig": {
+                  "linuxFxVersion": "[format('NODE|{0}', parameters('nodeVersion'))]",
+                  "alwaysOn": true,
+                  "appCommandLine": "node server.js",
+                  "http20Enabled": true,
+                  "minTlsVersion": "1.2",
+                  "scmIpSecurityRestrictions": [],
+                  "ipSecurityRestrictions": [],
+                  "vnetRouteAllEnabled": true,
+                  "appSettings": [
+                    {
+                      "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                      "value": "false"
+                    },
+                    {
+                      "name": "PORT",
+                      "value": "8080"
+                    }
+                  ],
+                  "connectionStrings": []
+                },
+                "httpsOnly": true,
+                "publicNetworkAccess": "[if(empty(parameters('uiSubnetId')), 'Enabled', 'Disabled')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites/config",
+              "apiVersion": "2023-01-01",
+              "name": "[format('{0}/{1}', parameters('appServiceName'), 'web')]",
+              "properties": {
+                "healthCheckPath": "/health"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('appServiceName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "appServicePlanId": {
+              "type": "string",
+              "metadata": {
+                "description": "The App Service Plan ID"
+              },
+              "value": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+            },
+            "appServiceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The App Service ID"
+              },
+              "value": "[resourceId('Microsoft.Web/sites', parameters('appServiceName'))]"
+            },
+            "appServiceHostname": {
+              "type": "string",
+              "metadata": {
+                "description": "The App Service default hostname"
+              },
+              "value": "[reference(resourceId('Microsoft.Web/sites', parameters('appServiceName')), '2023-01-01').defaultHostName]"
+            },
+            "appServiceUrl": {
+              "type": "string",
+              "metadata": {
+                "description": "The App Service URL"
+              },
+              "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', parameters('appServiceName')), '2023-01-01').defaultHostName)]"
+            },
+            "appServiceName": {
+              "type": "string",
+              "metadata": {
+                "description": "The App Service name"
+              },
+              "value": "[parameters('appServiceName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'primary-vnet')]"
+      ]
     }
   ],
   "outputs": {
@@ -2428,6 +3328,60 @@
     "secondaryFrontDoorEndpointHost": {
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Resources/deployments', 'front-door-secondary-edge'), '2025-04-01').outputs.frontDoorEndpointHost.value]"
+    },
+    "appServiceId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ui-appservice'), '2025-04-01').outputs.appServiceId.value]"
+    },
+    "appServiceName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ui-appservice'), '2025-04-01').outputs.appServiceName.value]"
+    },
+    "appServiceUrl": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ui-appservice'), '2025-04-01').outputs.appServiceUrl.value]"
+    },
+    "appServiceHostname": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ui-appservice'), '2025-04-01').outputs.appServiceHostname.value]"
+    },
+    "aksClusterId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-aks-cluster'), '2025-04-01').outputs.aksClusterId.value]"
+    },
+    "aksClusterName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-aks-cluster'), '2025-04-01').outputs.aksClusterName.value]"
+    },
+    "aksClusterFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-aks-cluster'), '2025-04-01').outputs.aksClusterFqdn.value]"
+    },
+    "aksNodeResourceGroup": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-aks-cluster'), '2025-04-01').outputs.aksNodeResourceGroup.value]"
+    },
+    "iotHubId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-iot-hub'), '2025-04-01').outputs.iotHubId.value]"
+    },
+    "iotHubName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-iot-hub'), '2025-04-01').outputs.iotHubName.value]"
+    },
+    "iotHubEventHubEndpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'primary-iot-hub'), '2025-04-01').outputs.iotHubEventHubEndpoint.value]"
+    },
+    "dataNetworkSecurityApplied": {
+      "type": "object",
+      "value": {
+        "sql": "[reference(resourceId('Microsoft.Resources/deployments', 'data-layer-security'), '2025-04-01').outputs.sqlVnetRulesApplied.value]",
+        "storage": "[reference(resourceId('Microsoft.Resources/deployments', 'data-layer-security'), '2025-04-01').outputs.storageNetworkRulesApplied.value]",
+        "keyVault": "[reference(resourceId('Microsoft.Resources/deployments', 'data-layer-security'), '2025-04-01').outputs.keyVaultNetworkRulesApplied.value]",
+        "serviceBus": "[reference(resourceId('Microsoft.Resources/deployments', 'data-layer-security'), '2025-04-01').outputs.serviceBusNetworkRulesApplied.value]",
+        "eventHub": "[reference(resourceId('Microsoft.Resources/deployments', 'data-layer-security'), '2025-04-01').outputs.eventHubNetworkRulesApplied.value]"
+      }
     }
   }
 }

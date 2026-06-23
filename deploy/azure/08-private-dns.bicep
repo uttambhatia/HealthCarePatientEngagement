@@ -23,6 +23,11 @@ resource privateDnsServiceBus 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
 }
 
+resource privateDnsIoT 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: 'privatelink.azure-devices.net'
+  location: 'global'
+}
+
 resource hubVnet 'Microsoft.Network/virtualNetworks@2023-11-01' existing = {
   scope: resourceGroup()
   name: last(split(hubVnetId, '/'))
@@ -182,9 +187,46 @@ resource serviceBusLinkSecondary 'Microsoft.Network/privateDnsZones/virtualNetwo
   }
 }
 
+resource iotLinkHub 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: privateDnsIoT
+  name: 'link-hub-${environment}'
+  location: 'global'
+  properties: {
+    virtualNetwork: {
+      id: hubVnet.id
+    }
+    registrationEnabled: false
+  }
+}
+
+resource iotLinkPrimary 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: privateDnsIoT
+  name: 'link-primary-${environment}'
+  location: 'global'
+  properties: {
+    virtualNetwork: {
+      id: primaryVnet.id
+    }
+    registrationEnabled: false
+  }
+}
+
+resource iotLinkSecondary 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: privateDnsIoT
+  name: 'link-secondary-${environment}'
+  location: 'global'
+  properties: {
+    virtualNetwork: {
+      id: secondaryVnet.id
+    }
+    registrationEnabled: false
+  }
+}
+
 output privateDnsZoneIds object = {
   sql: privateDnsSql.id
   blob: privateDnsBlob.id
   keyVault: privateDnsKeyVault.id
   serviceBus: privateDnsServiceBus.id
+  iot: privateDnsIoT.id
 }
