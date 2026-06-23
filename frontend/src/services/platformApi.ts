@@ -102,6 +102,7 @@ export type TeleconsultationResponse = {
   consultationNotes?: string
   followUpRequired: boolean
   nextFollowUpDate?: string
+  prescriptions?: string[]
   interactionLogs: string[]
 }
 
@@ -109,6 +110,7 @@ export type TeleconsultationCompleteRequest = {
   consultationNotes: string
   followUpRequired: boolean
   nextFollowUpDate?: string
+  prescriptions?: string[]
 }
 
 export type TeleconsultTokenRequest = {

@@ -45,6 +45,8 @@ platform:
       path: ${FOLLOWUP_APPOINTMENT_PATH:/appointments/internal/follow-up}
   messaging:
     channel: ${NOTIFICATION_MESSAGING_CHANNEL:notification-service}
+    followup:
+      scheduledChannel: ${FOLLOWUP_SCHEDULED_CHANNEL:notification-service}
     inboundChannel: ${NOTIFICATION_INBOUND_CHANNEL:appointment-service}
     teleconsultation:
       processorEnabled: ${TELECONSULT_TOPIC_PROCESSOR_ENABLED:true}

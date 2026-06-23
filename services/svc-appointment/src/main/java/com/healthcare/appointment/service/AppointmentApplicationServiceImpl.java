@@ -318,7 +318,8 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
                 completed.providerId(),
                 completed.completedAt(),
                 completed.followUpRequired(),
-                completed.nextFollowUpDate()
+            completed.nextFollowUpDate(),
+            abbreviate(trimmedNotes, 512)
         ));
 
         auditLogger.log(resolveActor(), "COMPLETE_TELECONSULTATION", appointmentId, correlationId);
@@ -361,6 +362,17 @@ public class AppointmentApplicationServiceImpl implements AppointmentApplication
         }
         String trimmed = raw.trim();
         return trimmed.contains("T") ? trimmed : trimmed + "T09:00:00Z";
+    }
+
+    private String abbreviate(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.length() <= maxLength) {
+            return trimmed;
+        }
+        return trimmed.substring(0, maxLength);
     }
 
     private String logEntry(String message) {

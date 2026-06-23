@@ -107,7 +107,8 @@ public class AlertQueueProcessor {
                         text(body, "providerId", ""),
                         text(body, "completedAt", ""),
                         body.path("followUpRequired").asBoolean(false),
-                        text(body, "nextFollowUpDate", null)
+                    text(body, "nextFollowUpDate", null),
+                    text(body, "consultationNotesSummary", "")
                 );
                 MessageEnvelope<TeleconsultationCompletedEvent> envelope =
                         new MessageEnvelope<>(correlationId, eventName, OffsetDateTime.now(), payload);

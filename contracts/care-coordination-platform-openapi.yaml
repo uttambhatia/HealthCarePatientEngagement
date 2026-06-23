@@ -50,10 +50,16 @@ components:
         consultationNotes: { type: string }
         followUpRequired: { type: boolean }
         nextFollowUpDate: { type: string, format: date-time }
+        prescriptions:
+          type: array
+          items: { type: string }
       example:
         consultationNotes: Consultation completed; patient advised to continue current treatment and follow-up in 2 weeks.
         followUpRequired: true
         nextFollowUpDate: 2026-07-15T11:00:00Z
+        prescriptions:
+          - Metformin 500mg twice daily
+          - Vitamin D3 once daily
     CarePlanRequest:
       type: object
       required: [patientId, goal, planStatus, ownerId, tasks]
@@ -226,6 +232,9 @@ components:
         consultationNotes: { type: string }
         followUpRequired: { type: boolean }
         nextFollowUpDate: { type: string, format: date-time }
+        prescriptions:
+          type: array
+          items: { type: string }
         interactionLogs:
           type: array
           items: { type: string }
@@ -241,6 +250,7 @@ components:
         consultationNotes:
         followUpRequired: false
         nextFollowUpDate:
+        prescriptions: []
         interactionLogs:
           - 2026-06-20T10:25:00Z | Teleconsultation initiated by doctor
           - 2026-06-20T10:30:30Z | Patient joined teleconsultation session
@@ -1103,6 +1113,8 @@ paths:
                   consultationNotes: Consultation completed and medication plan reviewed.
                   followUpRequired: true
                   nextFollowUpDate: 2026-07-15T11:00:00Z
+                  prescriptions:
+                    - Metformin 500mg twice daily
       responses:
         '200':
           description: Teleconsultation completed and notes recorded
@@ -1128,6 +1140,8 @@ paths:
                       consultationNotes: Consultation completed and medication plan reviewed.
                       followUpRequired: true
                       nextFollowUpDate: 2026-07-15T11:00:00Z
+                      prescriptions:
+                        - Metformin 500mg twice daily
                       interactionLogs:
                         - 2026-06-20T10:25:00Z | Teleconsultation initiated by doctor
                         - 2026-06-20T10:30:30Z | Patient joined teleconsultation session

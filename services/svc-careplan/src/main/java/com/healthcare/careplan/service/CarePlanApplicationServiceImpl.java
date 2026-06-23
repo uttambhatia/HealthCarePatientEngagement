@@ -13,6 +13,7 @@ import com.healthcare.careplan.exception.VersionConflictException;
 import com.healthcare.careplan.integration.CarePlanFhirAdapter;
 import com.healthcare.careplan.integration.CarePlanNotificationAdapter;
 import com.healthcare.careplan.repository.CarePlanRepository;
+import com.healthcare.platform.common.audit.AuditLogger;
 import com.healthcare.platform.common.messaging.MessagingPort;
 import org.springframework.stereotype.Service;
 
@@ -29,16 +30,19 @@ public class CarePlanApplicationServiceImpl implements CarePlanApplicationServic
     private final MessagingPort messagingPort;
     private final CarePlanFhirAdapter fhirAdapter;
     private final CarePlanNotificationAdapter notificationAdapter;
+    private final AuditLogger auditLogger;
 
     public CarePlanApplicationServiceImpl(
             CarePlanRepository repository,
             MessagingPort messagingPort,
             CarePlanFhirAdapter fhirAdapter,
-            CarePlanNotificationAdapter notificationAdapter) {
+            CarePlanNotificationAdapter notificationAdapter,
+            AuditLogger auditLogger) {
         this.repository = repository;
         this.messagingPort = messagingPort;
         this.fhirAdapter = fhirAdapter;
         this.notificationAdapter = notificationAdapter;
+        this.auditLogger = auditLogger;
     }
 
     @Override
@@ -68,6 +72,7 @@ public class CarePlanApplicationServiceImpl implements CarePlanApplicationServic
                     aggregate.tasks(),
                     aggregate.version()
             ));
+                auditLogger.log("SYSTEM", "CAREPLAN_CREATED", aggregate.id(), correlationId);
             return map(aggregate);
         } catch (RuntimeException exception) {
             repository.deleteById(aggregate.id());
@@ -108,6 +113,7 @@ public class CarePlanApplicationServiceImpl implements CarePlanApplicationServic
                 updated.tasks(),
                 updated.version()
         ));
+        auditLogger.log("SYSTEM", "CAREPLAN_UPDATED", updated.id(), correlationId);
 
         return map(updated);
     }

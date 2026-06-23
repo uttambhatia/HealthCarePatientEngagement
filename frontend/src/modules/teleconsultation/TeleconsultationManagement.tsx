@@ -52,6 +52,7 @@ export function TeleconsultationManagement() {
   const [consultationNotes, setConsultationNotes] = useState('')
   const [followUpRequired, setFollowUpRequired] = useState(false)
   const [nextFollowUpDate, setNextFollowUpDate] = useState('')
+  const [prescriptionsInput, setPrescriptionsInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [isError, setIsError] = useState(false)
@@ -279,12 +280,18 @@ export function TeleconsultationManagement() {
     setActionMessage(null)
 
     try {
+      const prescriptions = prescriptionsInput
+        .split(/[,\n]/)
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0)
+
       const response = await completeTeleconsultation(
         activeSession.appointmentId,
         {
           consultationNotes: consultationNotes.trim(),
           followUpRequired,
           nextFollowUpDate: followUpRequired ? nextFollowUpDate : undefined,
+          prescriptions: prescriptions.length > 0 ? prescriptions : undefined,
         },
         session.accessToken,
       )
@@ -295,6 +302,7 @@ export function TeleconsultationManagement() {
         setConsultationNotes('')
         setFollowUpRequired(false)
         setNextFollowUpDate('')
+        setPrescriptionsInput('')
       }
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'We could not complete the tele-consultation session right now. Please try again.'
@@ -319,6 +327,7 @@ export function TeleconsultationManagement() {
       `Completed: ${completedSession.completedAt ? new Date(completedSession.completedAt).toLocaleString() : 'Not recorded'}`,
       `Follow-up required: ${completedSession.followUpRequired ? 'Yes' : 'No'}`,
       `Next follow-up: ${completedSession.nextFollowUpDate ?? 'None'}`,
+      `Prescriptions: ${completedSession.prescriptions && completedSession.prescriptions.length > 0 ? completedSession.prescriptions.join('; ') : 'None'}`,
       '',
       'Consultation notes:',
       completedSession.consultationNotes ?? '(none)',
@@ -424,6 +433,15 @@ export function TeleconsultationManagement() {
                 <textarea value={consultationNotes} onChange={(event) => setConsultationNotes(event.target.value)} />
               </label>
 
+              <label className="field-block">
+                <LabelWithIcon icon="notes">Prescriptions (optional)</LabelWithIcon>
+                <textarea
+                  value={prescriptionsInput}
+                  onChange={(event) => setPrescriptionsInput(event.target.value)}
+                  placeholder="Enter one medicine per line or comma-separated"
+                />
+              </label>
+
               <label className="field-block teleconsult-followup-toggle">
                 <input type="checkbox" checked={followUpRequired} onChange={(event) => setFollowUpRequired(event.target.checked)} />
                 <LabelWithIcon icon="followup">Schedule follow-up</LabelWithIcon>
@@ -480,6 +498,17 @@ export function TeleconsultationManagement() {
             <div className="teleconsult-post-session-notes">
               <h4>Recorded consultation notes</h4>
               <p>{completedSession.consultationNotes}</p>
+            </div>
+          ) : null}
+
+          {completedSession.prescriptions && completedSession.prescriptions.length > 0 ? (
+            <div className="teleconsult-post-session-notes">
+              <h4>Prescriptions</h4>
+              <ul>
+                {completedSession.prescriptions.map((prescription) => (
+                  <li key={prescription}>{prescription}</li>
+                ))}
+              </ul>
             </div>
           ) : null}
 

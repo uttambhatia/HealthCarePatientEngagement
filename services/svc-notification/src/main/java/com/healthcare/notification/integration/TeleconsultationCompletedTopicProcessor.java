@@ -110,7 +110,8 @@ public class TeleconsultationCompletedTopicProcessor {
                     text(body, "providerId", ""),
                     text(body, "completedAt", ""),
                     bool(body, "followUpRequired", false),
-                    text(body, "nextFollowUpDate", "")
+                    text(body, "nextFollowUpDate", ""),
+                    text(body, "consultationNotesSummary", "")
             );
 
             MessageEnvelope<TeleconsultationCompletedEvent> envelope =

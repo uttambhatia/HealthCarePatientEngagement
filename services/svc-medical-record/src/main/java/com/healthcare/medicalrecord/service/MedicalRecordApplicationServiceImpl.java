@@ -10,6 +10,7 @@ import com.healthcare.medicalrecord.exception.ResourceNotFoundException;
 import com.healthcare.medicalrecord.exception.VersionConflictException;
 import com.healthcare.medicalrecord.integration.FhirAdapter;
 import com.healthcare.medicalrecord.repository.MedicalRecordRepository;
+import com.healthcare.platform.common.audit.AuditLogger;
 import com.healthcare.platform.common.messaging.MessagingPort;
 import org.springframework.stereotype.Service;
 
@@ -34,11 +35,13 @@ public class MedicalRecordApplicationServiceImpl implements MedicalRecordApplica
     private final MedicalRecordRepository repository;
     private final MessagingPort messagingPort;
     private final FhirAdapter integration;
+    private final AuditLogger auditLogger;
 
-    public MedicalRecordApplicationServiceImpl(MedicalRecordRepository repository, MessagingPort messagingPort, FhirAdapter integration) {
+    public MedicalRecordApplicationServiceImpl(MedicalRecordRepository repository, MessagingPort messagingPort, FhirAdapter integration, AuditLogger auditLogger) {
         this.repository = repository;
         this.messagingPort = messagingPort;
         this.integration = integration;
+        this.auditLogger = auditLogger;
     }
 
     @Override
@@ -63,6 +66,7 @@ public class MedicalRecordApplicationServiceImpl implements MedicalRecordApplica
                 aggregate.resourceReference(),
                 aggregate.summary()
         ));
+        auditLogger.log("SYSTEM", "MEDICAL_RECORD_SYNCED", aggregate.id(), correlationId);
         return map(aggregate);
     }
 
@@ -95,6 +99,7 @@ public class MedicalRecordApplicationServiceImpl implements MedicalRecordApplica
                 updated.resourceReference(),
                 updated.summary()
         ));
+        auditLogger.log("SYSTEM", "MEDICAL_RECORD_UPDATED", updated.id(), correlationId);
 
         return map(updated);
     }

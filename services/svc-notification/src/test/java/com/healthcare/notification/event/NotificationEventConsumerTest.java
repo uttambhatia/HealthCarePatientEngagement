@@ -3,7 +3,9 @@ package com.healthcare.notification.event;
 import com.healthcare.notification.dto.CreateNotificationRequest;
 import com.healthcare.notification.port.AppointmentBookingPort;
 import com.healthcare.notification.service.NotificationApplicationService;
+import com.healthcare.platform.common.audit.AuditLogger;
 import com.healthcare.platform.common.event.MessageEnvelope;
+import com.healthcare.platform.common.messaging.MessagingPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -15,8 +17,10 @@ import java.time.OffsetDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationEventConsumerTest {
@@ -27,8 +31,20 @@ class NotificationEventConsumerTest {
     @Mock
     private AppointmentBookingPort followUpAppointmentAdapter;
 
+        @Mock
+        private MessagingPort messagingPort;
+
+        private final AuditLogger auditLogger = new AuditLogger();
+
     private NotificationEventConsumer consumer() {
-        return new NotificationEventConsumer(notificationService, followUpAppointmentAdapter, "SMS", "teleconsult-followup-v1");
+                return new NotificationEventConsumer(
+                                notificationService,
+                                followUpAppointmentAdapter,
+                                messagingPort,
+                                auditLogger,
+                                "SMS",
+                                "teleconsult-followup-v1",
+                                "notification-service");
     }
 
     @Test
@@ -40,7 +56,8 @@ class NotificationEventConsumerTest {
                 "prov-44",
                 "2026-06-01T10:10:00Z",
                 true,
-                "2026-06-15T09:30:00Z"
+                "2026-06-15T09:30:00Z",
+                "Patient improving clinically"
         );
 
         MessageEnvelope<TeleconsultationCompletedEvent> envelope = new MessageEnvelope<>(
@@ -53,12 +70,12 @@ class NotificationEventConsumerTest {
         consumer().handleTeleconsultationCompleted(envelope);
 
         ArgumentCaptor<CreateNotificationRequest> requestCaptor = ArgumentCaptor.forClass(CreateNotificationRequest.class);
-        verify(notificationService).sendNotification(requestCaptor.capture(), eq("corr-5001"));
+        verify(notificationService, times(2)).sendNotification(requestCaptor.capture(), eq("corr-5001"));
 
-        CreateNotificationRequest request = requestCaptor.getValue();
+        CreateNotificationRequest request = requestCaptor.getAllValues().get(0);
         assertThat(request.recipientId()).isEqualTo("pat-3001");
         assertThat(request.channel()).isEqualTo("SMS");
-        assertThat(request.templateId()).isEqualTo("teleconsult-followup-v1");
+        assertThat(request.templateId()).isEqualTo("teleconsult-summary-v1");
         assertThat(request.message()).contains("2026-06-15T09:30:00Z");
     }
 
@@ -71,7 +88,8 @@ class NotificationEventConsumerTest {
                 "prov-44",
                 "2026-06-01T10:10:00Z",
                 true,
-                "2026-06-15T09:30:00Z"
+                "2026-06-15T09:30:00Z",
+                "Patient improving clinically"
         );
 
         MessageEnvelope<TeleconsultationCompletedEvent> envelope = new MessageEnvelope<>(
@@ -81,6 +99,8 @@ class NotificationEventConsumerTest {
                 payload
         );
 
+        when(followUpAppointmentAdapter.createFollowUpAppointment(any(), any(), any(), any())).thenReturn(true);
+
         consumer().handleTeleconsultationCompleted(envelope);
 
         verify(followUpAppointmentAdapter).createFollowUpAppointment(
@@ -89,6 +109,7 @@ class NotificationEventConsumerTest {
                 eq("2026-06-15T09:30:00Z"),
                 eq("corr-5001")
         );
+        verify(messagingPort).publish(eq("notification-service"), eq("corr-5001"), any(FollowUpScheduledEvent.class));
     }
 
     @Test
@@ -100,7 +121,8 @@ class NotificationEventConsumerTest {
                 "prov-77",
                 "2026-06-01T11:10:00Z",
                 false,
-                ""
+                "",
+                "No follow-up needed"
         );
 
         MessageEnvelope<TeleconsultationCompletedEvent> envelope = new MessageEnvelope<>(
@@ -112,8 +134,9 @@ class NotificationEventConsumerTest {
 
         consumer().handleTeleconsultationCompleted(envelope);
 
-        verify(notificationService, never()).sendNotification(any(), any());
+                verify(notificationService, times(2)).sendNotification(any(), any());
         verify(followUpAppointmentAdapter, never()).createFollowUpAppointment(any(), any(), any(), any());
+                verify(messagingPort, never()).publish(any(), any(), any());
     }
 }
 

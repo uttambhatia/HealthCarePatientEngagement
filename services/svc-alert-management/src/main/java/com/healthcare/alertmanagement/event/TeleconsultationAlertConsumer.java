@@ -37,8 +37,31 @@ public class TeleconsultationAlertConsumer {
         LOGGER.info("Evaluating teleconsultation for clinical alerts correlationId={} appointmentId={} patientId={}",
                 envelope.correlationId(), event.appointmentId(), event.patientId());
 
-        // Note content is not included in the event payload — alert on metadata conditions instead
-        // (full note evaluation requires access to the medical record service)
+        // Evaluate keyword matches from the event note summary when present.
+        // Full note text is still not propagated in events.
+        String notesSummary = event.consultationNotesSummary();
+        if (notesSummary != null && !notesSummary.isBlank() && criticalKeywordPattern.matcher(notesSummary).find()) {
+            try {
+                alertApplicationService.triggerAlert(
+                        new CreateAlertRequest(
+                                event.patientId(),
+                                null,
+                                "HIGH",
+                                "TELECONSULT_CRITICAL_FINDINGS",
+                                null,
+                                "Critical findings detected in teleconsultation notes for appointment "
+                                        + event.appointmentId() + ". Notes summary: " + notesSummary
+                        ),
+                        envelope.correlationId()
+                );
+                LOGGER.warn("Triggered TELECONSULT_CRITICAL_FINDINGS alert patientId={} appointmentId={} correlationId={}",
+                        event.patientId(), event.appointmentId(), envelope.correlationId());
+            } catch (Exception ex) {
+                LOGGER.error("Failed to trigger teleconsult critical finding alert patientId={} appointmentId={} correlationId={} error={}",
+                        event.patientId(), event.appointmentId(), envelope.correlationId(), ex.getMessage());
+            }
+        }
+
         // Trigger an informational alert when follow-up is required and no follow-up date was provided
         if (event.followUpRequired() && (event.nextFollowUpDate() == null || event.nextFollowUpDate().isBlank())) {
             try {
