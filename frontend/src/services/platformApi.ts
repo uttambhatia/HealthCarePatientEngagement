@@ -475,3 +475,26 @@ export async function requestTeleconsultToken(request: TeleconsultTokenRequest, 
   )
   return extractData(payload) as TeleconsultTokenResponse
 }
+
+export type AlertResponse = {
+  id: string
+  status: string
+  patientId: string
+  deviceId?: string
+  severity: string
+  triggerType: string
+  summary: string
+}
+
+export async function listAlerts(token?: string) {
+  const payload = await apiClient<Envelope<AlertResponse[]> | AlertResponse[]>(platformRoutes.alerts, { token })
+  return normalizeArray(payload) as AlertResponse[]
+}
+
+export async function getAppointment(id: string, token?: string) {
+  const payload = await apiClient<Envelope<AppointmentResponse> | AppointmentResponse>(
+    `${platformRoutes.appointments}/${encodeURIComponent(id)}`,
+    { token },
+  )
+  return extractData(payload) as AppointmentResponse
+}

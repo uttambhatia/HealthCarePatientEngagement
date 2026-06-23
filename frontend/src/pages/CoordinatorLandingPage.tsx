@@ -2,9 +2,12 @@ import { useState, type ReactNode } from 'react'
 import { Card } from '../components/Card'
 import { MetricCardIcon, type MetricVariant } from '../components/MetricCardIcon'
 import { CarePlanManagement } from '../modules/careplan/CarePlanManagement'
+import { FollowUpTaskboard } from '../modules/careplan/FollowUpTaskboard'
 import { NotificationsPanel } from '../modules/notification/NotificationsPanel'
 import { TeleconsultationWorkspace } from '../modules/teleconsultation/TeleconsultationWorkspace'
 import type { Role } from '../utils/roleUtils'
+
+type CoordinatorPanel = 'careplan' | 'followup' | 'support'
 
 type CoordinatorLandingPageProps = {
   role: Role
@@ -25,10 +28,20 @@ function CoordinatorModuleGrid({ children }: { children: ReactNode }) {
 }
 
 export function CoordinatorLandingPage({ role }: CoordinatorLandingPageProps) {
-  const [showSupportPanel, setShowSupportPanel] = useState(false)
+  const [activePanel, setActivePanel] = useState<CoordinatorPanel>('careplan')
   const [isRightPaneMaximized, setIsRightPaneMaximized] = useState(false)
-  const togglePanel = () => setShowSupportPanel((current) => !current)
   const toggleRightPaneSize = () => setIsRightPaneMaximized((current) => !current)
+
+  const panelOrder: CoordinatorPanel[] = ['careplan', 'followup', 'support']
+  const panelLabels: Record<CoordinatorPanel, string> = {
+    careplan: 'Care plan management',
+    followup: 'Follow-up taskboard',
+    support: 'Operational support',
+  }
+
+  const currentIndex = panelOrder.indexOf(activePanel)
+  const nextPanel = panelOrder[(currentIndex + 1) % panelOrder.length]
+  const prevPanel = panelOrder[(currentIndex - 1 + panelOrder.length) % panelOrder.length]
 
   return (
     <div className="workspace-stack coordinator-landing">
@@ -54,9 +67,9 @@ export function CoordinatorLandingPage({ role }: CoordinatorLandingPageProps) {
         </section>
 
         <Card
-          title={showSupportPanel ? 'Operational support' : 'Coordinator workflow'}
-          eyebrow={showSupportPanel ? 'Supporting tools' : 'Landing page'}
-          subtitle={showSupportPanel ? 'Notifications and teleconsultation support the primary care-plan workflow.' : undefined}
+          title={panelLabels[activePanel]}
+          eyebrow={activePanel === 'support' ? 'Supporting tools' : 'Landing page'}
+          subtitle={activePanel === 'support' ? 'Notifications and teleconsultation support the primary care-plan workflow.' : undefined}
           centeredHeader
           actions={(
             <div className="coordinator-panel-actions">
@@ -87,27 +100,50 @@ export function CoordinatorLandingPage({ role }: CoordinatorLandingPageProps) {
               </button>
               <button
                 type="button"
-                className="primary-button coordinator-panel-nav"
-                onClick={togglePanel}
-                aria-label={showSupportPanel ? 'Back to coordinator workflow' : 'Go to operational support'}
+                className="secondary-button coordinator-panel-nav"
+                onClick={() => setActivePanel(prevPanel)}
+                aria-label={`Go to ${panelLabels[prevPanel]}`}
               >
-                {showSupportPanel ? '← Back' : 'Next →'}
+                ← {panelLabels[prevPanel]}
+              </button>
+              <button
+                type="button"
+                className="primary-button coordinator-panel-nav"
+                onClick={() => setActivePanel(nextPanel)}
+                aria-label={`Go to ${panelLabels[nextPanel]}`}
+              >
+                {panelLabels[nextPanel]} →
               </button>
             </div>
           )}
         >
-          <button
-            type="button"
-            className="coordinator-panel-stepper coordinator-panel-stepper--centered"
-            data-tooltip={showSupportPanel ? 'Operational support' : 'Coordinator workflow'}
-            aria-label={showSupportPanel ? 'Back to coordinator workflow' : 'Go to operational support'}
-            onClick={togglePanel}
-          >
-            <span className="coordinator-panel-stepper-node coordinator-panel-stepper-node--active" />
-            <span className={`coordinator-panel-stepper-node${showSupportPanel ? ' coordinator-panel-stepper-node--active' : ''}`} />
-          </button>
+          {/* 3-dot stepper */}
+          <div className="coordinator-panel-stepper coordinator-panel-stepper--centered">
+            {panelOrder.map((panel) => (
+              <button
+                key={panel}
+                type="button"
+                className={`coordinator-panel-stepper-node${activePanel === panel ? ' coordinator-panel-stepper-node--active' : ''}`}
+                aria-label={`Go to ${panelLabels[panel]}`}
+                title={panelLabels[panel]}
+                onClick={() => setActivePanel(panel)}
+              />
+            ))}
+          </div>
 
-          {showSupportPanel ? (
+          {activePanel === 'careplan' ? (
+            <CoordinatorModuleGrid>
+              <div className="module-slot module-slot--featured coordinator-right-panel-grid">
+                <CarePlanManagement />
+              </div>
+            </CoordinatorModuleGrid>
+          ) : activePanel === 'followup' ? (
+            <CoordinatorModuleGrid>
+              <div className="module-slot module-slot--featured coordinator-right-panel-grid">
+                <FollowUpTaskboard />
+              </div>
+            </CoordinatorModuleGrid>
+          ) : (
             <div className="dashboard-grid dashboard-grid--support coordinator-right-panel-grid">
               <div className="module-slot">
                 <NotificationsPanel />
@@ -116,12 +152,6 @@ export function CoordinatorLandingPage({ role }: CoordinatorLandingPageProps) {
                 <TeleconsultationWorkspace />
               </div>
             </div>
-          ) : (
-            <CoordinatorModuleGrid>
-              <div className="module-slot module-slot--featured coordinator-right-panel-grid">
-                <CarePlanManagement />
-              </div>
-            </CoordinatorModuleGrid>
           )}
         </Card>
       </section>
