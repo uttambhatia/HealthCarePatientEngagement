@@ -5,6 +5,7 @@ import com.azure.core.credential.TokenRequestContext;
 import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.healthcare.patient.domain.PatientProfile;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,13 +30,27 @@ public class PatientFhirAdapter {
     private final int maxAttempts;
     private final ObjectMapper objectMapper;
 
+    @Autowired
     public PatientFhirAdapter(
             RestClient.Builder restClientBuilder,
             @Value("${platform.integration.fhir.base-url:}") String baseUrl,
             @Value("${platform.integration.fhir.audience:}") String audience,
             @Value("${platform.messaging.retryAttempts:3}") int maxAttempts) {
+        this(restClientBuilder,
+                baseUrl,
+                audience,
+                maxAttempts,
+                baseUrl.isBlank() ? null : new DefaultAzureCredentialBuilder().build());
+    }
+
+    PatientFhirAdapter(
+            RestClient.Builder restClientBuilder,
+            String baseUrl,
+            String audience,
+            int maxAttempts,
+            TokenCredential credential) {
         this.restClient = baseUrl.isBlank() ? null : restClientBuilder.baseUrl(baseUrl).build();
-        this.credential = baseUrl.isBlank() ? null : new DefaultAzureCredentialBuilder().build();
+        this.credential = credential;
         this.audience = audience;
         this.maxAttempts = Math.max(1, maxAttempts);
         this.objectMapper = new ObjectMapper();
@@ -88,6 +103,7 @@ public class PatientFhirAdapter {
 
         LOGGER.error("Patient FHIR integration failed after all retries for aggregateId={} correlationId={} - patient record created but FHIR sync incomplete", 
                 aggregate.id(), correlationId);
+        throw new IllegalStateException("Patient FHIR integration failed after retries", lastError);
     }
 
     private String acquireToken() {
