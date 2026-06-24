@@ -1,5 +1,8 @@
 package com.healthcare.patient.integration;
 
+import com.azure.core.credential.AccessToken;
+import com.azure.core.credential.TokenCredential;
+import com.azure.core.credential.TokenRequestContext;
 import com.healthcare.patient.domain.PatientProfile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
+
+import java.time.OffsetDateTime;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
@@ -28,11 +33,19 @@ class PatientFhirAdapterContractTest {
 
     @Test
     void shouldRetryAndFailWhenFhirSyncKeepsFailing() {
+        TokenCredential credential = new TokenCredential() {
+            @Override
+            public reactor.core.publisher.Mono<AccessToken> getToken(TokenRequestContext request) {
+                return reactor.core.publisher.Mono.just(new AccessToken("test-token", OffsetDateTime.now().plusHours(1)));
+            }
+        };
+
         PatientFhirAdapter adapter = new PatientFhirAdapter(
                 restClientBuilder,
                 "http://fhir.example.internal",
-                "/fhir/patients",
-                2
+                "https://fhir.example.internal",
+                2,
+                credential
         );
 
         PatientProfile profile = new PatientProfile(
@@ -50,8 +63,9 @@ class PatientFhirAdapterContractTest {
                 null
         );
 
-        server.expect(ExpectedCount.times(2), requestTo("http://fhir.example.internal/fhir/patients"))
-                .andExpect(method(HttpMethod.POST))
+        server.expect(ExpectedCount.times(2), requestTo("http://fhir.example.internal/Patient/pat-1"))
+                .andExpect(method(HttpMethod.PUT))
+                .andExpect(header("Authorization", "Bearer " + "test-token"))
                 .andExpect(header("X-Correlation-Id", "corr-123"))
                 .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
 

@@ -1,0 +1,15 @@
+platform:
+  security:
+    enabled: false
+  routes:
+    patients-uri: http://localhost:8081
+    appointments-uri: http://localhost:8082
+    careplans-uri: http://localhost:8083
+    consents-uri: http://localhost:8084
+    medical-records-uri: http://localhost:8085
+    notifications-uri: http://localhost:8086
+    telemetry-uri: http://localhost:8087
+    device-events-uri: http://localhost:8088
+    alerts-uri: http://localhost:8089
+    identity-assertions-uri: http://localhost:8090
+    servicebus-messages-uri: http://localhost:8091
