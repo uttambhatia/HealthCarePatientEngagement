@@ -36,7 +36,7 @@ export function CoordinatorLandingPage({ role }: CoordinatorLandingPageProps) {
   const panelLabels: Record<CoordinatorPanel, string> = {
     careplan: 'Care plan management',
     followup: 'Follow-up taskboard',
-    support: 'Operational support',
+    support: 'Operational Support',
   }
 
   const currentIndex = panelOrder.indexOf(activePanel)
@@ -75,7 +75,7 @@ export function CoordinatorLandingPage({ role }: CoordinatorLandingPageProps) {
             <div className="coordinator-panel-actions">
               <button
                 type="button"
-                className="primary-button coordinator-pane-size-toggle"
+                className="secondary-button coordinator-pane-size-toggle"
                 onClick={toggleRightPaneSize}
                 aria-label={isRightPaneMaximized ? 'Minimize right pane' : 'Maximize right pane'}
               >
@@ -98,6 +98,24 @@ export function CoordinatorLandingPage({ role }: CoordinatorLandingPageProps) {
                 </span>
                 <span className="coordinator-pane-size-toggle-label">{isRightPaneMaximized ? 'Minimize' : 'Maximize'}</span>
               </button>
+            </div>
+          )}
+        >
+          <div className="coordinator-panel-toolbar">
+            {/* 3-dot stepper */}
+            <div className="coordinator-panel-stepper">
+              {panelOrder.map((panel) => (
+                <button
+                  key={panel}
+                  type="button"
+                  className={`coordinator-panel-stepper-node${activePanel === panel ? ' coordinator-panel-stepper-node--active' : ''}`}
+                  aria-label={`Go to ${panelLabels[panel]}`}
+                  title={panelLabels[panel]}
+                  onClick={() => setActivePanel(panel)}
+                />
+              ))}
+            </div>
+            <div className="coordinator-panel-nav-group">
               <button
                 type="button"
                 className="secondary-button coordinator-panel-nav"
@@ -115,20 +133,6 @@ export function CoordinatorLandingPage({ role }: CoordinatorLandingPageProps) {
                 {panelLabels[nextPanel]} →
               </button>
             </div>
-          )}
-        >
-          {/* 3-dot stepper */}
-          <div className="coordinator-panel-stepper coordinator-panel-stepper--centered">
-            {panelOrder.map((panel) => (
-              <button
-                key={panel}
-                type="button"
-                className={`coordinator-panel-stepper-node${activePanel === panel ? ' coordinator-panel-stepper-node--active' : ''}`}
-                aria-label={`Go to ${panelLabels[panel]}`}
-                title={panelLabels[panel]}
-                onClick={() => setActivePanel(panel)}
-              />
-            ))}
           </div>
 
           {activePanel === 'careplan' ? (

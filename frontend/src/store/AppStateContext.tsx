@@ -1,4 +1,6 @@
 import { createContext, useMemo, type PropsWithChildren } from 'react'
+import { useAuth } from '../auth/useAuth'
+import { listNotifications } from '../services/platformApi'
 import { useRealtimeFeed } from '../hooks/useRealtimeFeed'
 
 type AppStateValue = {
@@ -9,11 +11,9 @@ type AppStateValue = {
 const AppStateContext = createContext<AppStateValue | undefined>(undefined)
 
 export function AppStateProvider({ children }: PropsWithChildren) {
-  const feed = useRealtimeFeed([
-    'Patient onboarding saga ready',
-    'Appointment notification queue healthy',
-    'Telemetry ingestion within SLA',
-  ])
+  const { session } = useAuth()
+
+  const feed = useRealtimeFeed([], listNotifications, session?.accessToken)
 
   const { items: liveUpdates, transport: liveTransport } = feed
 

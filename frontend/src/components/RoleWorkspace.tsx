@@ -80,7 +80,7 @@ const roleBlueprints: Record<Role, RoleBlueprint> = {
     ],
   },
   ADMIN: {
-    title: 'Operational governance center',
+    title: 'Operational Governance Center',
     summary: 'See service posture, policy visibility, and platform health from one control surface designed for governance work.',
     focus: ['Watch service posture', 'Inspect IoT health', 'Audit governance workflows'],
     metrics: [

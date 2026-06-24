@@ -173,9 +173,9 @@ export function PatientRegistrationForm({ onBack, onSaved }: PatientRegistration
           ← Back
         </button>
         <div>
-          <p className="eyebrow">Patient onboarding</p>
-          <h2>Register new patient</h2>
-          <p>Capture the UC-01 intake fields, create the profile, and queue the confirmation notification.</p>
+          <p className="eyebrow">Patient Onboarding</p>
+          <h2>Register New Patient</h2>
+          <p>Enter patient details to create a health profile and send registration confirmation.</p>
         </div>
       </div>
 
@@ -187,7 +187,7 @@ export function PatientRegistrationForm({ onBack, onSaved }: PatientRegistration
               value={form.externalReference}
               onChange={(event) => updateField('externalReference', event.target.value)}
               onBlur={() => markFieldTouched('externalReference')}
-              placeholder="EXT-1001"
+              placeholder="MRN/NHS/EMR/other ID"
               required
               aria-invalid={fieldState('externalReference').showError}
               aria-describedby={fieldState('externalReference').showError ? fieldState('externalReference').errorId : undefined}

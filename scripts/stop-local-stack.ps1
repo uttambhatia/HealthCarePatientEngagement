@@ -15,14 +15,14 @@ function Stop-PortListeners {
         }
 
         $pids = @($listeners | Select-Object -ExpandProperty OwningProcess -Unique)
-        foreach ($pid in $pids) {
+        foreach ($processId in $pids) {
             try {
-                $proc = Get-Process -Id $pid -ErrorAction Stop
-                Write-Host "Stopping PID $pid ($($proc.ProcessName)) on port $port"
-                Stop-Process -Id $pid -Force -ErrorAction Stop
+                $proc = Get-Process -Id $processId -ErrorAction Stop
+                Write-Host "Stopping PID $processId ($($proc.ProcessName)) on port $port"
+                Stop-Process -Id $processId -Force -ErrorAction Stop
             }
             catch {
-                Write-Warning "Unable to stop PID $pid on port ${port}: $($_.Exception.Message)"
+                Write-Warning "Unable to stop PID $processId on port ${port}: $($_.Exception.Message)"
             }
         }
     }

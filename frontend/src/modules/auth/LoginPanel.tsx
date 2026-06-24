@@ -46,6 +46,17 @@ type LoginPanelProps = {
   registrationPanel?: ReactNode
 }
 
+const loginCarouselImages = [
+  {
+    src: '/PE1.png',
+    alt: 'Secure healthcare access overview',
+  },
+  {
+    src: '/patient-engagement_2.png',
+    alt: 'Safer handoffs and coordinated care continuity',
+  },
+]
+
 export function LoginPanel({
   oidcEnabled,
   authError,
@@ -183,6 +194,12 @@ export function LoginPanel({
               </div>
             </article>
           </div>
+
+          <img
+            className="login-carousel-image"
+            src={loginCarouselImages[activeSlide]?.src ?? loginCarouselImages[0].src}
+            alt={loginCarouselImages[activeSlide]?.alt ?? loginCarouselImages[0].alt}
+          />
 
           <div className="login-carousel-stepper" aria-label="Login highlights auto rotation">
             <span className={`login-carousel-stepper-node${activeSlide === 0 ? ' login-carousel-stepper-node--active' : ''}`} />

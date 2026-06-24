@@ -54,14 +54,22 @@ export function PatientLandingPage({ role }: PatientLandingPageProps) {
 
         <Card
           title={showSupportPanel ? 'Care support' : 'Patient workflow'}
-          eyebrow={showSupportPanel ? 'Supporting tools' : 'Landing page'}
-          subtitle={showSupportPanel ? 'Notifications and teleconsultation support the primary patient workflow.' : undefined}
+          eyebrow={showSupportPanel ? 'Supporting tools' : undefined}
+          subtitle={showSupportPanel ? 'Notifications and teleconsultation support the primary patient workflow.' : 'Registration, consent, and appointment progress'}
           centeredHeader
           actions={(
             <div className="patient-panel-actions">
               <button
                 type="button"
-                className="primary-button patient-pane-size-toggle"
+                className="primary-button patient-panel-nav"
+                onClick={togglePanel}
+                aria-label={showSupportPanel ? 'Switch to patient workflow' : 'Switch to care support'}
+              >
+                {showSupportPanel ? 'Patient workflow' : 'Care support'}
+              </button>
+              <button
+                type="button"
+                className="secondary-button patient-pane-size-toggle"
                 onClick={toggleRightPaneSize}
                 aria-label={isRightPaneMaximized ? 'Minimize right pane' : 'Maximize right pane'}
               >
@@ -83,14 +91,6 @@ export function PatientLandingPage({ role }: PatientLandingPageProps) {
                   )}
                 </span>
                 <span className="patient-pane-size-toggle-label">{isRightPaneMaximized ? 'Minimize' : 'Maximize'}</span>
-              </button>
-              <button
-                type="button"
-                className="primary-button patient-panel-nav"
-                onClick={togglePanel}
-                aria-label={showSupportPanel ? 'Back to patient workflow' : 'Go to care support'}
-              >
-                {showSupportPanel ? '← Back' : 'Next →'}
               </button>
             </div>
           )}

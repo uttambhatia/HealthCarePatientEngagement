@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import { LabelWithIcon } from '../../components/LabelWithIcon'
-import { createAppointment, listAppointments, listAvailableSlots } from '../../services/platformApi'
+import { createAppointment, listAppointments, listAvailableSlots, listPatients } from '../../services/platformApi'
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   const [, payload] = token.split('.')
@@ -49,11 +49,22 @@ function formatSlotLabel(value: string) {
 
 type PatientAppointmentBookingProps = {
   onBooked?: () => Promise<void> | void
+  onCancel?: () => void
 }
 
-export function PatientAppointmentBooking({ onBooked }: PatientAppointmentBookingProps) {
+type PatientDisplayInfo = {
+  internalId: string
+  displayText: string
+}
+
+export function PatientAppointmentBooking({ onBooked, onCancel }: PatientAppointmentBookingProps) {
   const { session } = useAuth()
   const [patientId, setPatientId] = useState('')
+  const [patientList, setPatientList] = useState<Record<string, unknown>[]>([])
+  const [patientDisplay, setPatientDisplay] = useState<PatientDisplayInfo>({
+    internalId: '',
+    displayText: '',
+  })
   const [providerId, setProviderId] = useState('')
   const [selectedProvider, setSelectedProvider] = useState('')
   const [providerOptions, setProviderOptions] = useState<string[]>([])
@@ -78,11 +89,70 @@ export function PatientAppointmentBooking({ onBooked }: PatientAppointmentBookin
     return inferPatientId(claims)
   }, [session])
 
+  const matchedPatient = useMemo(() => {
+    if (!inferredPatientId || !patientList.length) return null
+
+    const normalized = inferredPatientId.trim().toLowerCase()
+    return patientList.find((p: Record<string, unknown>) => {
+      const pId = (p.id as string)?.trim().toLowerCase() || ''
+      const pExtRef = (p.externalReference as string)?.trim().toLowerCase() || ''
+      return pId === normalized || pExtRef === normalized
+    }) || null
+  }, [inferredPatientId, patientList])
+
   useEffect(() => {
     if (!patientId && inferredPatientId) {
       setPatientId(inferredPatientId)
     }
   }, [inferredPatientId, patientId])
+
+  useEffect(() => {
+    if (matchedPatient) {
+      const given = ((matchedPatient.givenName as string) || '').trim()
+      const family = ((matchedPatient.familyName as string) || '').trim()
+      const extRef = ((matchedPatient.externalReference as string) || '').trim()
+
+      const namePart = [given, family].filter(Boolean).join(' ').trim()
+      const displayText = [namePart, extRef && `- ${extRef}`].filter(Boolean).join(' ')
+
+      setPatientDisplay({
+        internalId: inferredPatientId,
+        displayText: displayText || inferredPatientId,
+      })
+    } else {
+      setPatientDisplay({
+        internalId: inferredPatientId,
+        displayText: inferredPatientId,
+      })
+    }
+  }, [matchedPatient, inferredPatientId])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadPatientList() {
+      if (!session) {
+        return
+      }
+
+      try {
+        const patients = await listPatients(session.accessToken)
+        if (active) {
+          setPatientList(Array.isArray(patients) ? patients : [])
+        }
+      } catch {
+        if (active) {
+          setPatientList([])
+        }
+      }
+    }
+
+    void loadPatientList()
+
+    return () => {
+      active = false
+    }
+  }, [session])
 
   useEffect(() => {
     let active = true
@@ -185,7 +255,7 @@ export function PatientAppointmentBooking({ onBooked }: PatientAppointmentBookin
 
     const selectedTime = selectedSlot || manualScheduledAt.trim()
 
-    if (!patientId.trim() || !providerId.trim() || !selectedTime) {
+    if (!patientDisplay.internalId.trim() || !providerId.trim() || !selectedTime) {
       setIsError(true)
       setResultMessage('Patient ID, Provider ID and appointment time are required.')
       return
@@ -199,7 +269,7 @@ export function PatientAppointmentBooking({ onBooked }: PatientAppointmentBookin
       const normalizedDate = Number.isNaN(Date.parse(selectedTime)) ? selectedTime : new Date(selectedTime).toISOString()
       await createAppointment(
         {
-          patientId: patientId.trim(),
+          patientId: patientDisplay.internalId.trim(),
           providerId: providerId.trim(),
           scheduledAt: normalizedDate,
           channel,
@@ -208,6 +278,7 @@ export function PatientAppointmentBooking({ onBooked }: PatientAppointmentBookin
       )
       await onBooked?.()
       setResultMessage('Appointment booked successfully. A confirmation event has been sent.')
+      setPatientId(patientDisplay.internalId)
       setProviderId('')
       setSelectedProvider(providerOptions[0] ?? 'CUSTOM')
       setSelectedSlot('')
@@ -232,12 +303,16 @@ export function PatientAppointmentBooking({ onBooked }: PatientAppointmentBookin
         <div className="field-grid">
           <label className="field-block">
             <LabelWithIcon icon="patient">Patient ID</LabelWithIcon>
-            <input
-              value={patientId}
-              placeholder="pat-1001"
-              onChange={(event) => setPatientId(event.target.value)}
-            />
-            {inferredPatientId ? <small>Prefilled from your session token.</small> : null}
+            <div style={{ padding: '8px 0', fontWeight: '500', minHeight: '36px', display: 'flex', alignItems: 'center' }}>
+              {patientDisplay.displayText}
+            </div>
+            {matchedPatient ? (
+              <small>Patient profile loaded from system.</small>
+            ) : inferredPatientId ? (
+              <small>Prefilled from your session token.</small>
+            ) : (
+              <small>Unable to identify patient.</small>
+            )}
           </label>
           <label className="field-block">
             <LabelWithIcon icon="provider">Provider ID</LabelWithIcon>
@@ -332,9 +407,12 @@ export function PatientAppointmentBooking({ onBooked }: PatientAppointmentBookin
           </label>
         </div>
 
-        <div className="form-actions">
-          <button type="submit" className="primary-button" disabled={submitting}>
-            {submitting ? 'Booking...' : 'Book appointment'}
+        <div className="patient-appointment-form-actions">
+          <button type="button" className="secondary-button patient-appointment-submit-button" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="submit" className="primary-button patient-appointment-submit-button" disabled={submitting}>
+            {submitting ? 'Booking...' : 'Book'}
           </button>
         </div>
 

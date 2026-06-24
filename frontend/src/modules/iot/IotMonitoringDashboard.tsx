@@ -158,7 +158,7 @@ export function IotMonitoringDashboard() {
           <input type="datetime-local" value={endTime} onChange={(event) => setEndTime(event.target.value)} />
         </label>
         <div className="form-actions">
-          <button type="submit" className="primary-button" disabled={isLoading}>
+          <button type="submit" className="primary-button monitoring-load-button" disabled={isLoading}>
             {isLoading ? 'Loading...' : 'Load trend'}
           </button>
         </div>

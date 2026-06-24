@@ -49,6 +49,10 @@ function isFollowUpTask(parsed: ParsedTask) {
   return parsed.type === 'FOLLOW_UP' || parsed.type === 'FOLLOW_UP_APPOINTMENT'
 }
 
+function hasLongTaskLabel(label: string, maxWords = 10) {
+  return label.trim().split(/\s+/).filter(Boolean).length > maxWords
+}
+
 // ---------------------------------------------------------------------------
 // Alert helpers
 // ---------------------------------------------------------------------------
@@ -82,6 +86,7 @@ export function FollowUpTaskboard() {
   const [completing, setCompleting] = useState<string | null>(null) // planId being saved
   const [alertFilter, setAlertFilter] = useState<'ALL' | 'OPEN'>('OPEN')
   const [taskFilter, setTaskFilter] = useState<'ALL' | 'FOLLOW_UP' | 'FOLLOW_UP_APPOINTMENT'>('ALL')
+  const [expandedTaskKeys, setExpandedTaskKeys] = useState<Record<string, boolean>>({})
 
   // ---------------------------------------------------------------------------
   // Derived data
@@ -165,6 +170,13 @@ export function FollowUpTaskboard() {
     },
     [session],
   )
+
+  const toggleTaskExpansion = useCallback((taskKey: string) => {
+    setExpandedTaskKeys((current) => ({
+      ...current,
+      [taskKey]: !current[taskKey],
+    }))
+  }, [])
 
   useEffect(() => {
     const active = { value: true }
@@ -263,12 +275,12 @@ export function FollowUpTaskboard() {
           title="Follow-up tasks"
           subtitle="Tasks generated from teleconsultation completions requiring coordinator action."
           action={
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <div className="taskboard-filter-row">
               <LabelWithIcon icon="status">
-                <span style={{ fontSize: '0.8rem' }}>Filter</span>
+                <span className="taskboard-filter-label">Filter</span>
               </LabelWithIcon>
               <select
-                style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem' }}
+                className="taskboard-filter-select"
                 value={taskFilter}
                 onChange={(e) => setTaskFilter(e.target.value as typeof taskFilter)}
               >
@@ -278,8 +290,7 @@ export function FollowUpTaskboard() {
               </select>
               <button
                 type="button"
-                className="secondary-button"
-                style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem' }}
+                className="secondary-button taskboard-filter-button"
                 onClick={() => void loadData({ value: true })}
               >
                 Refresh
@@ -301,7 +312,7 @@ export function FollowUpTaskboard() {
           {visibleFollowUpPlans.map(({ plan, followUpTasks }) => (
             <article key={plan.id} className="careplan-item careplan-item--tasks">
               <div className="careplan-item-header">
-                <strong>{plan.goal}</strong>
+                <strong className="careplan-item-title">{plan.goal}</strong>
                 <span className="careplan-item-meta">
                   Patient: {plan.patientId} · Owner: {plan.ownerId} · v{plan.version}
                 </span>
@@ -311,22 +322,49 @@ export function FollowUpTaskboard() {
                 {followUpTasks.map((task) => {
                   const key = plan.id + task.raw
                   const isLoading = completing === key
+                  const showToggle = hasLongTaskLabel(task.label)
+                  const isExpanded = !!expandedTaskKeys[key]
                   return (
                     <li key={task.raw} className={`followup-task-item followup-task-item--${task.type.toLowerCase()}`}>
-                      <div className="followup-task-content">
-                        <span className={`badge ${task.type === 'FOLLOW_UP_APPOINTMENT' ? 'badge--appointment' : 'badge--review'}`}>
-                          {task.type === 'FOLLOW_UP_APPOINTMENT' ? 'Appointment' : 'Review'}
-                        </span>
-                        <span className="followup-task-label">{task.label}</span>
+                      <div className="followup-task-body">
+                        <div className="followup-task-header-row">
+                          <span className={`badge ${task.type === 'FOLLOW_UP_APPOINTMENT' ? 'badge--appointment' : 'badge--review'}`}>
+                            {task.type === 'FOLLOW_UP_APPOINTMENT' ? 'Appointment' : 'Review'}
+                          </span>
+                          <button
+                            type="button"
+                            className="secondary-button followup-task-done-btn"
+                            disabled={isLoading || !!completing}
+                            onClick={() => void handleMarkTaskDone(plan, task.raw)}
+                          >
+                            {isLoading ? 'Saving…' : 'Done'}
+                          </button>
+                        </div>
+                        <div className="followup-task-copy">
+                          <div className="followup-task-label-frame">
+                            <span
+                              className={
+                                showToggle && !isExpanded
+                                  ? 'followup-task-label followup-task-label--collapsed'
+                                  : 'followup-task-label'
+                              }
+                              title={task.label}
+                            >
+                              {task.label}
+                            </span>
+                          </div>
+                          {showToggle ? (
+                            <button
+                              type="button"
+                              className="followup-task-toggle"
+                              aria-expanded={isExpanded}
+                              onClick={() => toggleTaskExpansion(key)}
+                            >
+                              {isExpanded ? 'Show less' : 'Show more'}
+                            </button>
+                          ) : null}
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        className="secondary-button followup-task-done-btn"
-                        disabled={isLoading || !!completing}
-                        onClick={() => void handleMarkTaskDone(plan, task.raw)}
-                      >
-                        {isLoading ? 'Saving…' : 'Mark done'}
-                      </button>
                     </li>
                   )
                 })}
@@ -337,13 +375,13 @@ export function FollowUpTaskboard() {
       </section>
 
       {/* ── teleconsult alerts ── */}
-      <section className="careplan-list-panel" style={{ marginTop: '1.5rem' }}>
+      <section className="careplan-list-panel careplan-list-panel--alerts">
         <SectionHeader
           title="Teleconsult alerts"
           subtitle="Active alerts raised by critical findings or missing follow-up dates."
           action={
             <select
-              style={{ fontSize: '0.85rem', padding: '0.25rem 0.5rem' }}
+              className="taskboard-filter-select"
               value={alertFilter}
               onChange={(e) => setAlertFilter(e.target.value as typeof alertFilter)}
             >
@@ -375,7 +413,7 @@ export function FollowUpTaskboard() {
       </section>
 
       {/* ── upcoming follow-up appointments ── */}
-      <section className="careplan-list-panel" style={{ marginTop: '1.5rem' }}>
+      <section className="careplan-list-panel careplan-list-panel--appointments">
         <SectionHeader
           title="Upcoming follow-up appointments"
           subtitle="Booked appointments scheduled from today onward."

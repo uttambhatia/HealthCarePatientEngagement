@@ -27,6 +27,13 @@ type RegistrationFilters = {
 
 type SortColumn = 'fullName' | 'email' | 'phone' | 'status' | 'decisionAudit'
 type SortDirection = 'asc' | 'desc'
+type RegistrationAction = 'approve' | 'reject' | 'notify'
+
+type PendingAction = {
+  id: string
+  action: RegistrationAction
+  comment: string
+}
 
 function readField(record: Record<string, unknown>, key: string) {
   const value = record[key]
@@ -83,6 +90,7 @@ export function PatientRegistrationReview() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(5)
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const [filters, setFilters] = useState<RegistrationFilters>({
     fullName: '',
     email: '',
@@ -206,7 +214,40 @@ export function PatientRegistrationReview() {
     setCurrentPage(1)
   }
 
-  async function runAction(id: string, action: 'approve' | 'reject' | 'resend') {
+  function openActionPanel(id: string, action: RegistrationAction) {
+    setPendingAction({ id, action, comment: '' })
+    setMessage(null)
+    setErrorMessage(null)
+  }
+
+  function actionSummary(action: RegistrationAction, fullName: string) {
+    if (action === 'approve') {
+      return {
+        heading: `Approve ${fullName}?`,
+        details: 'This confirms the registration and completes downstream provisioning tasks.',
+        nextSteps: 'Next step: the status changes to Completed and the patient can continue onboarding.',
+        confirmLabel: 'Confirm approval',
+      }
+    }
+
+    if (action === 'reject') {
+      return {
+        heading: `Reject ${fullName}?`,
+        details: 'This marks the registration as rejected and sends a decline notification.',
+        nextSteps: 'Next step: review the rejection note for audit and re-open only if needed.',
+        confirmLabel: 'Confirm rejection',
+      }
+    }
+
+    return {
+      heading: `Notify ${fullName}?`,
+      details: 'This resends the pending registration notification to the patient contact channels.',
+      nextSteps: 'Next step: monitor for acknowledgment or patient follow-up before re-sending again.',
+      confirmLabel: 'Send notification',
+    }
+  }
+
+  async function runAction(id: string, action: RegistrationAction, comment?: string) {
     if (!token) {
       return
     }
@@ -218,14 +259,17 @@ export function PatientRegistrationReview() {
     try {
       if (action === 'approve') {
         await approvePatientRegistration(id, token)
-        setMessage('Registration approved. FHIR and identity provisioning were triggered.')
+        setMessage(
+          `Registration approved. FHIR and identity provisioning were triggered.${comment ? ' Reviewer note captured.' : ''}`,
+        )
       } else if (action === 'reject') {
         await rejectPatientRegistration(id, token)
-        setMessage('Registration rejected and patient was notified.')
+        setMessage(`Registration rejected and patient was notified.${comment ? ' Reviewer note captured.' : ''}`)
       } else {
         await resendPatientRegistrationNotification(id, token)
         setMessage('Notification resend was triggered for this registration.')
       }
+      setPendingAction(null)
       await loadRows()
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'Action failed. Please retry.'
@@ -255,10 +299,6 @@ export function PatientRegistrationReview() {
   return (
     <section className="registration-review-panel" aria-label="Patient registrations review">
       <header className="registration-review-header">
-        <div>
-          <h3>Patient registrations</h3>
-          <p>Review pending registrations and decide approval outcomes.</p>
-        </div>
         <span className="registration-pending-chip">Pending: {pendingCount}</span>
       </header>
 
@@ -353,6 +393,7 @@ export function PatientRegistrationReview() {
               pagedRows.map((row) => {
                 const pending = row.status.toUpperCase() === 'PENDING_VERIFICATION'
                 const busy = activeId === row.id
+                const panel = pendingAction?.id === row.id ? actionSummary(pendingAction.action, row.fullName) : null
                 return (
                   <tr key={row.id}>
                     <td>{row.fullName}</td>
@@ -362,7 +403,7 @@ export function PatientRegistrationReview() {
                       <span className={statusClassName(row.status)}>{row.status}</span>
                     </td>
                     <td>{row.decisionAudit || 'n/a'}</td>
-                    <td>
+                    <td className="registration-actions-cell">
                       <div className="registration-action-group">
                         {row.idProofUploaded ? (
                           <button
@@ -380,15 +421,15 @@ export function PatientRegistrationReview() {
                               type="button"
                               className="primary-button registration-action-button"
                               disabled={busy}
-                              onClick={() => void runAction(row.id, 'approve')}
+                              onClick={() => openActionPanel(row.id, 'approve')}
                             >
                               Approve
                             </button>
                             <button
                               type="button"
-                              className="secondary-button registration-action-button"
+                              className="secondary-button registration-action-button registration-action-button--reject"
                               disabled={busy}
-                              onClick={() => void runAction(row.id, 'reject')}
+                              onClick={() => openActionPanel(row.id, 'reject')}
                             >
                               Reject
                             </button>
@@ -396,13 +437,62 @@ export function PatientRegistrationReview() {
                         ) : null}
                         <button
                           type="button"
-                          className="secondary-button registration-action-button"
+                          className="secondary-button registration-action-button registration-action-button--notify"
                           disabled={busy}
-                          onClick={() => void runAction(row.id, 'resend')}
+                          onClick={() => openActionPanel(row.id, 'notify')}
                         >
                           Notify
                         </button>
                       </div>
+                      {panel && pendingAction ? (
+                        <div
+                          className="registration-action-inline-panel"
+                          data-registration-panel-id={row.id}
+                          role="group"
+                          aria-label={panel.heading}
+                        >
+                          <p className="registration-action-inline-title">{panel.heading}</p>
+                          <p className="registration-action-inline-detail">{panel.details}</p>
+                          <p className="registration-action-inline-next">{panel.nextSteps}</p>
+                          {pendingAction.action !== 'notify' ? (
+                            <label className="registration-action-comment-field">
+                              Comment
+                              <textarea
+                                className="registration-action-comment-input"
+                                value={pendingAction.comment}
+                                rows={2}
+                                maxLength={280}
+                                placeholder="Add a brief reviewer comment"
+                                onChange={(event) =>
+                                  setPendingAction((current) =>
+                                    current && current.id === row.id
+                                      ? { ...current, comment: event.target.value }
+                                      : current,
+                                  )
+                                }
+                              />
+                            </label>
+                          ) : null}
+                          <div className="registration-action-inline-controls">
+                            <button
+                              type="button"
+                              className="secondary-button registration-action-inline-button"
+                              disabled={busy}
+                              onClick={() => setPendingAction(null)}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              className="primary-button registration-action-inline-button"
+                              disabled={busy}
+                              onClick={() => void runAction(row.id, pendingAction.action, pendingAction.comment.trim())}
+                            >
+                              {panel.confirmLabel}
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
                     </td>
                   </tr>
                 )

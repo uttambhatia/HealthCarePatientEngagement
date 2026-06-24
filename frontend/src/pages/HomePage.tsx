@@ -6,6 +6,7 @@ type HomePageProps = PropsWithChildren<{
   profilePhotoUrl?: string
   connectionStatus?: 'checking' | 'up' | 'auth-required' | 'down'
   headerActions?: ReactNode
+  onPhotoUpload?: (file: File) => void
 }>
 
 export function HomePage({
@@ -15,6 +16,7 @@ export function HomePage({
   profilePhotoUrl,
   connectionStatus = 'checking',
   headerActions,
+  onPhotoUpload,
 }: HomePageProps) {
   const trustSignals = [
     { label: 'HIPAA-ready security', tone: 'safe' },
@@ -123,16 +125,41 @@ export function HomePage({
               data-status-label={connectionStatusLabel}
             />
             <span className="site-user-welcome" title={`Welcome ${welcomeName}`}>
-              <span className="site-user-icon" aria-hidden="true">
-                {profilePhotoUrl ? (
-                  <img src={profilePhotoUrl} alt="Profile" className="site-user-photo" />
-                ) : (
-                  <svg viewBox="0 0 24 24" focusable="false">
-                    <circle cx="12" cy="8.2" r="3.2" />
-                    <path d="M5.5 18.2a6.5 6.5 0 0 1 13 0" />
-                  </svg>
-                )}
-              </span>
+              {onPhotoUpload ? (
+                <label className="site-user-icon site-user-icon--uploadable" aria-label="Change profile photo">
+                  {profilePhotoUrl ? (
+                    <img src={profilePhotoUrl} alt="Profile" className="site-user-photo" />
+                  ) : (
+                    <svg viewBox="0 0 24 24" focusable="false" className="site-user-avatar-svg">
+                      <circle cx="12" cy="8.2" r="3.2" />
+                      <path d="M5.5 18.2a6.5 6.5 0 0 1 13 0" />
+                    </svg>
+                  )}
+                  <span className="site-user-camera-overlay" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="site-user-upload-input"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhotoUpload(f) }}
+                  />
+                </label>
+              ) : (
+                <span className="site-user-icon" aria-hidden="true">
+                  {profilePhotoUrl ? (
+                    <img src={profilePhotoUrl} alt="Profile" className="site-user-photo" />
+                  ) : (
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <circle cx="12" cy="8.2" r="3.2" />
+                      <path d="M5.5 18.2a6.5 6.5 0 0 1 13 0" />
+                    </svg>
+                  )}
+                </span>
+              )}
               <span>Welcome {welcomeName}</span>
             </span>
           </div>

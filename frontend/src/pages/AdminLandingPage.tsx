@@ -36,7 +36,7 @@ export function AdminLandingPage({ role }: AdminLandingPageProps) {
         <section className="role-spotlight card admin-spotlight">
           <div className="role-spotlight-copy">
             <p className="eyebrow">{role} landing</p>
-            <h2>Operational governance center</h2>
+            <h2>Operational Governance Center</h2>
             <p>
               See service posture, policy visibility, and platform health from one control surface designed for governance workflows.
             </p>
@@ -53,15 +53,23 @@ export function AdminLandingPage({ role }: AdminLandingPageProps) {
         </section>
 
         <Card
-          title={showSupportPanel ? 'Operational support' : 'Admin workflow'}
-          eyebrow={showSupportPanel ? 'Supporting tools' : 'Landing page'}
-          subtitle={showSupportPanel ? 'Telemetry and notifications support the primary governance workflow.' : undefined}
+          title={showSupportPanel ? 'Operational support' : 'Patient registrations'}
+          eyebrow={showSupportPanel ? 'Supporting tools' : undefined}
+          subtitle={showSupportPanel ? 'Telemetry and notifications support the primary governance workflow.' : 'Review pending registrations and decide approval outcomes.'}
           centeredHeader
           actions={(
             <div className="admin-panel-actions">
               <button
                 type="button"
-                className="primary-button admin-pane-size-toggle"
+                className="primary-button admin-panel-nav"
+                onClick={togglePanel}
+                aria-label={showSupportPanel ? 'Go to Patient Registrations' : 'Go to operational support'}
+              >
+                {showSupportPanel ? 'Patient Registrations' : 'Operational Support'}
+              </button>
+              <button
+                type="button"
+                className="secondary-button admin-pane-size-toggle"
                 onClick={toggleRightPaneSize}
                 aria-label={isRightPaneMaximized ? 'Minimize right pane' : 'Maximize right pane'}
               >
@@ -84,22 +92,14 @@ export function AdminLandingPage({ role }: AdminLandingPageProps) {
                 </span>
                 <span className="admin-pane-size-toggle-label">{isRightPaneMaximized ? 'Minimize' : 'Maximize'}</span>
               </button>
-              <button
-                type="button"
-                className="primary-button admin-panel-nav"
-                onClick={togglePanel}
-                aria-label={showSupportPanel ? 'Back to admin workflow' : 'Go to operational support'}
-              >
-                {showSupportPanel ? '← Back' : 'Next →'}
-              </button>
             </div>
           )}
         >
           <button
             type="button"
             className="admin-panel-stepper admin-panel-stepper--centered"
-            data-tooltip={showSupportPanel ? 'Operational support' : 'Admin workflow'}
-            aria-label={showSupportPanel ? 'Back to admin workflow' : 'Go to operational support'}
+            data-tooltip={showSupportPanel ? 'Operational Support' : 'Patient registrations'}
+            aria-label={showSupportPanel ? 'Go to patient registrations' : 'Go to operational support'}
             onClick={togglePanel}
           >
             <span className="admin-panel-stepper-node admin-panel-stepper-node--active" />

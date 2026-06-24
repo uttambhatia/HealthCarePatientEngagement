@@ -48,7 +48,7 @@ public class CarePlanController {
     @Operation(summary = "Update CarePlan resource")
     @PutMapping("/{id}")
     public StandardResponse<CarePlanResponse> update(
-            @PathVariable String id,
+            @PathVariable("id") String id,
             @Valid @RequestBody UpdateCarePlanRequest request) {
         String correlationId = CorrelationIdHolder.get().orElse("n/a");
         return new StandardResponse<>(correlationId, service.updateCarePlan(id, request, correlationId));
@@ -56,7 +56,7 @@ public class CarePlanController {
 
     @Operation(summary = "Get CarePlan resource")
     @GetMapping("/{id}")
-    public StandardResponse<CarePlanResponse> get(@PathVariable String id) {
+    public StandardResponse<CarePlanResponse> get(@PathVariable("id") String id) {
         CarePlanResponse response = service.getCarePlan(id);
         enforcePatientScope(response.patientId());
         return new StandardResponse<>(CorrelationIdHolder.get().orElse("n/a"), response);

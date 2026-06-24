@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../auth/useAuth'
-import { createConsent, listConsents, type ConsentResponse } from '../../services/platformApi'
+import { LabelWithIcon } from '../../components/LabelWithIcon'
+import { createConsent, listConsents, listPatients, type ConsentResponse } from '../../services/platformApi'
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   const [, payload] = token.split('.')
@@ -100,11 +101,22 @@ function resolveConsentPatientId(item: ConsentResponse) {
 
 type PatientConsentManagementProps = {
   showConsentForm: boolean
+  onCancel?: () => void
 }
 
-export function PatientConsentManagement({ showConsentForm }: PatientConsentManagementProps) {
+type PatientDisplayInfo = {
+  internalId: string
+  displayText: string
+}
+
+export function PatientConsentManagement({ showConsentForm, onCancel }: PatientConsentManagementProps) {
   const { session } = useAuth()
   const [patientId, setPatientId] = useState('')
+  const [patientList, setPatientList] = useState<Record<string, unknown>[]>([])
+  const [patientDisplay, setPatientDisplay] = useState<PatientDisplayInfo>({
+    internalId: '',
+    displayText: '',
+  })
   const [consentType, setConsentType] = useState('GENERAL_CARE')
   const [granted, setGranted] = useState(true)
   const [effectiveFrom, setEffectiveFrom] = useState(() => toDateTimeInputValue(new Date()))
@@ -132,6 +144,17 @@ export function PatientConsentManagement({ showConsentForm }: PatientConsentMana
     return inferPatientId(idClaims)
   }, [session])
 
+  const matchedPatient = useMemo(() => {
+    if (!inferredPatientId || !patientList.length) return null
+
+    const normalized = inferredPatientId.trim().toLowerCase()
+    return patientList.find((p: Record<string, unknown>) => {
+      const pId = (p.id as string)?.trim().toLowerCase() || ''
+      const pExtRef = (p.externalReference as string)?.trim().toLowerCase() || ''
+      return pId === normalized || pExtRef === normalized
+    }) || null
+  }, [inferredPatientId, patientList])
+
   const cacheScope = inferredPatientId || 'all'
   const totalConsentPages = Math.max(1, Math.ceil(consents.length / consentsPerPage))
   const visibleConsents = consents.slice(consentPage * consentsPerPage, (consentPage + 1) * consentsPerPage)
@@ -147,8 +170,54 @@ export function PatientConsentManagement({ showConsentForm }: PatientConsentMana
   }, [inferredPatientId, patientId])
 
   useEffect(() => {
-    let active = true
+    if (matchedPatient) {
+      const given = ((matchedPatient.givenName as string) || '').trim()
+      const family = ((matchedPatient.familyName as string) || '').trim()
+      const extRef = ((matchedPatient.externalReference as string) || '').trim()
 
+      const namePart = [given, family].filter(Boolean).join(' ').trim()
+      const displayText = [namePart, extRef && `- ${extRef}`].filter(Boolean).join(' ')
+
+      setPatientDisplay({
+        internalId: inferredPatientId,
+        displayText: displayText || inferredPatientId,
+      })
+    } else {
+      setPatientDisplay({
+        internalId: inferredPatientId,
+        displayText: inferredPatientId,
+      })
+    }
+  }, [matchedPatient, inferredPatientId])
+
+  useEffect(() => {
+    let active = true
+    async function loadPatientList() {
+      if (!session) {
+        return
+      }
+
+      try {
+        const patients = await listPatients(session.accessToken)
+        if (active) {
+          setPatientList(Array.isArray(patients) ? patients : [])
+        }
+      } catch {
+        if (active) {
+          setPatientList([])
+        }
+      }
+    }
+
+    void loadPatientList()
+
+    return () => {
+      active = false
+    }
+  }, [session])
+
+  useEffect(() => {
+    let active = true
     async function loadConsents() {
       if (!session) {
         return
@@ -199,7 +268,7 @@ export function PatientConsentManagement({ showConsentForm }: PatientConsentMana
       return
     }
 
-    if (!patientId.trim() || !consentType.trim() || !effectiveFrom.trim()) {
+    if (!patientDisplay.internalId.trim() || !consentType.trim() || !effectiveFrom.trim()) {
       setIsError(true)
       setResultMessage('Patient ID, consent type and effective time are required.')
       return
@@ -213,7 +282,7 @@ export function PatientConsentManagement({ showConsentForm }: PatientConsentMana
       const effectiveAt = Number.isNaN(Date.parse(effectiveFrom)) ? effectiveFrom : new Date(effectiveFrom).toISOString()
       const created = await createConsent(
         {
-          patientId: patientId.trim(),
+          patientId: patientDisplay.internalId.trim(),
           consentType,
           granted,
           effectiveFrom: effectiveAt,
@@ -224,7 +293,7 @@ export function PatientConsentManagement({ showConsentForm }: PatientConsentMana
       const optimisticRecord: ConsentResponse = {
         id: created.id,
         status: created.status || 'RECORDED',
-        patientId: created.patientId || patientId.trim(),
+        patientId: created.patientId || patientDisplay.internalId.trim(),
         consentType: created.consentType || consentType,
         granted: typeof created.granted === 'string' ? created.granted : String(granted),
         effectiveFrom: created.effectiveFrom || effectiveAt,
@@ -262,9 +331,17 @@ export function PatientConsentManagement({ showConsentForm }: PatientConsentMana
           <form className="stacked-form" onSubmit={(event) => { event.preventDefault(); void handleSubmit() }}>
             <div className="field-grid">
               <label className="field-block">
-                <span>Patient ID</span>
-                <input value={patientId} placeholder="pat-1001" onChange={(event) => setPatientId(event.target.value)} />
-                {inferredPatientId ? <small>Prefilled from your session token.</small> : null}
+                <LabelWithIcon icon="patient">Patient ID</LabelWithIcon>
+                <div style={{ padding: '8px 0', fontWeight: '500', minHeight: '36px', display: 'flex', alignItems: 'center' }}>
+                  {patientDisplay.displayText}
+                </div>
+                {matchedPatient ? (
+                  <small>Patient profile loaded from system.</small>
+                ) : inferredPatientId ? (
+                  <small>Prefilled from your session token.</small>
+                ) : (
+                  <small>Unable to identify patient.</small>
+                )}
               </label>
 
               <label className="field-block">
@@ -293,8 +370,11 @@ export function PatientConsentManagement({ showConsentForm }: PatientConsentMana
               </label>
             </div>
 
-            <div className="form-actions">
-              <button type="submit" className="primary-button" disabled={submitting}>
+            <div className="patient-appointment-form-actions">
+              <button type="button" className="secondary-button patient-appointment-submit-button" onClick={onCancel}>
+                Cancel
+              </button>
+              <button type="submit" className="primary-button patient-appointment-submit-button" disabled={submitting}>
                 {submitting ? 'Updating...' : 'Save consent'}
               </button>
             </div>
@@ -313,26 +393,8 @@ export function PatientConsentManagement({ showConsentForm }: PatientConsentMana
         {loading ? <p>Loading consent records...</p> : null}
         {!loading && consents.length > 0 ? (
           <>
-            <div className="carousel-controls" aria-label="Consent records navigation">
-                <button
-                  type="button"
-                  className={`${consentPage >= totalConsentPages - 1 ? 'primary-button' : 'secondary-button'} carousel-button`}
-                  onClick={() => setConsentPage((page) => Math.max(0, page - 1))}
-                  disabled={consentPage === 0}
-                >
-                <span aria-hidden="true">&lt;</span> Prev
-              </button>
-                <button
-                  type="button"
-                  className={`${consentPage < totalConsentPages - 1 ? 'primary-button' : 'secondary-button'} carousel-button`}
-                  onClick={() => setConsentPage((page) => Math.min(totalConsentPages - 1, page + 1))}
-                  disabled={consentPage >= totalConsentPages - 1}
-                >
-                Next <span aria-hidden="true">&gt;</span>
-              </button>
-            </div>
-              <div className="patient-consent-list patient-consent-list--paged">
-                {visibleConsents.map((item) => (
+            <div className="patient-consent-list patient-consent-list--paged">
+              {visibleConsents.map((item) => (
                 <article key={item.id} className="patient-consent-item">
                   <strong>{item.consentType}</strong>
                   <span>Consent ID: {item.id}</span>
@@ -341,6 +403,24 @@ export function PatientConsentManagement({ showConsentForm }: PatientConsentMana
                   <span>Effective from: {formatEffectiveFrom(item.effectiveFrom)}</span>
                 </article>
               ))}
+            </div>
+            <div className="carousel-controls" aria-label="Consent records navigation">
+              <button
+                type="button"
+                className={`${consentPage >= totalConsentPages - 1 ? 'primary-button' : 'secondary-button'} carousel-button`}
+                onClick={() => setConsentPage((page) => Math.max(0, page - 1))}
+                disabled={consentPage === 0}
+              >
+                <span aria-hidden="true">&lt;</span> Prev
+              </button>
+              <button
+                type="button"
+                className={`${consentPage < totalConsentPages - 1 ? 'primary-button' : 'secondary-button'} carousel-button`}
+                onClick={() => setConsentPage((page) => Math.min(totalConsentPages - 1, page + 1))}
+                disabled={consentPage >= totalConsentPages - 1}
+              >
+                Next <span aria-hidden="true">&gt;</span>
+              </button>
             </div>
           </>
         ) : null}

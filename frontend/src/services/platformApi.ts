@@ -36,6 +36,17 @@ export type AppointmentResponse = {
   channel: string
 }
 
+export type NotificationResponse = {
+  id: string
+  status: string
+  recipientId: string
+  channel: string
+  templateId: string
+  message: string
+  deliveryAttempts: number
+  lastError: string | null
+}
+
 function readStringField(source: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const value = source[key]
@@ -252,8 +263,8 @@ export async function listConsents(token?: string) {
 }
 
 export async function listNotifications(token?: string) {
-  const payload = await apiClient<Envelope<Record<string, unknown>[]> | Record<string, unknown>[]>(platformRoutes.notifications, { token })
-  return normalizeArray(payload)
+  const payload = await apiClient<Envelope<NotificationResponse[]> | NotificationResponse[]>(platformRoutes.notifications, { token })
+  return normalizeArray(payload) as NotificationResponse[]
 }
 
 export async function listTelemetry(token?: string) {

@@ -331,7 +331,7 @@ export function CarePlanManagement() {
           action={
             <button
               type="button"
-              className="primary-button"
+              className="primary-button careplan-create-button"
               onClick={() => {
                 setCreateOpen((o) => !o)
                 setSelectedPlanId('')
@@ -395,7 +395,12 @@ export function CarePlanManagement() {
               <button type="button" className="secondary-button" onClick={() => setCreateOpen(false)}>
                 Cancel
               </button>
-              <button type="button" className="primary-button" onClick={() => void handleCreateCarePlan()} disabled={submitting}>
+              <button
+                type="button"
+                className="primary-button careplan-create-button"
+                onClick={() => void handleCreateCarePlan()}
+                disabled={submitting}
+              >
                 {submitting ? 'Saving...' : 'Create plan'}
               </button>
             </div>
@@ -449,7 +454,7 @@ export function CarePlanManagement() {
 
         {loading ? <p>Loading care plans...</p> : null}
         {!loading && filteredCarePlans.length === 0 ? <p className="patient-appointments-empty">No care plans match your current filters.</p> : null}
-        {!loading && filteredCarePlans.length > 0 ? (
+        {!loading && filteredCarePlans.length > 0 && totalCarePlanPages > 1 ? (
           <div className="carousel-controls" aria-label="Care plan navigation">
             <button
               type="button"
@@ -471,18 +476,20 @@ export function CarePlanManagement() {
         ) : null}
         <div className="careplan-list careplan-list--paged">
           {visibleCarePlans.map((carePlan) => (
-            <article key={carePlan.id} className="careplan-item">
-              <strong>{carePlan.goal}</strong>
-              <span>Plan ID: {carePlan.id}</span>
-              <span>Patient: {carePlan.patientId}</span>
-              <span>Owner: {carePlan.ownerId}</span>
-              <span>Status: {carePlan.planStatus}</span>
-              <span>Version: {carePlan.version}</span>
-              <span>Tasks: {formatTaskSummary(carePlan.tasks)}</span>
+            <article key={carePlan.id} className="careplan-item careplan-item--management">
+              <strong className="careplan-item-title">{carePlan.goal}</strong>
+              <div className="careplan-item-body">
+                <span>Plan ID: {carePlan.id}</span>
+                <span>Patient: {carePlan.patientId}</span>
+                <span>Owner: {carePlan.ownerId}</span>
+                <span>Status: {carePlan.planStatus}</span>
+                <span>Version: {carePlan.version}</span>
+                <span>Tasks: {formatTaskSummary(carePlan.tasks)}</span>
+              </div>
               <div className="button-row careplan-item-actions">
                 <button
                   type="button"
-                  className="secondary-button"
+                  className="secondary-button careplan-item-edit-button"
                   onClick={() => {
                     loadPlanIntoEditor(carePlan)
                     setCreateOpen(false)

@@ -150,16 +150,9 @@ function App() {
       username={session?.displayName}
       profilePhotoUrl={profilePhotoUrl ?? undefined}
       connectionStatus={backendStatus}
+      onPhotoUpload={session ? (file) => void handleProfilePhotoUpload(file) : undefined}
       headerActions={session ? (
         <>
-          <label className="secondary-button upload-button">
-            Upload photo
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) => void handleProfilePhotoUpload(event.target.files?.[0] ?? null)}
-            />
-          </label>
           <button className="primary-button" onClick={logout}>Sign out</button>
         </>
       ) : undefined}
